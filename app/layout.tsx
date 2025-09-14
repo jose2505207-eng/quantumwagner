@@ -1,19 +1,12 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import { Background } from "@/componenets/background";
+import { AppBar } from "@/componenets/Appbar";
+import { SolanaProvider } from "../lib/SolanaProvider";
+import Footer from "@/componenets/Footer";
 
 export const metadata: Metadata = {
-  title: "CoinBuzz",
+  title: "Quantum",
   description: "Your next crypto choice.",
 };
 
@@ -24,10 +17,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+      <body className="relative bg-black text-white min-h-screen flex flex-col">
+        <Background />
+        <SolanaProvider>
+          <AppBar />
+          <main className="flex-grow pt-24">{children}</main>
+        </SolanaProvider>
+        <Footer />
       </body>
     </html>
   );

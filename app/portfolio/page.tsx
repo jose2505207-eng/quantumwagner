@@ -1,7 +1,7 @@
 "use-client";
 
 export default function Home() {
-  return <div> 
-    
+  return <div>
+    portfolio
   </div>;
 }
