@@ -1,6 +1,9 @@
-import Link from "next/link";
+"use client"
+import { useRouter } from "next/navigation";
 
 const Footer = () => {
+  const router = useRouter();
+
   return (
     <footer className="bg-black text-gray-400 py-10 px-6 md:px-20 border-t border-gray-800">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -8,7 +11,7 @@ const Footer = () => {
         <div>
           <h2 className="text-white text-lg font-semibold">Quantum Wager</h2>
           <p className="mt-2 text-sm">
-            The prediction market for internet culture.  
+            The prediction market for internet culture.
             Bet on meme coin futures with confidence.
           </p>
         </div>
@@ -16,11 +19,13 @@ const Footer = () => {
         {/* Middle Section */}
         <div>
           <h3 className="text-white text-sm font-semibold uppercase">Product</h3>
-          <ul className="mt-3 space-y-2 text-sm">
-            <li><Link href="/markets" className="hover:text-white">Markets</Link></li>
-            <li><Link href="/leaderboard" className="hover:text-white">Leaderboard</Link></li>
-            <li><Link href="/portfolio" className="hover:text-white">Portfolio</Link></li>
-            <li><Link href="/how-it-works" className="hover:text-white">How it Works</Link></li>
+          <ul className="mt-3 space-y-2 text-sm ">
+            <li onClick={() => { router.push("/markets") }} className="hover:text-white hover:cursor-pointer">Markets</li>
+
+            <li onClick={() => { router.push("/leaderboard") }} className="hover:text-white hover:cursor-pointer">Leaderboard</li>
+
+            <li onClick={() => { router.push("/portfolio") }} className="hover:text-white hover:cursor-pointer" > Portfolio</li>
+
           </ul>
         </div>
 
@@ -28,9 +33,13 @@ const Footer = () => {
         <div>
           <h3 className="text-white text-sm font-semibold uppercase">Legal & Support</h3>
           <ul className="mt-3 space-y-2 text-sm">
-            <li><Link href="/terms" className="hover:text-white">Terms of Service</Link></li>
-            <li><Link href="/privacy" className="hover:text-white">Privacy Policy</Link></li>
-            <li><Link href="/support" className="hover:text-white">Support</Link></li>
+
+            <li onClick={() => { router.push("/info/terms_of_services") }} className="hover:text-white hover:cursor-pointer">Terms of Service</li>
+
+            <li onClick={() => { router.push("/info/privacy_policy") }} className="hover:text-white hover:cursor-pointer">Privacy Policy</li>
+
+            <li onClick={() => { router.push("/info/support") }} className="hover:text-white hover:cursor-pointer">Support</li>
+
           </ul>
         </div>
       </div>
