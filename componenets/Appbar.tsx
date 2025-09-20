@@ -9,8 +9,6 @@ import {
   WalletMultiButton,
 } from "@solana/wallet-adapter-react-ui";
 
-
-
 export function AppBar() {
   const [isOpen, setIsOpen] = useState(false);
   const { connected } = useWallet();
@@ -18,12 +16,14 @@ export function AppBar() {
 
   return (
     <header
-      className="fixed top-0 left-0 w-full z-50
-                 bg-[#0a0a0f]/60 backdrop-blur-xl
-                 border-b border-transparent
-                 [border-image:linear-gradient(90deg,rgba(255,255,255,0.1),rgba(168,85,247,0.05),rgba(59,130,246,0.05))_1]
-                 shadow-[0_0_20px_rgba(255,255,255,0.05),0_0_30px_rgba(168,85,247,0.08),0_0_40px_rgba(59,130,246,0.08)]
-                 transition-all duration-300"
+      className="
+        fixed top-0 left-0 w-full z-50
+        bg-[#0a0a0f]/60 backdrop-blur-xl
+        border-b border-transparent
+        [border-image:linear-gradient(90deg,rgba(255,255,255,0.1),rgba(0,212,255,0.15),rgba(255,0,150,0.1))_1]
+        shadow-[0_0_10px_rgba(0,212,255,0.1),0_0_15px_rgba(255,0,150,0.08)]
+        transition-all duration-300
+      "
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
         {/* Logo */}
@@ -35,26 +35,25 @@ export function AppBar() {
         <nav className="hidden md:flex items-center gap-8">
           <div
             className="text-gray-300 hover:text-white transition-colors"
-            onClick={() => { router.push("/markets") }}
+            onClick={() => router.push("/markets")}
           >
-            <p>Markets</p>
-          </div>{" "}
-          <div
-            className="text-gray-300 hover:text-white transition-colors"
-            onClick={() => { router.push("/leaderboard") }}
-          >
-            <p>Leaderboard</p>
+            Markets
           </div>
           <div
             className="text-gray-300 hover:text-white transition-colors"
-            onClick={() => { router.push("/portfolio") }}
+            onClick={() => router.push("/leaderboard")}
           >
-            <p>Portfolio</p>
+            Leaderboard
           </div>
-          <WalletMultiButton />
+          <div
+            className="text-gray-300 hover:text-white transition-colors"
+            onClick={() => router.push("/portfolio")}
+          >
+            Portfolio
+          </div>
+          <WalletMultiButton className="hover:shadow-[0_0_15px_rgba(0,212,255,0.3)] transition-shadow" />
           {connected && <WalletDisconnectButton />}
         </nav>
-
 
         {/* Mobile Menu Button */}
         <button
@@ -68,13 +67,13 @@ export function AppBar() {
       {/* Mobile Nav */}
       {isOpen && (
         <div className="md:hidden bg-[#0a0a0f]/90 backdrop-blur-xl border-t border-white/10 px-6 py-4 space-y-4">
-          <div className="block text-gray-300 hover:text-white" onClick={() => { router.push("/") }}>
+          <div className="block text-gray-300 hover:text-white" onClick={() => router.push("/")}>
             Markets
           </div>
-          <div className="block text-gray-300 hover:text-white" onClick={() => { router.push("/") }}>
+          <div className="block text-gray-300 hover:text-white" onClick={() => router.push("/")}>
             Leaderboard
           </div>
-          <div className="block text-gray-300 hover:text-white" onClick={() => { router.push("/") }}>
+          <div className="block text-gray-300 hover:text-white" onClick={() => router.push("/")}>
             Portfolio
           </div>
           <WalletMultiButton />

@@ -25,24 +25,21 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* wallet style */
+
 .wallet-adapter-button-trigger {
-  background: radial-gradient(
-    circle,
-    rgba(255, 255, 255, 0.06),
-    rgba(168, 85, 247, 0.04),
-    rgba(59, 130, 246, 0.04)
-  ) !important;
+  background: #0a0a0f !important; /* dark base */
   color: #fff !important;
   border-radius: 12px !important;
   padding: 8px 14px !important;
   border: 1px solid rgba(255, 255, 255, 0.06) !important;
-  box-shadow: 0 6px 20px rgba(168, 85, 247, 0.06),
-    0 10px 30px rgba(59, 130, 246, 0.04) !important;
+  transition: all 0.3s ease;
+  box-shadow: none;
 }
 
-/* Hover glow for AppBar button */
 .wallet-adapter-button-trigger:hover {
   transform: scale(1.03);
-  box-shadow: 0 10px 30px rgba(168, 85, 247, 0.09),
-    0 14px 40px rgba(59, 130, 246, 0.07) !important;
+  border: 1px solid rgba(0, 212, 255, 0.5); /* neon cyan border */
+  box-shadow: 0 6px 18px rgba(0, 212, 255, 0.25),
+    0 8px 25px rgba(255, 0, 150, 0.15); /* subtle neon glow */
 }
