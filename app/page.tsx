@@ -1,14 +1,14 @@
-"use client";
+"use client"
 
 import { Button } from '@/componenets/button/primary';
+// import { Button } from '@/componenets/button/primary';
+import Faq from '@/componenets/landing/FAQ';
 import HeroSection from '@/componenets/landing/Hero';
 import MarketCard from '@/componenets/market/MarketCard';
-import { ChevronDown } from 'lucide-react';
-import { useState } from "react";
+import { motion } from 'framer-motion';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState('featured');
-  const [selectedBet, setSelectedBet] = useState(null);
+
 
   const featuredMarkets = [
     {
@@ -82,13 +82,15 @@ export default function Home() {
 
 
   return (
-    <div className="min-h-screen text-white relative">
+    < motion.div initial={{ opacity: 0, y: 30 }}   // 👈 before animation
+      animate={{ opacity: 1, y: 0 }}    // 👈 after animation
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="min-h-screen bg-black text-white">
+      <div className="min-h-screen text-white relative">
+        <main className="relative z-10 max-w-6xl mx-auto px-4 py-12">
 
-      {/* Main Content */}
-      <main className="relative z-10 max-w-6xl mx-auto px-4 py-12">
-
-        {/* Hero Section */}
-        <HeroSection></HeroSection>
+          {/* Hero Section */}
+          <HeroSection></HeroSection>
 
           {/* Featured Market */}
           <section className="mb-12">
@@ -121,46 +123,19 @@ export default function Home() {
             </div>
 
             <div className="text-center mt-8">
-              <button className="border border-gray-600 px-8 py-3 rounded-lg font-medium hover:border-gray-500 transition-colors mr-4">
-                View All Markets
-              </button>
-              <button className="bg-gradient-to-r from-purple-600 to-pink-600 px-8 py-3 rounded-lg font-medium hover:from-purple-700 hover:to-pink-700 transition-colors">
-                Create Market
-              </button>
+
+              <Button> View All Markets</Button>
             </div>
           </section>
 
           {/* FAQ Section */}
           <section className="mb-12">
-            <h2 className="text-2xl font-bold mb-2">Frequently asked questions</h2>
-            <p className="text-gray-400 mb-8">
-              Everything you need to know about prediction markets and how CoinBuzz works.
-            </p>
-
-            <div className="space-y-4">
-              {[
-                "How do prediction markets work on CoinBuzz?",
-                "What happens to my money when I place a bet?",
-                "How are market outcomes determined?",
-                "Can I sell my position before the market closes?",
-                "What fees does CoinBuzz charge?",
-                "Is my wallet safe on CoinBuzz?"
-              ].map((question, index) => (
-                <div key={index} className="border border-gray-800 rounded-lg p-4 hover:border-gray-700 transition-colors">
-                  <div className="flex items-center justify-between cursor-pointer">
-                    <span className="text-white font-medium">{question}</span>
-                    <ChevronDown className="w-5 h-5 text-gray-400" />
-                  </div>
-                </div>
-              ))}
-            </div>
+            <Faq></Faq>
           </section>
-      </main>
+        </main>
 
-      <Button onClick={() => {
-        console.log("hit here");
-      }}>Start Now</Button>
+      </div>
 
-    </div>
+    </motion.div>
   );
 }

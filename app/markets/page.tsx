@@ -12,9 +12,11 @@ import {
   Target,
   Zap,
   ArrowRight,
-  ExternalLink,
-  Menu
+  ExternalLink
 } from 'lucide-react';
+import { Button } from '@/componenets/button/primary';
+import PinkButton from '@/componenets/button/PinkButton';
+// import Pink from '@/componenets/button/PinkButton';
 
 interface PredictionMarketsProps { }
 
@@ -41,13 +43,9 @@ export default function Markets(PredictionMarketsProps: any) {
           from politics to technology, sports to economics.
         </p>
         <div className="flex gap-4 justify-center">
-          <button className="px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center gap-2">
-            Start Trading
-            <ArrowRight className="w-4 h-4" />
-          </button>
-          <button className="px-6 py-3 border border-gray-600 text-white rounded-lg font-medium hover:border-gray-500 transition-colors">
-            Learn More
-          </button>
+
+          <PinkButton>Start Trading</PinkButton>
+          <Button>  Learn More</Button>
         </div>
       </div>
 
@@ -77,6 +75,7 @@ export default function Markets(PredictionMarketsProps: any) {
           View All Categories
           <ExternalLink className="w-4 h-4" />
         </button>
+
       </div>
 
       {/* Popular Markets Section */}

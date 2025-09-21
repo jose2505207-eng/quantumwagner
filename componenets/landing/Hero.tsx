@@ -13,9 +13,9 @@ export default function HeroSection() {
             <h1 className="text-5xl md:text-6xl font-bold mb-4">
                 Bet on Meme Coin
                 <br />
-                {/* <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                     Futures
-                </span> */}
+                </span>
 
             </h1>
 
