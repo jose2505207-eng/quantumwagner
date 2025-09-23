@@ -4,6 +4,7 @@ import { Background } from "@/componenets/background";
 import { AppBar } from "@/componenets/Appbar";
 import { SolanaProvider } from "../lib/SolanaProvider";
 import Footer from "@/componenets/Footer";
+import { WalletAuth } from "@/app/utils/walletAuth";
 
 export const metadata: Metadata = {
   title: "Quantum",
@@ -21,6 +22,7 @@ export default function RootLayout({
         <Background />
         <SolanaProvider>
           <AppBar />
+          <WalletAuth></WalletAuth>
           <main className="flex-grow pt-24">{children}</main>
         </SolanaProvider>
         <Footer />
