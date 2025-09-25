@@ -35,7 +35,7 @@ const buttonVariants = cva(
 );
 
 const Button = React.forwardRef<
-  HTMLButtonElement, // <-- Type of element
+  HTMLButtonElement,
   React.ComponentProps<"button"> &
     VariantProps<typeof buttonVariants> & {
       asChild?: boolean;

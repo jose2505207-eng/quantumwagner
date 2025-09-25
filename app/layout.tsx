@@ -5,10 +5,11 @@ import { AppBar } from "@/componenets/Appbar";
 import { SolanaProvider } from "../lib/SolanaProvider";
 import Footer from "@/componenets/Footer";
 import { WalletAuth } from "@/app/utils/walletAuth";
+import { Toaster } from "react-hot-toast";
 
 export const metadata: Metadata = {
   title: "Quantum",
-  description: "Your next crypto choice.",
+  description: "Meme coin prediction market.",
 };
 
 export default function RootLayout({
@@ -24,6 +25,20 @@ export default function RootLayout({
           <AppBar />
           <WalletAuth></WalletAuth>
           <main className="flex-grow pt-24">{children}</main>
+
+          <Toaster
+            position="top-center"
+            toastOptions={{
+              style: {
+                background: "#0d0f16", // solid dark
+                color: "#fff",
+                borderRadius: "0.5rem",
+                padding: "10px 16px",
+                fontSize: "0.9rem",
+                fontWeight: 500,
+              },
+            }}
+          />
         </SolanaProvider>
         <Footer />
       </body>
