@@ -28,7 +28,7 @@ import {
   MarketCategoryLabels,
   MarketStatus,
 } from "@/app/types";
-import { useMarketStore } from "@/store/marketStore";
+import { useMarketStore } from "@/store/adminMarketStore";
 import toast from "react-hot-toast";
 import { Label } from "../ui/label";
 import {
@@ -42,6 +42,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
+import { Switch } from "../ui/switch"; // ✅ import Switch
 
 export default function ActiveMarkets() {
   const [filterCategory, setFilterCategory] = useState("ALL");
@@ -160,7 +161,6 @@ export default function ActiveMarkets() {
                   </div>
                   <div className="flex space-x-2">
                     {/* Edit */}
-
                     <Sheet open={open} onOpenChange={setOpen}>
                       <SheetTrigger asChild>
                         <Button
@@ -189,19 +189,19 @@ export default function ActiveMarkets() {
                                   question: editing.question,
                                   description: editing.description,
                                   category: editing.category,
-                                  end_time: editing.end_time, // always included
-                                  oracle_source: editing.oracle_source, // always included
+                                  end_time: editing.end_time,
+                                  oracle_source: editing.oracle_source,
                                   oracle_config: editing.oracle_config || "",
                                   resolution_criteria:
                                     editing.resolution_criteria || "",
                                   status: editing.status,
+                                  featured: editing.featured, //  send featured state
                                 });
                                 setEditing(null);
                                 setOpen(false);
                               }
                             }}
                           >
-                            {/* Editable fields only */}
                             <Label>Question</Label>
                             <Input
                               placeholder="Question"
@@ -285,6 +285,22 @@ export default function ActiveMarkets() {
                                 </SelectItem>
                               </SelectContent>
                             </Select>
+
+                            {/*  Featured toggle */}
+                            <div className="flex items-center space-x-3 pt-2">
+                              <Switch
+                                checked={editing.featured}
+                                onCheckedChange={(val) =>
+                                  setEditing({
+                                    ...editing,
+                                    featured: val,
+                                  })
+                                }
+                              />
+                              <Label className="text-white">
+                                Mark as Featured
+                              </Label>
+                            </div>
 
                             <Button type="submit" className="w-full">
                               Save Changes

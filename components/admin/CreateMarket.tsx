@@ -18,6 +18,7 @@ import { useEffect, useState } from "react";
 import { useMarkets } from "../helper/fetchMarkets";
 import toast from "react-hot-toast";
 import { MarketCategory, MarketCategoryLabels } from "@/app/types";
+import { Switch } from "../ui/switch"; 
 
 export default function CreateMarkets() {
   const { fetchMarkets } = useMarkets();
@@ -29,8 +30,9 @@ export default function CreateMarkets() {
     category: MarketCategory.CRYPTO,
     end_time: new Date().toISOString(),
     oracle_source: "Binance", // todo
-    oracle_config: "", //  toda
+    oracle_config: "", // todo
     resolution_criteria: "",
+    featured: false, // ✅ initially false
   });
 
   useEffect(() => {
@@ -70,6 +72,7 @@ export default function CreateMarkets() {
         oracle_source: "Binance API",
         oracle_config: "",
         resolution_criteria: "",
+        featured: false,
       });
       fetchMarkets();
     } catch (err) {
@@ -84,17 +87,20 @@ export default function CreateMarkets() {
       </CardHeader>
       <CardContent>
         <form className="space-y-4" onSubmit={handleCreateMarket}>
+          {/* Market Question */}
           <Label htmlFor="marketQuestion">
             What question should this market ask?
           </Label>
           <Input
-            required={true}
+            required
             placeholder="Market Question"
             id="marketQuestion"
             value={form.question}
             onChange={(e) => setForm({ ...form, question: e.target.value })}
           />
-          <Label htmlFor="description"> {"Description ( Optional )"}</Label>
+
+          {/* Description */}
+          <Label htmlFor="description">Description (Optional)</Label>
           <Textarea
             id="description"
             placeholder="Description"
@@ -102,8 +108,9 @@ export default function CreateMarkets() {
             onChange={(e) => setForm({ ...form, description: e.target.value })}
           />
 
+          {/* Category */}
           <Select
-            required={true}
+            required
             value={form.category}
             onValueChange={(val) =>
               setForm({ ...form, category: val as MarketCategory })
@@ -121,15 +128,16 @@ export default function CreateMarkets() {
             </SelectContent>
           </Select>
 
+          {/* End Time */}
           <Calendar28
             onChange={(iso) => {
               setEndTime(iso);
             }}
           />
 
-
+          {/* Resolution Criteria */}
           <Input
-            required={true}
+            required
             placeholder="Resolution Criteria"
             value={form.resolution_criteria}
             onChange={(e) =>
@@ -139,6 +147,17 @@ export default function CreateMarkets() {
               })
             }
           />
+
+          {/* Featured Toggle  */}
+          <div className="flex items-center space-x-3 pt-2">
+            <Switch
+              checked={form.featured}
+              onCheckedChange={(val) => setForm({ ...form, featured: val })}
+            />
+            <Label className="text-white">Mark as Featured</Label>
+          </div>
+
+          {/* Submit */}
           <Button
             type="submit"
             className="w-full bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white cursor-pointer"

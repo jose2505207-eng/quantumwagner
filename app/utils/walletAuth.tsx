@@ -6,10 +6,12 @@ import axios from "axios";
 import { BACKEND_URL } from "@/config";
 import { getUtf8Encoder } from "@solana/kit";
 import bs58 from "bs58";
+import { useUserStore } from "@/store/userInfo";
 
 export const WalletAuth = () => {
   const { connected, publicKey, signMessage } = useWallet();
   const [userVerified, setUserVerified] = useState<boolean>(false);
+  const { setUserInfo } = useUserStore();
 
   useEffect(() => {
     const authenticate = async () => {
@@ -25,8 +27,14 @@ export const WalletAuth = () => {
             headers: { Authorization: `Bearer ${token}` },
           });
 
-          tokenValid = res.data.success;
-          setUserVerified(tokenValid);
+          if (res.data.user.wallet_address !== publicKey.toString()) {
+            tokenValid = false;
+            localStorage.removeItem("token");
+          } else {
+            tokenValid = res.data.success;
+            setUserVerified(tokenValid);
+            setUserInfo(res.data);
+          }
         } catch {
           tokenValid = false;
           setUserVerified(false);
@@ -66,7 +74,7 @@ export const WalletAuth = () => {
     };
 
     authenticate();
-  }, [connected, publicKey, signMessage]);
+  }, [connected]);
 
   return null;
 };

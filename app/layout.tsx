@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Background } from "@/componenets/background";
-import { AppBar } from "@/componenets/Appbar";
+import { Background } from "@/components/background";
+import { AppBar } from "@/components/Appbar";
 import { SolanaProvider } from "../lib/SolanaProvider";
-import Footer from "@/componenets/Footer";
+import Footer from "@/components/Footer";
 import { WalletAuth } from "@/app/utils/walletAuth";
 import { Toaster } from "react-hot-toast";
 

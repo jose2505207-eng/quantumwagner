@@ -1,7 +1,7 @@
 "use client";
 
 import { Market } from "@/app/types";
-import { useMarketStore } from "@/store/marketStore";
+import { useMarketStore } from "@/store/adminMarketStore";
 import axios from "axios";
 import toast from "react-hot-toast";
 

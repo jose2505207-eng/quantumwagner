@@ -2,20 +2,38 @@
 
 import { useState } from "react";
 import * as XLSX from "xlsx";
-import { Download, Menu } from "lucide-react";
+import {
+  LayoutDashboard,
+  Users,
+  FileText,
+  ShieldCheck,
+  Settings,
+  Download,
+  Loader2,
+  Lock,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import AdminSidebar from "@/components/admin/SideBar";
-import ActiveMarkets from "@/components/admin/ActiveMarkets";
-import CreateMarkets from "@/components/admin/CreateMarket";
 import Stats from "@/components/admin/Stats";
-import { useMarketStore } from "@/store/marketStore";
+import CreateMarkets from "@/components/admin/CreateMarket";
+import ActiveMarkets from "@/components/admin/ActiveMarkets";
+import { useMarketStore } from "@/store/adminMarketStore";
+import { useUserStore } from "@/store/userInfo";
+import { Card, CardContent } from "@/components/ui/card";
+
+const navItems = [
+  { name: "Dashboard", icon: LayoutDashboard },
+  { name: "User Management", icon: Users },
+  { name: "Reports", icon: FileText },
+  { name: "Moderation", icon: ShieldCheck },
+  { name: "Settings", icon: Settings },
+];
 
 export default function AdminDashboard() {
   const { markets } = useMarketStore();
+  const { userInfo } = useUserStore();
   const [active, setActive] = useState("Dashboard");
-  const [mobileMenu, setMobileMenu] = useState(false);
 
-  // Export
+  // Export markets
   const handleExport = () => {
     const data = markets.map((m) => ({
       Question: m.question,
@@ -33,67 +51,95 @@ export default function AdminDashboard() {
     XLSX.writeFile(wb, "markets_export.xlsx");
   };
 
+  // Loading state
+  if (!userInfo) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // Permission check
+  const hasAccess =
+    userInfo.user.kyc_level <= 3 && userInfo.user.is_verified === true;
+
+  if (!hasAccess) {
+    return (
+      <div className="flex min-h-screen items-center justify-center px-4">
+        <Card className="max-w-md w-full border border-border bg-black/30 backdrop-blur-xl shadow-lg">
+          <CardContent className="flex flex-col items-center text-center space-y-4 p-6">
+            <Lock className="h-10 w-10 text-muted-foreground" />
+            <h2 className="text-lg font-semibold text-foreground">
+              Unauthorized Access
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              You do not have the required permissions to access this page.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen flex bg-transparent text-foreground">
-      {/* Main */}
+    <div className="min-h-screen flex flex-col bg-transparent text-foreground">
+      {/* Top Nav */}
+      <header className="border-b border-border bg-black/30 backdrop-blur-xl px-6 py-3 flex items-center justify-between">
+        {/* <h1 className="text-lg font-bold bg-gradient-to-r from-purple-400 to-fuchsia-500 bg-clip-text text-transparent">
+          Admin Command
+        </h1> */}
 
-      {/* Admin Sidebar */}
-      <AdminSidebar
-        active={active}
-        onChangeActive={setActive}
-        mobileMenu={mobileMenu}
-        onChangeMobileMenu={setMobileMenu}
-      />
-
-      <main className="flex-1 p-6 overflow-x-hidden">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
-          <div className="flex items-center justify-between w-full md:w-auto">
-            <div>
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-fuchsia-400 bg-clip-text text-transparent">
-                {active}
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                {active === "Dashboard"
-                  ? "Control the pulse of Quantum Wager markets"
-                  : `Upcoming ${active}`}
-              </p>
-            </div>
+        <nav className="flex space-x-2">
+          {navItems.map(({ name, icon: Icon }) => (
             <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
-              onClick={() => setMobileMenu(true)}
+              key={name}
+              onClick={() => setActive(name)}
+              variant={active === name ? "default" : "ghost"}
+              className={`flex items-center gap-2 px-3 ${
+                active === name
+                  ? "bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white"
+                  : "hover:bg-accent hover:text-accent-foreground"
+              }`}
             >
-              <Menu className="h-6 w-6" />
+              <Icon className="w-4 h-4" />
+              <span className="hidden sm:inline">{name}</span>
             </Button>
-          </div>
+          ))}
+        </nav>
 
-          <Button
-            onClick={handleExport}
-            className="w-full md:w-auto bg-gradient-to-r from-purple-600 to-fuchsia-600"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">Export Data</span>
-          </Button>
-        </div>
+        <Button
+          onClick={handleExport}
+          className="bg-gradient-to-r from-purple-600 to-fuchsia-600"
+        >
+          <Download className="w-4 h-4 mr-2" />
+          <span className="hidden sm:inline">Export Data</span>
+        </Button>
+      </header>
 
-        {/* Dashboard */}
+      {/* Page Content */}
+      <main className="flex-1 p-6 overflow-x-hidden">
         {active === "Dashboard" && (
           <div className="space-y-6">
-            {/* Stats */}
-
             <Stats markets={markets} />
-
-            {/* Create + Active markets */}
-
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Create */}
               <CreateMarkets />
-              {/* Active Markets */}
               <ActiveMarkets />
             </div>
           </div>
+        )}
+
+        {active === "User Management" && (
+          <div className="text-muted-foreground">User Management content…</div>
+        )}
+        {active === "Reports" && (
+          <div className="text-muted-foreground">Reports section…</div>
+        )}
+        {active === "Moderation" && (
+          <div className="text-muted-foreground">Moderation tools…</div>
+        )}
+        {active === "Settings" && (
+          <div className="text-muted-foreground">Settings page…</div>
         )}
       </main>
     </div>

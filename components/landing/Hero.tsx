@@ -1,5 +1,5 @@
 import { TrendingUp } from "lucide-react";
-import { Button } from "../button/primary";
+import { Button } from "../../components/custom/primary";
 
 export default function HeroSection() {
     return (
@@ -25,12 +25,12 @@ export default function HeroSection() {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
 
-                <Button>  Start Predicting</Button>
-                <Button> View Markets</Button>
+                {/* <Button>  Start Predicting</Button>
+                <Button> View Markets</Button> */}
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+            {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
                 <div className="text-center">
                     <div className="text-3xl font-bold text-cyan-400 mb-2">$2.4M+</div>
                     <div className="text-gray-400">Total Volume</div>
@@ -43,7 +43,7 @@ export default function HeroSection() {
                     <div className="text-3xl font-bold text-pink-400 mb-2">8,924</div>
                     <div className="text-gray-400">Top Predictors</div>
                 </div>
-            </div>
+            </div> */}
         </div>
 
     )
