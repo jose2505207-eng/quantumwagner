@@ -1,6 +1,7 @@
 "use client";
 
 import { Market } from "@/app/types";
+import { BACKEND_URL } from "@/config";
 import { useMarketStore } from "@/store/adminMarketStore";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -10,7 +11,7 @@ export function useMarkets() {
 
   const fetchMarkets = async ():Promise<void> => {
     try {
-      const res = await axios.get<{success:boolean,markets:Market[]}>("http://localhost:8000/api/admin/markets", {
+      const res = await axios.get<{success:boolean,markets:Market[]}>(`${BACKEND_URL}/api/admin/markets`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
 

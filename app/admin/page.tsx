@@ -83,7 +83,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-transparent text-foreground">
+    <div className="min-h-screen flex flex-col bg-transparent text-foreground pt-24">
       {/* Top Nav */}
       <header className="border-b border-border bg-black/30 backdrop-blur-xl px-6 py-3 flex items-center justify-between">
         {/* <h1 className="text-lg font-bold bg-gradient-to-r from-purple-400 to-fuchsia-500 bg-clip-text text-transparent">

@@ -14,7 +14,7 @@ export default function Portfolio() {
   const { positions, setPositions } = usePositionStore();
   const [loading, setLoading] = useState(true);
   const { userInfo } = useUserStore();
-  const { connected, publicKey, signMessage } = useWallet();
+  const { connected } = useWallet();
 
   useEffect(() => {
     if (!userInfo) {
@@ -51,7 +51,7 @@ export default function Portfolio() {
 
   if (!connected) {
     return (
-      <div className="flex flex-col justify-center items-center min-h-screen  text-white px-6">
+      <div className="flex flex-col justify-center items-center min-h-screen  text-white px-6 pt-24">
         <div className="flex flex-col items-center text-center space-y-6 max-w-md">
           {/* Icon */}
           <div className="w-20 h-20 rounded-full bg-purple-600/20 flex items-center justify-center">
@@ -78,7 +78,7 @@ export default function Portfolio() {
 
   if (!userInfo) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-black text-white">
+      <div className="flex justify-center items-center min-h-screen  text-white">
         <div className="flex flex-col items-center space-y-4">
           {/* Animated spinner */}
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
@@ -109,7 +109,7 @@ export default function Portfolio() {
   }
 
   return (
-    <div className="min-h-screen text-white p-6">
+    <div className="min-h-screen text-white p-6 pt-24">
       {/* Portfolio Header */}
       <div className="mb-8">
         <div className="flex justify-between items-center mb-6">

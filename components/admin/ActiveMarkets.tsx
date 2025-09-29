@@ -43,6 +43,7 @@ import {
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
 import { Switch } from "../ui/switch"; // ✅ import Switch
+import { BACKEND_URL } from "@/config";
 
 export default function ActiveMarkets() {
   const [filterCategory, setFilterCategory] = useState("ALL");
@@ -58,7 +59,7 @@ export default function ActiveMarkets() {
   // Fetch markets
   const fetchMarkets = async () => {
     try {
-      const res = await axios.get("http://localhost:8000/api/admin/markets", {
+      const res = await axios.get(`${BACKEND_URL}/api/admin/markets`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       if (res.data.success) setMarkets(res.data.markets);
@@ -72,7 +73,7 @@ export default function ActiveMarkets() {
   const handleUpdateMarket = async (id: string, data: Partial<Market>) => {
     try {
       await axios
-        .put(`http://localhost:8000/api/admin/markets/${id}`, data, {
+        .put(`${BACKEND_URL}/api/admin/markets/${id}`, data, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         })
         .then(() => {
@@ -90,7 +91,7 @@ export default function ActiveMarkets() {
   const handleCancelMarket = async (id: string) => {
     try {
       await axios
-        .delete(`http://localhost:8000/api/admin/markets/${id}`, {
+        .delete(`${BACKEND_URL}/api/admin/markets/${id}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         })
         .then(() => {

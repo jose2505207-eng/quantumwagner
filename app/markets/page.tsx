@@ -1,18 +1,15 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import {
-  Bitcoin,
-  TrendingUp,
-  Diamond,
-  Star,
-  Gamepad2,
-  BarChart3,
   RefreshCw,
 } from "lucide-react";
 import PlateformStats from "@/components/market/PlateformStats";
 import { useMarketStore } from "@/store/adminMarketStore";
 import axios from "axios";
 import CountdownTimer from "../hooks/CountdownTimer";
+import { BACKEND_URL } from "@/config";
+import MarketCategories from "@/components/MarketCategories";
+import Faq from "@/components/landing/FAQ";
 
 export default function Markets() {
   const { markets, setMarkets } = useMarketStore();
@@ -27,7 +24,7 @@ export default function Markets() {
       setLoading(true);
       const token = localStorage.getItem("token");
 
-      const res = await axios.get("http://localhost:8000/api/markets", {
+      const res = await axios.get(`${BACKEND_URL}/api/markets`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -42,11 +39,11 @@ export default function Markets() {
   };
 
   return (
-    <div className="min-h-screen text-white">
+    <div className="min-h-screen text-white pt-24">
       {/* Hero Section */}
       <div className="max-w-4xl mx-auto text-center mb-16">
         <h1 className="text-6xl font-bold mb-6">
-          <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-[#a855f7] to-[#9333ea] bg-clip-text text-transparent">
             Prediction Markets
           </span>
         </h1>
@@ -58,80 +55,10 @@ export default function Markets() {
           Join thousands of traders making informed predictions on everything
           from politics to technology, sports to economics.
         </p>
-
-        {/* Todo */}
-        {/* <div className="flex gap-4 justify-center"> */}
-
-        {/* <PinkButton>Start Trading</PinkButton> */}
-        {/* <Button>  Learn More</Button> */}
-        {/* </div> */}
       </div>
 
       {/* Categories Section */}
-      <div className="text-center mb-16">
-        {/*  todo */}
-        {/* <div className="inline-block px-4 py-2 border border-gray-600 rounded-full text-sm mb-8">
-          Market Categories
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-4 sm:px-8 lg:px-20 py-10">
-          {[
-            {
-              title: "Crypto Coins",
-              subtitle: "Price predictions",
-              count: "89",
-              Icon: Bitcoin,
-            },
-            {
-              title: "Crypto Predictions",
-              subtitle: "Market trends",
-              count: "156",
-              Icon: TrendingUp,
-            },
-            {
-              title: "DeFi Events",
-              subtitle: "Protocol launches",
-              count: "43",
-              Icon: Diamond,
-            },
-            {
-              title: "Celebrity Crypto",
-              subtitle: "Celebrity endorsements",
-              count: "67",
-              Icon: Star,
-            },
-            {
-              title: "AI & Gaming",
-              subtitle: "Technology adoption",
-              count: "34",
-              Icon: Gamepad2,
-            },
-            {
-              title: "Market Events",
-              subtitle: "Economic indicators",
-              count: "78",
-              Icon: BarChart3,
-            },
-          ].map((category, index) => (
-            <div
-              key={index}
-              className="border border-gray-700 rounded-xl p-6 hover:border-gray-600 transition-colors"
-            >
-              <category.Icon className="w-8 h-8 text-purple-400 mb-3" />
-              <div className="text-right text-2xl font-bold text-green-400 mb-2">
-                {category.count}
-              </div>
-              <h3 className="text-lg font-semibold mb-1">{category.title}</h3>
-              <p className="text-gray-400 text-sm">{category.subtitle}</p>
-            </div>
-          ))}
-        </div> */}
-
-        {/* todo */}
-        {/* <button className="mt-8 px-6 py-3 border border-gray-600 text-white rounded-lg hover:border-gray-500 transition-colors flex items-center gap-2 mx-auto">
-          View All Categories
-          <ExternalLink className="w-4 h-4" />
-        </button> */}
-      </div>
+      <MarketCategories />
 
       {/* Popular Markets Section */}
       <div className="mb-16">
@@ -190,40 +117,73 @@ export default function Markets() {
             {markets.map((market, index) => (
               <div
                 key={index}
-                className="border border-gray-700 rounded-xl p-6 hover:border-gray-600 transition-colors"
+                className="rounded-2xl p-6 
+\             shadow-[0_0_15px_rgba(0,0,0,0.7)]
+             border border-[#1f1f1f]
+             hover:shadow-[0_0_25px_rgba(0,0,0,0.9)]
+             transition-all"
               >
+                {/* Category */}
+                <div className="text-xs font-semibold text-purple-400 uppercase mb-3">
+                  {market.category}
+                </div>
+
+                {/* Question */}
                 <h4 className="text-white font-medium mb-4 text-sm leading-relaxed">
                   {market.question}
                 </h4>
-                <div className="flex justify-between mb-4">
+
+                {/* YES / NO Stats */}
+                <div className="flex justify-between mb-3">
                   <div className="text-center">
-                    <div className="text-green-400 text-2xl font-bold">
-                      {market.yes_pool}
+                    <div className="text-emerald-400 text-2xl font-bold">
+                      {market.yes_pool}%
                     </div>
                     <div className="text-gray-400 text-xs">YES</div>
                   </div>
                   <div className="text-center">
                     <div className="text-red-400 text-2xl font-bold">
-                      {market.no_pool}
+                      {market.no_pool}%
                     </div>
                     <div className="text-gray-400 text-xs">NO</div>
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-2 text-xs text-gray-400 mb-4">
-                  <div>
-                    <div className="text-white">{market.total_volume}</div>
+
+                {/* Progress Bar */}
+                <div className="w-full h-1.5 bg-gray-800 rounded-full mb-4">
+                  <div
+                    className="h-1.5 rounded-full bg-emerald-400"
+                    style={{ width: `${market.yes_pool}%` }}
+                  />
+                </div>
+
+                {/* Stats row */}
+                <div className="grid grid-cols-3 text-xs text-gray-400 mb-4">
+                  <div className="text-center">
+                    <div className="text-white font-medium">
+                      {market.total_volume}
+                    </div>
                     <div>Volume</div>
                   </div>
-                  <div>
+                  <div className="text-center">
+                    {/* <div className="text-white font-medium">
+                      {market.traders}
+                    </div> */}
+                    <div>Traders</div>
+                  </div>
+                  <div className="text-center">
                     <CountdownTimer endTime={market.end_time} />
+                    <div>Left</div>
                   </div>
                 </div>
+
+                {/* Buttons */}
                 <div className="flex gap-2">
-                  <button className="flex-1 py-2 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors">
-                    Buy Yes
+                  <button className="flex-1 py-2 rounded-lg bg-emerald-500 text-white font-medium text-sm hover:bg-emerald-600 transition">
+                    Bet YES
                   </button>
-                  <button className="flex-1 py-2 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors">
-                    Buy No
+                  <button className="flex-1 py-2 rounded-lg bg-red-500 text-white font-medium text-sm hover:bg-red-600 transition">
+                    Bet NO
                   </button>
                 </div>
               </div>
@@ -272,6 +232,8 @@ export default function Markets() {
           </button>
         </div> */}
       </div>
+
+      <Faq />
     </div>
   );
 }

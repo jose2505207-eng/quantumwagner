@@ -19,6 +19,7 @@ import { useMarkets } from "../helper/fetchMarkets";
 import toast from "react-hot-toast";
 import { MarketCategory, MarketCategoryLabels } from "@/app/types";
 import { Switch } from "../ui/switch"; 
+import { BACKEND_URL } from "@/config";
 
 export default function CreateMarkets() {
   const { fetchMarkets } = useMarkets();
@@ -49,7 +50,7 @@ export default function CreateMarkets() {
 
       await axios
         .post(
-          "http://localhost:8000/api/admin/markets",
+          `${BACKEND_URL}/api/admin/markets`,
           { ...form, end_time: endTime },
           {
             headers: {

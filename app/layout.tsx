@@ -24,7 +24,7 @@ export default function RootLayout({
         <SolanaProvider>
           <AppBar />
           <WalletAuth></WalletAuth>
-          <main className="flex-grow pt-24">{children}</main>
+          <main className="flex-grow ">{children}</main>
 
           <Toaster
             position="top-center"

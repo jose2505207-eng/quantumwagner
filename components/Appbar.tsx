@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useUserStore } from "@/store/userInfo";
+import Image from "next/image";
 
 export function AppBar() {
   const { connected } = useWallet();
@@ -37,23 +38,35 @@ export function AppBar() {
   ];
 
   // Permission check
-  const hasAccess = userInfo?.user?.kyc_level !== undefined && userInfo?.user?.kyc_level <= 3 && userInfo?.user?.is_verified === true;
+  const hasAccess =
+    userInfo?.user?.kyc_level !== undefined &&
+    userInfo?.user?.kyc_level <= 3 &&
+    userInfo?.user?.is_verified === true;
 
   if (hasAccess) {
     navItems.push({ label: "Admin", path: "/admin" });
   }
 
   return (
-    <header className="fixed top-0 left-0 w-full z-50 border-b border-border bg-[#0a0a0f]/70 backdrop-blur-xl shadow-[0_0_10px_rgba(0,212,255,0.08),0_0_15px_rgba(255,0,150,0.06)]">
+    <header
+      className="fixed top-0 left-0 w-full z-50 bg-[#0a0a0f]/70 backdrop-blur-xl
+  shadow-[0_0_10px_rgba(0,212,255,0.08),0_0_15px_rgba(255,0,150,0.06)]"
+    >
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
         {/* Logo */}
         <div
           onClick={() => router.push("/")}
-          className="text-2xl font-semibold tracking-wide text-white cursor-pointer"
+          className="cursor-pointer flex items-center"
         >
-          Quantum
+          <Image
+            src="/logo.png" // put your PNG inside the /public folder
+            alt="Quantum Logo"
+            width={88}
+            height={89}
+            priority
+            className="h-auto w-auto"
+          />
         </div>
-
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-8">
           <NavigationMenu>
@@ -64,19 +77,14 @@ export function AppBar() {
                   <NavigationMenuItem key={item.label}>
                     <NavigationMenuLink
                       onClick={() => router.push(item.path)}
-                      className={`relative cursor-pointer font-medium transition-colors ${
+                      className={`relative cursor-pointer font-medium transition-all duration-300 ${
                         isActive
-                          ? "text-white"
-                          : "text-gray-300 hover:text-gray-100"
+                          ? "bg-gradient-to-r from-[#a855f7] to-[#9333ea] bg-clip-text text-transparent"
+                          : "text-gray-300 hover:bg-gradient-to-r hover:from-[#a855f7] hover:to-[#9333ea] hover:bg-clip-text hover:text-transparent"
                       }`}
                     >
                       {item.label}
                       {/* underline effect (isolated per item) */}
-                      <span
-                        className={`absolute left-0 -bottom-1 h-[2px] rounded-full bg-gradient-to-r from-cyan-400 to-pink-500 transition-all duration-300 ${
-                          isActive ? "w-full" : "w-0 hover:w-full"
-                        }`}
-                      />
                     </NavigationMenuLink>
                   </NavigationMenuItem>
                 );
@@ -90,7 +98,6 @@ export function AppBar() {
             {connected && <WalletDisconnectButton />}
           </div>
         </div>
-
         {/* Mobile Menu */}
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
