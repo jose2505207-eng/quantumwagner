@@ -51,6 +51,7 @@ export default function ActiveMarkets() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Market | null>(null);
   const [open, setOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
 
   useEffect(() => {
     fetchMarkets();
@@ -90,6 +91,7 @@ export default function ActiveMarkets() {
 
   const handleCancelMarket = async (id: string) => {
     try {
+      setConfirmText("");
       await axios
         .delete(`${BACKEND_URL}/api/admin/markets/${id}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -312,6 +314,7 @@ export default function ActiveMarkets() {
                     </Sheet>
 
                     {/* Delete */}
+                    {/* Delete with confirmation typing */}
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button size="icon" variant="destructive">
@@ -320,24 +323,40 @@ export default function ActiveMarkets() {
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>
-                            Are you absolutely sure ?
-                          </AlertDialogTitle>
+                          <AlertDialogTitle>Delete Market</AlertDialogTitle>
                           <AlertDialogDescription>
-                            This action{" "}
+                            This action
                             <span className="font-bold text-red-700">
+                              {" "}
                               cannot be undone
                             </span>
-                            . This will permanently delete the market{" "}
-                            <span className="italic">{market.question}</span>.
+                            . <br />
+                            To confirm deletion of
+                            <span className="italic"> {market.question}</span>,
+                            please type{" "}
+                            <code className="px-1 py-0.5 bg-muted rounded">
+                              delete market
+                            </code>{" "}
+                            below.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
+
+                        {/* Input field for confirmation */}
+                        <div className="mt-4">
+                          <Input
+                            placeholder="Type 'delete market' to confirm"
+                            value={confirmText}
+                            onChange={(e) => setConfirmText(e.target.value)}
+                          />
+                        </div>
+
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
                           <AlertDialogAction
+                            disabled={confirmText !== "delete market"}
                             onClick={() => handleCancelMarket(market.id)}
                           >
-                            Continue
+                            Delete
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>

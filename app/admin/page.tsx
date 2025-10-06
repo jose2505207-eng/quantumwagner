@@ -19,6 +19,7 @@ import ActiveMarkets from "@/components/admin/ActiveMarkets";
 import { useMarketStore } from "@/store/adminMarketStore";
 import { useUserStore } from "@/store/userInfo";
 import { Card, CardContent } from "@/components/ui/card";
+import { notFound } from "next/navigation";
 
 const navItems = [
   { name: "Dashboard", icon: LayoutDashboard },
@@ -65,21 +66,7 @@ export default function AdminDashboard() {
     userInfo.user.is_verified === true && userInfo.user.kyc_level >= 3;
 
   if (!hasAccess) {
-    return (
-      <div className="flex min-h-screen items-center justify-center px-4">
-        <Card className="max-w-md w-full border border-border bg-black/30 backdrop-blur-xl shadow-lg">
-          <CardContent className="flex flex-col items-center text-center space-y-4 p-6">
-            <Lock className="h-10 w-10 text-muted-foreground" />
-            <h2 className="text-lg font-semibold text-foreground">
-              Unauthorized Access
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              You do not have the required permissions to access this page.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    notFound();
   }
 
   return (
