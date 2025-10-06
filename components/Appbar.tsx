@@ -35,12 +35,14 @@ export function AppBar() {
   const navItems = [
     { label: "Markets", path: "/markets" },
     { label: "Portfolio", path: "/portfolio" },
+    { label: "leaderboard", path: "/leaderboard" },
   ];
 
   // Permission check
+
   const hasAccess =
     userInfo?.user?.kyc_level !== undefined &&
-    userInfo?.user?.kyc_level <= 3 &&
+    userInfo?.user?.kyc_level >= 3 &&
     userInfo?.user?.is_verified === true;
 
   if (hasAccess) {

@@ -8,7 +8,8 @@ import { BACKEND_URL } from "@/config";
 import { useMarketStore } from "@/store/adminMarketStore";
 import axios from "axios";
 import { motion } from "framer-motion";
-import Image from "next/image";
+// import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -104,12 +105,17 @@ export default function Home() {
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold">Featured Markets</h2>
                 </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {markets
                     .filter((m) => m.featured)
                     .map((market) => (
-                      <MarketCard key={market.id} market={market} />
+                      <Link
+                        key={market.id}
+                        href={`/markets/${market.id}`}
+                        className="block"
+                      >
+                        <MarketCard key={market.id} market={market} />
+                      </Link>
                     ))}
                 </div>
               </section>
@@ -132,7 +138,13 @@ export default function Home() {
                 {markets
                   .filter((m) => !m.featured) // show only non-featured
                   .map((market) => (
-                    <MarketCard key={market.id} market={market} />
+                    <Link
+                      key={market.id}
+                      href={`/markets/${market.id}`}
+                      className="block"
+                    >
+                      <MarketCard key={market.id} market={market} />
+                    </Link>
                   ))}
               </div>
 

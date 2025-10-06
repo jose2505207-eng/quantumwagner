@@ -8,8 +8,11 @@ import { WalletAuth } from "@/app/utils/walletAuth";
 import { Toaster } from "react-hot-toast";
 
 export const metadata: Metadata = {
-  title: "Quantum",
+  title: "Quantum Wager ",
   description: "Meme coin prediction market.",
+  icons: {
+    icon: "logo.png ",
+  },
 };
 
 export default function RootLayout({

@@ -5,6 +5,7 @@ import { useMarketStore } from "@/store/adminMarketStore";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import CountdownTimer from "@/app/hooks/CountdownTimer";
+import Link from "next/link";
 
 export default function CategoryPage() {
   const params = useParams();
@@ -54,52 +55,58 @@ export default function CategoryPage() {
             const noPercent = 100 - yesPercent;
 
             return (
-              <div
+              <Link
                 key={m.id}
-                className="bg-[#0e0e0e] border border-gray-800 rounded-xl p-6 shadow hover:shadow-lg transition cursor-pointer"
+                href={`/markets/${m.id}`}
+                className="block"
               >
-                {/* Category Label */}
-                <span className="text-xs uppercase tracking-wide text-purple-400 font-semibold">
-                  {m.category.replaceAll("_", " ")}
-                </span>
-
-                {/* Question */}
-                <h2 className="mt-2 font-semibold text-lg text-white">
-                  {m.question}
-                </h2>
-
-                {/* Yes / No Percentages */}
-                <div className="flex justify-between mt-4 text-sm font-bold">
-                  <span className="text-green-400">{yesPercent}% YES</span>
-                  <span className="text-red-400">{noPercent}% NO</span>
-                </div>
-
-                {/* Progress Bar */}
-                <div className="w-full h-2 bg-gray-800 rounded-full mt-2 overflow-hidden">
-                  <div
-                    className="h-full bg-green-500"
-                    style={{ width: `${yesPercent}%` }}
-                  />
-                </div>
-
-                {/* Stats */}
-                <div className="flex justify-between items-center text-xs text-gray-400 mt-4">
-                  <span>
-                    ${Number(m.total_volume || 0).toLocaleString()} Volume
+                <div
+                  key={m.id}
+                  className="bg-[#0e0e0e] border border-gray-800 rounded-xl p-6 shadow hover:shadow-lg transition cursor-pointer"
+                >
+                  {/* Category Label */}
+                  <span className="text-xs uppercase tracking-wide text-purple-400 font-semibold">
+                    {m.category.replaceAll("_", " ")}
                   </span>
-                  <CountdownTimer endTime={m.end_time} />
-                </div>
 
-                {/* Action Buttons */}
-                <div className="flex gap-2 mt-6">
-                  <button className="flex-1 bg-green-600 hover:bg-green-500 py-2 rounded-lg text-sm font-semibold">
-                    Bet YES
-                  </button>
-                  <button className="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-lg text-sm font-semibold">
-                    Bet NO
-                  </button>
+                  {/* Question */}
+                  <h2 className="mt-2 font-semibold text-lg text-white">
+                    {m.question}
+                  </h2>
+
+                  {/* Yes / No Percentages */}
+                  <div className="flex justify-between mt-4 text-sm font-bold">
+                    <span className="text-green-400">{yesPercent}% YES</span>
+                    <span className="text-red-400">{noPercent}% NO</span>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="w-full h-2 bg-gray-800 rounded-full mt-2 overflow-hidden">
+                    <div
+                      className="h-full bg-green-500"
+                      style={{ width: `${yesPercent}%` }}
+                    />
+                  </div>
+
+                  {/* Stats */}
+                  <div className="flex justify-between items-center text-xs text-gray-400 mt-4">
+                    <span>
+                      ${Number(m.total_volume || 0).toLocaleString()} Volume
+                    </span>
+                    <CountdownTimer endTime={m.end_time} />
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2 mt-6">
+                    <button className="flex-1 bg-green-600 hover:bg-green-500 py-2 rounded-lg text-sm font-semibold">
+                      Bet YES
+                    </button>
+                    <button className="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-lg text-sm font-semibold">
+                      Bet NO
+                    </button>
+                  </div>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>
