@@ -18,7 +18,7 @@ import { useEffect, useState } from "react";
 import { useMarkets } from "../helper/fetchMarkets";
 import toast from "react-hot-toast";
 import { MarketCategory, MarketCategoryLabels } from "@/app/types";
-import { Switch } from "../ui/switch"; 
+import { Switch } from "../ui/switch";
 import { BACKEND_URL } from "@/config";
 
 export default function CreateMarkets() {
@@ -40,45 +40,51 @@ export default function CreateMarkets() {
     fetchMarkets();
   }, []);
 
+  // const handleCreateMarket = async (e: React.FormEvent) => {
+  //   // e.preventDefault();
+  //   try {
+  //     if (!endTime) {
+  //       toast.error("enter date for market");
+  //       return;
+  //     }
+
+  //     await axios
+  //       .post(
+  //         `${BACKEND_URL}/api/admin/markets`,
+  //         { ...form, end_time: endTime },
+  //         {
+  //           headers: {
+  //             Authorization: `Bearer ${localStorage.getItem("token")}`,
+  //           },
+  //         }
+  //       )
+  //       .then(() => {
+  //         toast.success(`${form.question} Market created successfully`);
+  //       })
+  //       .catch((err) => {
+  //         toast.error(`${form.question} Market creation failed ${err}`);
+  //       });
+
+  //     setForm({
+  //       question: "",
+  //       description: "",
+  //       category: MarketCategory.CRYPTO,
+  //       end_time: new Date().toISOString(),
+  //       oracle_source: "Binance API",
+  //       oracle_config: "",
+  //       resolution_criteria: "",
+  //       featured: false,
+  //     });
+  //     fetchMarkets();
+  //   } catch (err) {
+  //     console.error("Failed to create market:", err);
+  //   }
+  // };
+
   const handleCreateMarket = async (e: React.FormEvent) => {
-    e.preventDefault();
+    // e.preventDefault();
     try {
-      if (!endTime) {
-        toast.error("enter date for market");
-        return;
-      }
-
-      await axios
-        .post(
-          `${BACKEND_URL}/api/admin/markets`,
-          { ...form, end_time: endTime },
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        )
-        .then(() => {
-          toast.success(`${form.question} Market created successfully`);
-        })
-        .catch((err) => {
-          toast.error(`${form.question} Market creation failed ${err}`);
-        });
-
-      setForm({
-        question: "",
-        description: "",
-        category: MarketCategory.CRYPTO,
-        end_time: new Date().toISOString(),
-        oracle_source: "Binance API",
-        oracle_config: "",
-        resolution_criteria: "",
-        featured: false,
-      });
-      fetchMarkets();
-    } catch (err) {
-      console.error("Failed to create market:", err);
-    }
+    } catch (err) {}
   };
 
   return (

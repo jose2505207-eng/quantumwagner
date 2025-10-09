@@ -42,7 +42,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
-import { Switch } from "../ui/switch"; // ✅ import Switch
+import { Switch } from "../ui/switch";
 import { BACKEND_URL } from "@/config";
 
 export default function ActiveMarkets() {
