@@ -9,6 +9,7 @@ import { BACKEND_URL } from "@/config";
 import MarketCategories from "@/components/MarketCategories";
 import Faq from "@/components/landing/FAQ";
 import Link from "next/link";
+import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 
 export default function Markets() {
   const { markets, setMarkets } = useMarketStore();
@@ -112,87 +113,94 @@ export default function Markets() {
           </div>
         ) : (
           //  Data Render
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-4 sm:px-8 lg:px-20 py-10">
-            {markets.map((market, index) => (
-              <Link
-                key={market.id}
-                href={`/markets/${market.id}`}
-                className="block"
-              >
-                <div
-                  key={index}
-                  className="rounded-2xl p-6 
+            {markets.map((market, index) => {
+              // calculate odds
+              const yesPool = Number(market.yes_pool || 0);
+              const noPool = Number(market.no_pool || 0);
+              const totalPool = yesPool + noPool || 1;
+              const yesOdds = Math.round((yesPool / totalPool) * 100);
+              const noOdds = 100 - yesOdds;
+
+              return (
+                <Link
+                  key={market.id}
+                  href={`/markets/${market.id}`}
+                  className="block"
+                >
+                  <div
+                    key={index}
+                    className="rounded-2xl p-6 
              shadow-[0_0_15px_rgba(0,0,0,0.7)]
              border border-[#1f1f1f]
              hover:shadow-[0_0_25px_rgba(0,0,0,0.9)]
              transition-all"
-                >
-                  {/* Category */}
-                  <div className="text-xs font-semibold text-purple-400 uppercase mb-3">
-                    {market.category}
-                  </div>
+                  >
+                    {/* Category */}
+                    <div className="text-xs font-semibold text-purple-400 uppercase mb-3">
+                      {market.category}
+                    </div>
 
-                  {/* Question */}
-                  <h4 className="text-white font-medium mb-4 text-sm leading-relaxed">
-                    {market.question}
-                  </h4>
+                    {/* Question */}
+                    <h4 className="text-white font-medium mb-4 text-sm leading-relaxed">
+                      {market.question}
+                    </h4>
 
-                  {/* YES / NO Stats */}
-                  <div className="flex justify-between mb-3">
-                    <div className="text-center">
-                      <div className="text-emerald-400 text-2xl font-bold">
-                        {market.yes_pool}%
+                    {/* YES / NO Stats */}
+                    <div className="flex justify-between mb-3">
+                      <div className="text-center">
+                        <div className="text-emerald-400 text-2xl font-bold">
+                          {yesOdds}%
+                        </div>
+                        <div className="text-gray-400 text-xs">YES</div>
                       </div>
-                      <div className="text-gray-400 text-xs">YES</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-red-400 text-2xl font-bold">
-                        {market.no_pool}%
+                      <div className="text-center">
+                        <div className="text-red-400 text-2xl font-bold">
+                          {noOdds}%
+                        </div>
+                        <div className="text-gray-400 text-xs">NO</div>
                       </div>
-                      <div className="text-gray-400 text-xs">NO</div>
                     </div>
-                  </div>
 
-                  {/* Progress Bar */}
-                  <div className="w-full h-1.5 bg-gray-800 rounded-full mb-4">
-                    <div
-                      className="h-1.5 rounded-full bg-emerald-400"
-                      style={{ width: `${market.yes_pool}%` }}
-                    />
-                  </div>
+                    {/* Progress Bar */}
+                    <div className="w-full h-1.5 bg-gray-800 rounded-full mb-4">
+                      <div
+                        className="h-1.5 rounded-full bg-emerald-400"
+                        style={{ width: `${yesOdds}%` }}
+                      />
+                    </div>
 
-                  {/* Stats row */}
-                  <div className="grid grid-cols-3 text-xs text-gray-400 mb-4">
-                    <div className="text-center">
-                      <div className="text-white font-medium">
-                        {market.total_volume}
+                    {/* Stats row */}
+                    <div className="grid grid-cols-3 text-xs text-gray-400 mb-4">
+                      <div className="text-center">
+                        <div className="text-white font-medium">
+                          {Number(market.total_volume) / LAMPORTS_PER_SOL} Sol
+                        </div>
+                        <div>Volume</div>
                       </div>
-                      <div>Volume</div>
+                      {/* <div className="text-center">
+                        <div>Traders</div>
+                      </div> */}
+                      <div className="text-center">
+                        <CountdownTimer endTime={market.end_time} />
+                        <div>Left</div>
+                      </div>
                     </div>
-                    <div className="text-center">
-                      {/* <div className="text-white font-medium">
-                      {market.traders}
-                    </div> */}
-                      <div>Traders</div>
-                    </div>
-                    <div className="text-center">
-                      <CountdownTimer endTime={market.end_time} />
-                      <div>Left</div>
-                    </div>
-                  </div>
 
-                  {/* Buttons */}
-                  <div className="flex gap-2">
-                    <button className="flex-1 py-2 rounded-lg bg-emerald-500 text-white font-medium text-sm hover:bg-emerald-600 transition">
-                      Bet YES
-                    </button>
-                    <button className="flex-1 py-2 rounded-lg bg-red-500 text-white font-medium text-sm hover:bg-red-600 transition">
-                      Bet NO
-                    </button>
+                    {/* Buttons */}
+                    <div className="flex gap-2">
+                      <button className="flex-1 py-2 rounded-lg bg-emerald-500 text-white font-medium text-sm hover:bg-emerald-600 transition">
+                        Bet YES
+                      </button>
+                      <button className="flex-1 py-2 rounded-lg bg-red-500 text-white font-medium text-sm hover:bg-red-600 transition">
+                        Bet NO
+                      </button>
+                    </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>

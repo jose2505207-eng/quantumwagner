@@ -6,6 +6,7 @@ export interface Market {
     total_volume: string;
     created_at: string;
     end_time: string;
+    outcome: outcomeEnum;
     _count: {
         positions: number;
         transactions: number;
@@ -15,12 +16,18 @@ export interface Market {
     tags: "";
     featured: boolean;
     image_url: "";
+    pda: string;
     resolution_criteria: string,
     oracle_config: string
     oracle_source: string,
     description: string,
     yes_pool: number;
     no_pool: number;
+}
+
+export enum outcomeEnum {
+    yes = "yes",
+    no = "no    "
 }
 
 export enum MarketStatus {

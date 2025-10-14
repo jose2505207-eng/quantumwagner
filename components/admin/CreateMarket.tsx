@@ -11,7 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { Calendar28 } from "../custom/Calender28";
 import { Button } from "../ui/button";
 import axios from "axios";
 import { useEffect, useState } from "react";
@@ -20,71 +19,114 @@ import toast from "react-hot-toast";
 import { MarketCategory, MarketCategoryLabels } from "@/app/types";
 import { Switch } from "../ui/switch";
 import { BACKEND_URL } from "@/config";
+import Methods from "@/app/contract_methods/methods";
+import * as anchor from "@coral-xyz/anchor";
 
 export default function CreateMarkets() {
   const { fetchMarkets } = useMarkets();
-  const [endTime, setEndTime] = useState<string | undefined>();
+  const { initMarket } = Methods();
+
+  const [days, setDays] = useState("0");
+  const [hours, setHours] = useState("0");
+  const [minutes, setMinutes] = useState("0");
+  const [endTime, setEndTime] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     question: "",
     description: "",
     category: MarketCategory.CRYPTO,
     end_time: new Date().toISOString(),
-    oracle_source: "Binance", // todo
-    oracle_config: "", // todo
+    oracle_source: "Binance",
+    oracle_config: "",
     resolution_criteria: "",
-    featured: false, // ✅ initially false
+    featured: false,
+    pda: "",
   });
 
   useEffect(() => {
     fetchMarkets();
   }, []);
 
-  // const handleCreateMarket = async (e: React.FormEvent) => {
-  //   // e.preventDefault();
-  //   try {
-  //     if (!endTime) {
-  //       toast.error("enter date for market");
-  //       return;
-  //     }
+  useEffect(() => {
+    const d = parseInt(days);
+    const h = parseInt(hours);
+    const m = parseInt(minutes);
+    const totalMinutes = d * 1440 + h * 60 + m;
 
-  //     await axios
-  //       .post(
-  //         `${BACKEND_URL}/api/admin/markets`,
-  //         { ...form, end_time: endTime },
-  //         {
-  //           headers: {
-  //             Authorization: `Bearer ${localStorage.getItem("token")}`,
-  //           },
-  //         }
-  //       )
-  //       .then(() => {
-  //         toast.success(`${form.question} Market created successfully`);
-  //       })
-  //       .catch((err) => {
-  //         toast.error(`${form.question} Market creation failed ${err}`);
-  //       });
-
-  //     setForm({
-  //       question: "",
-  //       description: "",
-  //       category: MarketCategory.CRYPTO,
-  //       end_time: new Date().toISOString(),
-  //       oracle_source: "Binance API",
-  //       oracle_config: "",
-  //       resolution_criteria: "",
-  //       featured: false,
-  //     });
-  //     fetchMarkets();
-  //   } catch (err) {
-  //     console.error("Failed to create market:", err);
-  //   }
-  // };
+    if (totalMinutes > 0) {
+      if (totalMinutes > 7 * 24 * 60) {
+        toast.error("Max market duration is 7 days");
+        setDays("7");
+        setHours("0");
+        setMinutes("0");
+        return;
+      }
+      const newEnd = new Date(Date.now() + totalMinutes * 60 * 1000);
+      setEndTime(newEnd.toISOString());
+    }
+  }, [days, hours, minutes]);
 
   const handleCreateMarket = async (e: React.FormEvent) => {
-    // e.preventDefault();
+    e.preventDefault();
+    if (!endTime) {
+      toast.error("Please set market duration");
+      return;
+    }
+
     try {
-    } catch (err) {}
+      const res = await axios.post(
+        `${BACKEND_URL}/api/admin/markets`,
+        { ...form, end_time: endTime },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      const tx = await initMarket({
+        questionId: `${res.data.market.id}`,
+        category: { price: {} },
+        durationSeconds: new anchor.BN(
+          parseInt(days) * 86400 +
+            parseInt(hours) * 3600 +
+            parseInt(minutes) * 60
+        ),
+        minBetAmount: new anchor.BN(100_000_000), // 0.1 sol
+        tags: ["ETH", "Price"],
+        imageUrl: null,
+      });
+
+      await axios.put(
+        `${BACKEND_URL}/api/admin/markets/${res.data.market.id}`,
+        { pda: tx },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      toast.success("Market created successfully");
+      fetchMarkets();
+      setForm({
+        question: "",
+        description: "",
+        category: MarketCategory.CRYPTO,
+        end_time: new Date().toISOString(),
+        oracle_source: "Binance",
+        oracle_config: "",
+        resolution_criteria: "",
+        featured: false,
+        pda: "",
+      });
+      setDays("0");
+      setHours("0");
+      setMinutes("0");
+    } catch (err) {
+      console.error(err);
+      toast.error("Market creation failed");
+    }
   };
 
   return (
@@ -95,21 +137,17 @@ export default function CreateMarkets() {
       <CardContent>
         <form className="space-y-4" onSubmit={handleCreateMarket}>
           {/* Market Question */}
-          <Label htmlFor="marketQuestion">
-            What question should this market ask?
-          </Label>
+          <Label>Market Question</Label>
           <Input
             required
-            placeholder="Market Question"
-            id="marketQuestion"
+            placeholder="Will ETH be above $3k?"
             value={form.question}
             onChange={(e) => setForm({ ...form, question: e.target.value })}
           />
 
           {/* Description */}
-          <Label htmlFor="description">Description (Optional)</Label>
+          <Label>Description (Optional)</Label>
           <Textarea
-            id="description"
             placeholder="Description"
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -135,12 +173,57 @@ export default function CreateMarkets() {
             </SelectContent>
           </Select>
 
-          {/* End Time */}
-          <Calendar28
-            onChange={(iso) => {
-              setEndTime(iso);
-            }}
-          />
+          <div className="space-y-2">
+            <Label>Market Duration (max 7 days)</Label>
+            <div className="flex justify-between space-x-2">
+              {/* Days Picker */}
+              <Select value={days} onValueChange={setDays}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Days" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <SelectItem key={i} value={i.toString()}>
+                      {i}d
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Hours Picker */}
+              <Select value={hours} onValueChange={setHours}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Hours" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 24 }).map((_, i) => (
+                    <SelectItem key={i} value={i.toString()}>
+                      {i}h
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Minutes Picker */}
+              <Select value={minutes} onValueChange={setMinutes}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Minutes" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 60 }).map((_, i) => (
+                    <SelectItem key={i} value={i.toString()}>
+                      {i}m
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {endTime && (
+              <p className="text-xs text-gray-400">
+                Ends on: {new Date(endTime).toLocaleString()}
+              </p>
+            )}
+          </div>
 
           {/* Resolution Criteria */}
           <Input
@@ -148,14 +231,11 @@ export default function CreateMarkets() {
             placeholder="Resolution Criteria"
             value={form.resolution_criteria}
             onChange={(e) =>
-              setForm({
-                ...form,
-                resolution_criteria: e.target.value,
-              })
+              setForm({ ...form, resolution_criteria: e.target.value })
             }
           />
 
-          {/* Featured Toggle  */}
+          {/* Featured Toggle */}
           <div className="flex items-center space-x-3 pt-2">
             <Switch
               checked={form.featured}
@@ -164,10 +244,9 @@ export default function CreateMarkets() {
             <Label className="text-white">Mark as Featured</Label>
           </div>
 
-          {/* Submit */}
           <Button
             type="submit"
-            className="w-full bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white cursor-pointer"
+            className="w-full bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white"
           >
             + Create Market
           </Button>

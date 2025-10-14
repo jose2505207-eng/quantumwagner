@@ -9,12 +9,11 @@ export function useProgram() {
     const wallet = useAnchorWallet();
     if (!wallet) return null;
 
-    const connection = new Connection("http://127.0.0.1:8899", "confirmed");
+    const connection = new Connection("https://api.devnet.solana.com", "confirmed");
     const provider = new AnchorProvider(connection, wallet, {});
 
     return new Program<PredictionMarket>(
         idl as PredictionMarket,
-
         provider
     );
 }

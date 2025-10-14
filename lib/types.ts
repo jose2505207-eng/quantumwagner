@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/prediction_market.json`.
  */
 export type PredictionMarket = {
-  "address": "FGLMNq1zYi5iTzja9fzZ6vStrYvZ9E1npzgNUAZtgGic",
+  "address": "3TECSe2FnZu94CmwpoRdTb25iV5uRUtu7Y81EpFrfXEe",
   "metadata": {
     "name": "predictionMarket",
     "version": "0.1.0",
@@ -108,6 +108,10 @@ export type PredictionMarket = {
         }
       ],
       "args": [
+        {
+          "name": "questionId",
+          "type": "string"
+        },
         {
           "name": "category",
           "type": {
@@ -776,6 +780,10 @@ export type PredictionMarket = {
             "type": "u64"
           },
           {
+            "name": "questionId",
+            "type": "string"
+          },
+          {
             "name": "admin",
             "type": "pubkey"
           },
@@ -938,6 +946,10 @@ export type PredictionMarket = {
           {
             "name": "marketId",
             "type": "u64"
+          },
+          {
+            "name": "questionId",
+            "type": "string"
           },
           {
             "name": "creator",

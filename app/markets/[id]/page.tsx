@@ -7,9 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import axios from "axios";
+import { useProgram } from "@/lib/useProgram";
 import { BACKEND_URL } from "@/config";
 import Methods from "@/app/contract_methods/methods";
-import { PublicKey } from "@solana/web3.js";
+import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import toast from "react-hot-toast";
 
 export interface MarketResponse {
   success: boolean;
@@ -42,6 +45,7 @@ export interface Market {
   featured: boolean;
   contract_address: string | null;
   program_id: string | null;
+  pda: string | null;
 
   creator: {
     id: string;
@@ -71,22 +75,105 @@ export default function MarketDetailPage() {
   const [market, setMarket] = useState<Market | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
-
+  const [hasBet, setHasBet] = useState(false);
+  const program = useProgram();
+  const [betting, setBetting] = useState(false);
+  const [solBal, setSolBal] = useState<number>(0);
+  const { publicKey } = useWallet();
+  const { connection } = useConnection();
   const [selected, setSelected] = useState<"yes" | "no" | null>(null);
   const [amount, setAmount] = useState("");
-  const { initProgram, placeBet, initMarket, cancelMarket } = Methods();
+  const [betResult, setBetResult] = useState<any | null>(null);
+  const {
+    initProgram,
+    placeBet,
+    initMarket,
+    cancelMarket,
+    settleMarket,
+    withdrawWinnings,
+  } = Methods();
 
   const handleBet = async () => {
-    // placeBet(
-    //   new PublicKey("2chep9C6qTyNfxdpFuco9p31uyQG4b19vZdwbju8gLRA"),
-    //   Number(amount),
-    //   selected === "yes"
+    if (betting) return;
+    setBetting(true);
+
+    try {
+      if (!market || !selected) {
+        toast.error("Please select YES or NO");
+        return;
+      }
+
+      const userLamports = Math.floor(Number(amount) * LAMPORTS_PER_SOL);
+
+      if (userLamports > solBal * LAMPORTS_PER_SOL) {
+        toast.error("Sol balnce is low");
+        return;
+      }
+
+      if (!market.pda) {
+        window.location.reload();
+      }
+
+      const tx = await placeBet(
+        new PublicKey(`${market.pda}`),
+        userLamports,
+        selected === "yes"
+      );
+
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Unaouthorized");
+        return;
+      }
+
+      const res = await axios.post(
+        `${BACKEND_URL}/api/positions/add`,
+        {
+          market_id: market.id,
+          position_type: selected.toUpperCase(),
+          amount_staked: Number(amount) * LAMPORTS_PER_SOL,
+          stake_tx_hash: "tx",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("Position added:", res.data);
+      setBetResult(res.data.data);
+      setHasBet(true);
+      setSelected(null);
+      setAmount("");
+    } catch (err) {
+      toast.error(`${err}`);
+    } finally {
+      setBetting(false);
+    }
+
+    // settleMarket(
+    //   new PublicKey("5KZeFdhGbVzHCYrmcgo4fwTBxfzknyQsMdupoK3QJJPX"),
+    //   false
     // );
-    // cancelMarket(new PublicKey("GNgga6GTY5sWtUQBA9xouPJojSTDNjEPmfx9vuFkqyZX"));
-    // initMarket();
+
     // initProgram();
-    initMarket("this is market ");
+
+    // withdrawWinnings(
+    //   new PublicKey("HZAkVKFzwbkQuzvEA65xL9e2HostX7VwH2upoFcdkLdN")
+    // );
   };
+
+  useEffect(() => {
+    async function fetchSolBal() {
+      if (publicKey) {
+        const lamports = await connection.getBalance(publicKey);
+        setSolBal(lamports / 1e9);
+      }
+    }
+    fetchSolBal();
+  }, [publicKey, connection, hasBet]);
 
   useEffect(() => {
     async function getMarket() {
@@ -122,12 +209,16 @@ export default function MarketDetailPage() {
     );
   }
 
+  function lamportsToSol(val) {
+    return val ? Number(val) / LAMPORTS_PER_SOL : 0;
+  }
   // calculate odds
-  const yesPool = Number(market.yes_pool || 0);
-  const noPool = Number(market.no_pool || 0);
-  const totalPool = yesPool + noPool || 1;
-  const yesOdds = Math.round((yesPool / totalPool) * 100);
-  const noOdds = 100 - yesOdds;
+  const yesPool = lamportsToSol(market?.yes_pool);
+  const noPool = lamportsToSol(market?.no_pool);
+  const totalPool = yesPool + noPool;
+
+  const yesPct = totalPool === 0 ? 0 : (yesPool / totalPool) * 100;
+  const noPct = 100 - yesPct;
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-black text-white px-6 py-10 pt-24">
@@ -150,10 +241,10 @@ export default function MarketDetailPage() {
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight">
             {market.question}
           </h1>
-
+          {/* todo get current price of solan show that on ui  */}
           <div className="flex flex-wrap items-center gap-6 text-gray-300">
             <span className="text-green-400 text-lg font-semibold">
-              ${market.total_volume} Volume
+              Sol {Number(market.total_volume) / LAMPORTS_PER_SOL} Volume
             </span>
             <span className="text-blue-400 text-lg font-semibold">
               {summary?.total_positions ?? 0} Traders
@@ -162,22 +253,31 @@ export default function MarketDetailPage() {
 
           <div className="flex flex-wrap gap-3">
             <Button
+              onClick={() => {
+                const url = window.location.href;
+                navigator.clipboard
+                  .writeText(url)
+                  .then(() => toast.success(`Market copied to clipboard!`))
+                  .catch(() => toast.error(`Failed to copy URL`));
+              }}
               variant="outline"
-              className="bg-gray-900/50 border-gray-700 hover:bg-gray-800"
-            >
-              Resolution Criteria
-            </Button>
-            <Button
-              variant="outline"
-              className="bg-gray-900/50 border-gray-700 hover:bg-gray-800"
+              className="bg-gray-900/50 border-gray-700 hover:bg-gray-800 "
             >
               Share Market
             </Button>
+
             <Button
+              asChild
               variant="outline"
               className="bg-gray-900/50 border-gray-700 hover:bg-gray-800"
             >
-              View on Explorer
+              <a
+                href={`https://explorer.solana.com/address/${market.pda}?cluster=devnet`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                View on Explorer
+              </a>
             </Button>
           </div>
         </div>
@@ -201,7 +301,7 @@ export default function MarketDetailPage() {
                   )}
                 >
                   <p className="text-3xl font-bold text-green-400">
-                    {yesOdds}%
+                    {yesPct.toFixed(2)}%
                   </p>
                   <p className="text-green-200">YES</p>
                 </div>
@@ -214,21 +314,45 @@ export default function MarketDetailPage() {
                       : "bg-gray-800/60 hover:bg-gray-800"
                   )}
                 >
-                  <p className="text-3xl font-bold text-red-400">{noOdds}%</p>
+                  <p className="text-3xl font-bold text-red-400">
+                    {noPct.toFixed(2)}%
+                  </p>
                   <p className="text-red-200">NO</p>
                 </div>
               </div>
 
               {/* Progress bar */}
-              <div className="mt-6 w-full bg-gray-800 rounded-full h-3 overflow-hidden">
-                <div
-                  className="bg-green-500 h-3"
-                  style={{ width: `${yesOdds}%` }}
-                />
+
+              <div className="mt-6">
+                <div className="w-full bg-gray-800 rounded-full h-3 flex overflow-hidden">
+                  {/* YES bar */}
+                  <div
+                    className="bg-green-500 h-3 transition-all duration-700 ease-in-out"
+                    style={{ width: `${yesPct.toFixed(2)}%` }}
+                  />
+                  {/* NO bar */}
+                  <div
+                    className="bg-red-500 h-3 transition-all duration-700 ease-in-out"
+                    style={{ width: `${noPct.toFixed(2)}%` }}
+                  />
+                </div>
+
+                <div className="flex justify-between mt-2 text-sm">
+                  <span className="text-green-400 font-medium">
+                    YES {yesPct.toFixed(2)}%
+                  </span>
+                  <span className="text-red-400 font-medium">
+                    NO {noPct.toFixed(2)}%
+                  </span>
+                </div>
+
+                <p className="mt-2 text-gray-400 text-xs">
+                  Trending toward{" "}
+                  <span className="font-semibold text-white">
+                    {yesPct >= 50 ? "YES" : "NO"}
+                  </span>
+                </p>
               </div>
-              <p className="mt-2 text-green-400 text-sm">
-                Trending toward {yesOdds >= 50 ? "YES" : "NO"}
-              </p>
             </CardContent>
           </Card>
 
@@ -248,7 +372,7 @@ export default function MarketDetailPage() {
                   )}
                   onClick={() => setSelected("yes")}
                 >
-                  YES {yesOdds}%
+                  YES {yesPct.toFixed(2)}%
                 </Button>
                 <Button
                   className={cn(
@@ -259,32 +383,44 @@ export default function MarketDetailPage() {
                   )}
                   onClick={() => setSelected("no")}
                 >
-                  NO {noOdds}%
+                  NO {noPct.toFixed(2)}%
                 </Button>
               </div>
 
               {/* Input */}
               <Input
                 type="number"
-                placeholder="$0.00"
+                placeholder="0.00 SOL"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 className="bg-gray-800 border-gray-700 text-white w-full 
-             [appearance:textfield] 
-             [&::-webkit-outer-spin-button]:appearance-none 
-             [&::-webkit-inner-spin-button]:appearance-none"
+                 [appearance:textfield] 
+                 [&::-webkit-outer-spin-button]:appearance-none 
+                 [&::-webkit-inner-spin-button]:appearance-none"
               />
+
+              <div>
+                {publicKey ? (
+                  <p className="text-green-400">
+                    Balance: {solBal !== null ? `${solBal} SOL` : "Loading..."}
+                  </p>
+                ) : (
+                  <p className="text-yellow-300">
+                    Connect your wallet to see balance
+                  </p>
+                )}
+              </div>
 
               {/* Quick amounts */}
               <div className="flex flex-wrap gap-3">
-                {[10, 50, 100, 250].map((val) => (
+                {[0.1, 0.25, , 0.5, 0.75, 1].map((val) => (
                   <Button
                     key={val}
                     variant="outline"
                     className="flex-1 bg-gray-800 border-gray-700 hover:bg-gray-700"
                     onClick={() => setAmount(String(val))}
                   >
-                    ${val}
+                    {val} SOL
                   </Button>
                 ))}
               </div>
@@ -292,8 +428,15 @@ export default function MarketDetailPage() {
               <Button
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white"
                 onClick={handleBet}
+                disabled={
+                  !selected || !amount || Number(amount) <= 0 || betting
+                }
               >
-                Place Bet
+                {betting
+                  ? "Placing Bet..."
+                  : hasBet
+                  ? "Bet Placed"
+                  : "Place Bet"}
               </Button>
             </CardContent>
           </Card>
@@ -305,48 +448,17 @@ export default function MarketDetailPage() {
             <CardContent className="pt-6 text-center">
               <p className="text-gray-400">Total Volume</p>
               <p className="text-2xl font-bold text-blue-400">
-                ${market.total_volume}
+                {Number(market.total_volume) / LAMPORTS_PER_SOL} Sol
               </p>
             </CardContent>
           </Card>
 
           <Card className="bg-gray-900/50 border-gray-800">
             <CardContent className="pt-6 text-center">
-              <p className="text-gray-400">Unique Traders</p>
+              <p className="text-gray-400">Total Traders</p>
               <p className="text-2xl font-bold text-purple-400">
                 {summary?.total_positions ?? 0}
               </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gray-900/50 border-gray-800">
-            <CardContent className="pt-6 text-center">
-              <p className="text-gray-400">Oracle Source</p>
-              <p className="text-md font-semibold text-green-400">
-                {market.oracle_source}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gray-900/50 border-gray-800">
-            <CardHeader>
-              <CardTitle className="text-lg">Your Positions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-green-400">YES</span>
-                <span>$0</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-red-400">NO</span>
-                <span>$0</span>
-              </div>
-              <Button
-                variant="outline"
-                className="w-full bg-gray-800 border-gray-700 hover:bg-gray-700"
-              >
-                Manage Positions
-              </Button>
             </CardContent>
           </Card>
         </div>

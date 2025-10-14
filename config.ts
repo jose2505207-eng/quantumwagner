@@ -5,12 +5,15 @@ import { PublicKey } from "@solana/web3.js"
 
 export const BACKEND_URL = "http://localhost:8000"
 
-export const PROGRAM_ID = new PublicKey("FGLMNq1zYi5iTzja9fzZ6vStrYvZ9E1npzgNUAZtgGic")
-export const treasury = new PublicKey("HsP7XPrxgjNcWmfwuzgikL4qi4MASdbxd2eQ77AzBGme")
-export const emergencyAdmin = new PublicKey("HsP7XPrxgjNcWmfwuzgikL4qi4MASdbxd2eQ77AzBGme");
+export const PROGRAM_ID = new PublicKey("3TECSe2FnZu94CmwpoRdTb25iV5uRUtu7Y81EpFrfXEe")
+
+export const treasury = new PublicKey("9Mv6tanREUmkYVS1jSgj27GrapJvK3ynkCWsRJKCMpn5")
+
+export const emergencyAdmin = new PublicKey("9Mv6tanREUmkYVS1jSgj27GrapJvK3ynkCWsRJKCMpn5");
 
 export const getConfigPDA = async () => {
-    const [pda] = await anchor.web3.PublicKey.findProgramAddressSync(
+    
+    const [pda] = anchor.web3.PublicKey.findProgramAddressSync(
         [Buffer.from("config")],
         PROGRAM_ID
     );

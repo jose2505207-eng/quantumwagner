@@ -44,14 +44,21 @@ import {
 } from "../ui/alert-dialog";
 import { Switch } from "../ui/switch";
 import { BACKEND_URL } from "@/config";
+import { PublicKey } from "@solana/web3.js";
+import Methods from "@/app/contract_methods/methods";
 
 export default function ActiveMarkets() {
   const [filterCategory, setFilterCategory] = useState("ALL");
   const { markets, setMarkets } = useMarketStore();
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Market | null>(null);
+  const [selectedOutcome, setSelectedOutcome] = useState<"YES" | "NO" | null>(
+    null
+  );
   const [open, setOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
+
+  const { cancelMarket, settleMarket } = Methods();
 
   useEffect(() => {
     fetchMarkets();
@@ -71,32 +78,50 @@ export default function ActiveMarkets() {
     }
   };
 
-  const handleUpdateMarket = async (id: string, data: Partial<Market>) => {
+  const handleUpdateMarket = async (
+    id: string,
+    data: Partial<Market>,
+    pda?: string,
+    outcome?: "YES" | "NO"
+  ) => {
     try {
-      await axios
-        .put(`${BACKEND_URL}/api/admin/markets/${id}`, data, {
+      if (data.status === "RESOLVED" && pda && outcome) {
+        const outcomeBool = outcome === "YES";
+
+        // Try settle first
+        await settleMarket(new PublicKey(pda), outcomeBool);
+        toast.success(`Market settled on-chain (${outcome})`);
+
+        // Only if chain succeeded, update backend
+        await axios.put(`${BACKEND_URL}/api/admin/markets/${id}`, data, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        })
-        .then(() => {
-          toast.success(`${editing?.question} updated successfully`);
-        })
-        .catch((err) => {
-          toast.error(`${editing?.question} failed to update ${err}`);
         });
+
+        toast.success(`${editing?.question} updated successfully`);
+      } else {
+        // Non-resolve status → just update backend
+        await axios.put(`${BACKEND_URL}/api/admin/markets/${id}`, data, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+        toast.success(`${editing?.question} updated successfully`);
+      }
+
       fetchMarkets();
     } catch (err) {
-      console.error("Failed to update market:", err);
+      console.error("handleUpdateMarket failed:", err);
+      toast.error(`${err}`);
     }
   };
 
-  const handleCancelMarket = async (id: string) => {
+  const handleCancelMarket = async (id: string, pda: string) => {
     try {
       setConfirmText("");
       await axios
         .delete(`${BACKEND_URL}/api/admin/markets/${id}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         })
-        .then(() => {
+        .then(async () => {
+          await cancelMarket(new PublicKey(`${pda}`));
           toast.success("market deleted successfully");
         })
         .catch((err) => {
@@ -169,7 +194,10 @@ export default function ActiveMarkets() {
                         <Button
                           size="icon"
                           variant="ghost"
-                          onClick={() => setEditing(market)}
+                          onClick={() => {
+                            setEditing(market);
+                            setSelectedOutcome(null);
+                          }}
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
@@ -188,19 +216,25 @@ export default function ActiveMarkets() {
                             onSubmit={(e) => {
                               e.preventDefault();
                               if (editing?.id) {
-                                handleUpdateMarket(editing.id, {
-                                  question: editing.question,
-                                  description: editing.description,
-                                  category: editing.category,
-                                  end_time: editing.end_time,
-                                  oracle_source: editing.oracle_source,
-                                  oracle_config: editing.oracle_config || "",
-                                  resolution_criteria:
-                                    editing.resolution_criteria || "",
-                                  status: editing.status,
-                                  featured: editing.featured, //  send featured state
-                                });
+                                handleUpdateMarket(
+                                  editing.id,
+                                  {
+                                    question: editing.question,
+                                    description: editing.description,
+                                    category: editing.category,
+                                    end_time: editing.end_time,
+                                    oracle_source: editing.oracle_source,
+                                    oracle_config: editing.oracle_config || "",
+                                    resolution_criteria:
+                                      editing.resolution_criteria || "",
+                                    status: editing.status,
+                                    featured: editing.featured,
+                                  },
+                                  editing.pda,
+                                  selectedOutcome || undefined
+                                );
                                 setEditing(null);
+                                setSelectedOutcome(null);
                                 setOpen(false);
                               }
                             }}
@@ -289,7 +323,28 @@ export default function ActiveMarkets() {
                               </SelectContent>
                             </Select>
 
-                            {/*  Featured toggle */}
+                            {/* ✅ Only show outcome select when status is RESOLVED */}
+                            {editing.status === MarketStatus.RESOLVED && (
+                              <>
+                                <Label>Outcome</Label>
+                                <Select
+                                  value={selectedOutcome || ""}
+                                  onValueChange={(val) =>
+                                    setSelectedOutcome(val as "YES" | "NO")
+                                  }
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select Outcome" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="YES">YES</SelectItem>
+                                    <SelectItem value="NO">NO</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </>
+                            )}
+
+                            {/* Featured toggle */}
                             <div className="flex items-center space-x-3 pt-2">
                               <Switch
                                 checked={editing.featured}
@@ -314,7 +369,6 @@ export default function ActiveMarkets() {
                     </Sheet>
 
                     {/* Delete */}
-                    {/* Delete with confirmation typing */}
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button size="icon" variant="destructive">
@@ -354,7 +408,9 @@ export default function ActiveMarkets() {
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
                           <AlertDialogAction
                             disabled={confirmText !== "delete market"}
-                            onClick={() => handleCancelMarket(market.id)}
+                            onClick={() =>
+                              handleCancelMarket(market.id, market.pda)
+                            }
                           >
                             Delete
                           </AlertDialogAction>

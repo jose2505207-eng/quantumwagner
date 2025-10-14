@@ -5,12 +5,8 @@ import * as XLSX from "xlsx";
 import {
   LayoutDashboard,
   Users,
-  FileText,
-  ShieldCheck,
-  Settings,
   Download,
   Loader2,
-  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Stats from "@/components/admin/Stats";
@@ -18,15 +14,11 @@ import CreateMarkets from "@/components/admin/CreateMarket";
 import ActiveMarkets from "@/components/admin/ActiveMarkets";
 import { useMarketStore } from "@/store/adminMarketStore";
 import { useUserStore } from "@/store/userInfo";
-import { Card, CardContent } from "@/components/ui/card";
 import { notFound } from "next/navigation";
 
 const navItems = [
   { name: "Dashboard", icon: LayoutDashboard },
   { name: "User Management", icon: Users },
-  // { name: "Reports", icon: FileText },
-  // { name: "Moderation", icon: ShieldCheck },
-  // { name: "Settings", icon: Settings },
 ];
 
 export default function AdminDashboard() {
@@ -73,11 +65,8 @@ export default function AdminDashboard() {
     <div className="min-h-screen flex flex-col bg-transparent text-foreground pt-24">
       {/* Top Nav */}
       <header className="border-b border-border bg-black/30 backdrop-blur-xl px-6 py-3 flex items-center justify-between">
-        {/* <h1 className="text-lg font-bold bg-gradient-to-r from-purple-400 to-fuchsia-500 bg-clip-text text-transparent">
-          Admin Command
-        </h1> */}
-
-        <nav className="flex space-x-2">
+     
+   <nav className="flex space-x-2">
           {navItems.map(({ name, icon: Icon }) => (
             <Button
               key={name}

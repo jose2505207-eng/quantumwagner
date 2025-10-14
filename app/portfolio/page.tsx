@@ -1,34 +1,47 @@
 "use client";
-import React, { useEffect, useState } from "react";
 
+import React, { useEffect, useState } from "react";
 import { usePositionStore } from "@/store/usePositionStore";
 import axios from "axios";
 import CountdownTimer from "../hooks/CountdownTimer";
-import { DollarSign, RefreshCw, Wallet } from "lucide-react";
+import { DollarSign, Loader2 } from "lucide-react";
 import { useUserStore } from "@/store/userInfo";
 import { BACKEND_URL } from "@/config";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import clsx from "clsx";
+import Methods from "../contract_methods/methods";
+import toast from "react-hot-toast";
 
 export default function Portfolio() {
   const { positions, setPositions } = usePositionStore();
   const [loading, setLoading] = useState(true);
   const { userInfo } = useUserStore();
   const { connected } = useWallet();
+  const [tab, setTab] = useState("active");
+  const [withdrawingMap, setWithdrawingMap] = useState<Record<string, boolean>>(
+    {}
+  );
+
+  const { withdrawWinnings } = Methods();
 
   useEffect(() => {
     if (!userInfo) {
       setPositions([]);
+      setLoading(false);
       return;
     }
     loadPositions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userInfo]);
 
   const loadPositions = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      console.log(userInfo?.user);
 
       const res = await axios.get(
         `${BACKEND_URL}/api/users/${userInfo?.user.id}/positions`,
@@ -39,8 +52,6 @@ export default function Portfolio() {
         }
       );
 
-      console.log(res.data.data.positions[0]);
-
       setPositions(res.data.data.positions || []);
     } catch (err) {
       console.error("Failed to fetch positions:", err);
@@ -49,208 +60,190 @@ export default function Portfolio() {
     }
   };
 
-  if (!connected) {
+  const handleWithdraw = async (marketPda: string) => {
+    try {
+      await withdrawWinnings(new PublicKey(marketPda));
+      toast.success("Bet withdrawn");
+      await loadPositions();
+    } catch (err) {
+      toast.error(`Withdraw failed ${err}`);
+    }
+  };
+
+  // Helper to render a position card
+  const renderPosition = (position) => {
+    const ended = new Date(position.market.end_time).getTime() < Date.now();
+    const withdrawing = !!withdrawingMap[position.id];
+
     return (
-      <div className="flex flex-col justify-center items-center min-h-screen  text-white px-6 pt-24">
-        <div className="flex flex-col items-center text-center space-y-6 max-w-md">
-          {/* Icon */}
-          <div className="w-20 h-20 rounded-full bg-purple-600/20 flex items-center justify-center">
-            <Wallet className="w-10 h-10 text-purple-400" />
-          </div>
-
-          {/* Title */}
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-            Connect Your Wallet
-          </h1>
-
-          {/* Subtitle */}
-          <p className="text-gray-400 text-base">
-            To view your portfolio and track your active positions, please
-            connect your wallet securely.
-          </p>
-
-          {/* Wallet Connect Button */}
-          <WalletMultiButton className="px-6 py-2 rounded-lg font-medium shadow-lg hover:shadow-purple-500/30 transition" />
-        </div>
-      </div>
-    );
-  }
-
-  if (!userInfo) {
-    return (
-      <div className="flex justify-center items-center min-h-screen  text-white">
-        <div className="flex flex-col items-center space-y-4">
-          {/* Animated spinner */}
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
-
-          {/* Loading text */}
-          <p className="text-gray-400 animate-pulse">
-            Loading your portfolio...
-          </p>
-
-          {/* Subtle skeleton shimmer */}
-          <div className="w-48 h-3 bg-gray-800 rounded overflow-hidden relative">
-            <div className="absolute inset-0 animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-purple-600/20 to-transparent"></div>
-          </div>
-        </div>
-
-        <style jsx>{`
-          @keyframes shimmer {
-            0% {
-              transform: translateX(-100%);
-            }
-            100% {
-              transform: translateX(100%);
-            }
-          }
-        `}</style>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen text-white p-6 pt-24">
-      {/* Portfolio Header */}
-      <div className="mb-8">
-        <div className="flex justify-between items-center mb-6">
-          {/* Left: Title + description */}
-          <div>
-            <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
-              <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
-                <DollarSign className="w-4 h-4" />
+      <Card
+        key={position.id}
+        className="p-3 sm:p-4 bg-gradient-to-b from-gray-900/60 to-gray-900/40 border border-gray-800 rounded-lg"
+      >
+        <CardHeader className="p-0 mb-2">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <h3 className="text-sm sm:text-base font-medium text-white truncate">
+                {position.market?.question ?? "Unknown market"}
+              </h3>
+              <div className="text-xs text-gray-400 mt-1">
+                Category:{" "}
+                <span className="uppercase text-purple-400">
+                  {position.market?.category}
+                </span>
               </div>
-              Your Portfolio
-            </h1>
-            <p className="text-gray-400">
-              Track all your positions, analyze gains and losses, and view your
-              trading performance
-            </p>
-          </div>
-
-          {/* Right: Refresh Button */}
-          <button
-            onClick={() => {
-              window.location.reload();
-            }}
-            className="p-2 rounded-full hover:bg-gray-800 transition-colors"
-            title="Refresh portfolio"
-          >
-            <RefreshCw
-              className={`w-6 h-6 ${
-                loading ? "animate-spin text-purple-400" : "text-gray-400"
-              }`}
-            />
-          </button>
-        </div>
-      </div>
-
-      {/* Active Positions */}
-      <div className="mb-8">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold">Active Positions</h2>
-        </div>
-        <p className="text-gray-400 text-sm mb-6">
-          Your active positions and predictions with unrealized gains/losses
-        </p>
-
-        {/* Positions Grid */}
-
-        {loading ? (
-          // Loading spinner
-          <div className="flex flex-col justify-center items-center py-20 space-y-8 w-full">
-            {/* Spinner */}
-            <div className="animate-spin rounded-full h-14 w-14 border-t-2 border-b-2 border-purple-500"></div>
-
-            {/* Text */}
-            <p className="text-gray-300 text-lg font-medium tracking-wide">
-              Loading your positions...
-            </p>
-
-            {/* Skeleton cards with shimmer */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-5xl">
-              {[...Array(2)].map((_, i) => (
-                <div
-                  key={i}
-                  className="border border-gray-800 rounded-xl p-6 bg-gray-900/60 relative overflow-hidden"
-                >
-                  {/* Shimmer Overlay */}
-                  <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
-
-                  <div className="h-5 w-3/4 bg-gray-800 rounded mb-4"></div>
-                  <div className="h-4 w-1/2 bg-gray-800 rounded mb-2"></div>
-                  <div className="h-4 w-1/3 bg-gray-800 rounded mb-6"></div>
-                  <div className="h-10 w-28 bg-gray-800 rounded"></div>
-                </div>
-              ))}
+            </div>
+            <div className="text-right">
+              <div
+                className={clsx(
+                  "text-sm font-semibold",
+                  position.settled ? "text-green-400" : "text-yellow-400"
+                )}
+              >
+                {position.settled ? "Settled" : "Active"}
+              </div>
+              <div className="text-xs text-gray-400 mt-1">
+                {new Date(position.created_at).toLocaleString()}
+              </div>
             </div>
           </div>
-        ) : positions.filter((pos) => !pos.settled).length === 0 ? (
-          // Empty state
-          <div className="text-center text-gray-400 py-10">
-            No active positions found.
+        </CardHeader>
+
+        <CardContent className="p-0">
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <div className="text-xs text-gray-400">Amount Staked</div>
+              <div className="text-white font-semibold mt-1">
+                {(position.amount_staked / LAMPORTS_PER_SOL).toFixed(4)} SOL
+              </div>
+            </div>
+
+            <div>
+              <div className="text-xs text-gray-400">Position</div>
+              <div className="mt-1">
+                <span
+                  className={clsx(
+                    "inline-block px-2 py-1 text-xs rounded-full font-medium",
+                    position.position_type === "YES"
+                      ? "bg-emerald-800 text-emerald-300"
+                      : "bg-red-900 text-red-300"
+                  )}
+                >
+                  {position.position_type ?? "—"}
+                </span>
+              </div>
+            </div>
           </div>
-        ) : (
-          // Active Positions Grid
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-            {positions.map((position, index) => (
-              <div
-                key={position.id || index}
-                className="border border-gray-700 rounded-xl p-4 sm:p-6 flex flex-col justify-between"
-              >
-                {/* Market Question */}
-                <h4 className="text-white font-medium mb-3 text-sm sm:text-base leading-snug">
-                  {position.market?.question ?? "Unknown market"}
-                </h4>
-
-                {/* Market Category */}
-                <div className="mb-2 text-xs text-gray-400">
-                  Category:{" "}
-                  <span className="uppercase text-purple-400">
-                    {position.market?.category}
-                  </span>
-                </div>
-
-                {/* Amount Staked */}
-                <div className="mb-2 text-sm">
-                  <span className="text-gray-400">Amount Staked: </span>
-                  <span className="text-white font-semibold">
-                    ${position.amount_staked}
-                  </span>
-                </div>
-
-                {/* Settled or Not */}
-                <div className="mb-2 text-sm">
-                  <span className="text-gray-400">Settled: </span>
-                  <span
-                    className={`font-semibold ${
-                      position.settled ? "text-green-400" : "text-yellow-400"
-                    }`}
-                  >
-                    {position.settled ? "Yes" : "No"}
-                  </span>
-                </div>
-
-                {/* Created At */}
-                <div className="mb-2 text-sm">
-                  <span className="text-gray-400">Created: </span>
-                  <span className="text-white">
-                    {new Date(position.created_at).toLocaleString()}
-                  </span>
-                </div>
-
-                {/* End Time */}
-
-                <div className="flex items-center gap-2 text-sm text-gray-300">
-                  <span>Market ends in:</span>
-                  <span className="font-semibold text-white">
-                    <CountdownTimer endTime={position.market.end_time} />
-                  </span>
+          <div className="mt-4 border-t border-gray-800 pt-4">
+            <div className="flex items-center justify-between text-sm text-gray-400">
+              <div className="flex items-center gap-3">
+                <span>Market ends in</span>
+                <span className="font-semibold text-white">
+                  <CountdownTimer endTime={position.market.end_time} />
+                </span>
+              </div>
+              <div className="text-right">
+                <div className="text-xs text-gray-400">Traders</div>
+                <div className="text-sm font-medium text-white">
+                  {position.market._count?.positions ?? "-"}
                 </div>
               </div>
-            ))}
+            </div>
+
+            <div className="mt-4">
+              {ended ? (
+                <div className="flex gap-3">
+                  <Button
+                    onClick={() => handleWithdraw(position.market.pda)}
+                    className="flex-1"
+                    disabled={withdrawing}
+                  >
+                    {withdrawing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />{" "}
+                        Withdrawing...
+                      </>
+                    ) : (
+                      "Withdraw Bet"
+                    )}
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 px-3 py-2 bg-gray-900/60 border border-gray-800 rounded-full text-sm text-gray-300">
+                    <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                    <span>Waiting for market to settle</span>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        )}
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const activePositions = positions.filter(
+    (p) => new Date(p.market.end_time).getTime() >= Date.now()
+  );
+  const expiredPositions = positions.filter(
+    (p) => new Date(p.market.end_time).getTime() < Date.now()
+  );
+
+  return (
+    <div className="min-h-screen p-6 pt-24 text-white">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-lg bg-purple-600/20 flex items-center justify-center">
+            <DollarSign className="w-5 h-5 text-purple-400" />
+          </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold">Your Portfolio</h1>
+            <p className="text-sm text-gray-400">
+              Track active and expired positions, manage withdrawals.
+            </p>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <Tabs defaultValue="active" onValueChange={setTab}>
+          <TabsList className="bg-gray-900/70 border border-gray-800 rounded-lg mb-8">
+            <TabsTrigger value="active" className="px-6 py-2">
+              Active
+            </TabsTrigger>
+            <TabsTrigger value="expired" className="px-6 py-2">
+              Expired
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Active tab */}
+          <TabsContent value="active">
+            {loading ? (
+              <p>Loading...</p>
+            ) : activePositions.length === 0 ? (
+              <p className="text-gray-400">No active positions.</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {activePositions.map(renderPosition)}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Expired tab */}
+          <TabsContent value="expired">
+            {loading ? (
+              <p>Loading...</p>
+            ) : expiredPositions.length === 0 ? (
+              <p className="text-gray-400">No expired positions.</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {expiredPositions.map(renderPosition)}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

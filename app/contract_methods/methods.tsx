@@ -4,10 +4,7 @@ import { PublicKey, SystemProgram } from "@solana/web3.js";
 import { useProgram } from "@/lib/useProgram";
 import * as anchor from "@coral-xyz/anchor";
 import { treasury, emergencyAdmin, getConfigPDA } from "@/config";
-import {
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  TOKEN_PROGRAM_ID,
-} from "@solana/spl-token";
+import toast from "react-hot-toast";
 
 export default function Methods() {
   const program = useProgram();
@@ -25,12 +22,21 @@ export default function Methods() {
       return;
     }
 
-    const platformFeeBps = 500; // 5%
-    const minBetAmount = new anchor.BN(1);
-    const maxBetAmount = new anchor.BN(1_00);
+    const platformFeeBps = 1000; // 5%
+    const minBetAmount = new anchor.BN(10_000_000);
+    const maxBetAmount = new anchor.BN(1_000_000_000);
     const marketCreationFee = new anchor.BN(0);
-    const minMarketDuration = new anchor.BN(60);
-    const maxMarketDuration = new anchor.BN(604800);
+    const minMarketDuration = new anchor.BN(60); // 1 min
+    const maxMarketDuration = new anchor.BN(604800); // 7 days
+
+    try {
+      const configAccount = await program.account.platformConfig.fetch(
+        await configPDA
+      );
+      console.log("Config account exists:", configAccount);
+    } catch (err) {
+      console.log("Config account not found, safe to initialize.");
+    }
 
     try {
       const tx = await program.methods
@@ -60,7 +66,21 @@ export default function Methods() {
     }
   };
 
-  const initMarket = async (question: string) => {
+  const initMarket = async ({
+    questionId,
+    category = { price: {} },
+    durationSeconds = new anchor.BN(3600 * 24),
+    minBetAmount = new anchor.BN(1),
+    tags = ["BTC", "Price"],
+    imageUrl,
+  }: {
+    questionId: string;
+    category?: any;
+    durationSeconds?: anchor.BN;
+    minBetAmount?: anchor.BN;
+    tags?: string[];
+    imageUrl?: string | null;
+  }) => {
     if (!program) {
       console.error("Program not ready");
       return;
@@ -72,14 +92,7 @@ export default function Methods() {
       return;
     }
 
-    const category = { crypto: {} };
-    const durationSeconds = new anchor.BN(3600 * 24); // 1 day
-    const minBetAmount = new anchor.BN(1); // must be >= config.min_bet_amount
-    const tags = ["BTC", "Price"];
-    const imageUrl = "https://example.com/btc.png";
-    const oracleSource = { manual: {} };
-
-    // --- Derive Market PDA ---
+    // fetching Market PDA
     // You’ll need to fetch config.next_market_id first
     const configAccount = await program.account.platformConfig.fetch(
       await configPDA
@@ -94,35 +107,22 @@ export default function Methods() {
       program.programId
     );
 
-    const mint = new PublicKey("4zHz8z45eJ9jC1mJ2NnBqA4s9Yg2eD4x84eXw67N23rT"); //usdc devnet 
-    const vault = await anchor.utils.token.associatedAddress({
-      mint,
-      owner: marketPDA,
-    }); // the account that will securely hold all those tokens for this market.
-
     try {
       const tx = await program.methods
         .initializeMarket(
-          question,
+          questionId,
           category,
           durationSeconds,
           minBetAmount,
           tags,
-          imageUrl || null,
-          oracleSource
+          imageUrl ? imageUrl : null
         )
         .accounts({
           creator,
           config: configPDA,
           market: marketPDA,
-          mint,
-          vault,
           treasury: configAccount.treasury,
-          priceFeed: anchor.web3.PublicKey.default, // if oracle = Manual
           systemProgram: SystemProgram.programId,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-          rent: anchor.web3.SYSVAR_RENT_PUBKEY,
         })
         .rpc();
 
@@ -132,7 +132,7 @@ export default function Methods() {
         "Market PDA:",
         marketPDA.toBase58()
       );
-      return tx;
+      return marketPDA.toBase58();
     } catch (err) {
       console.error("❌ Error initializing market:", err);
       throw err;
@@ -146,47 +146,35 @@ export default function Methods() {
   ) => {
     if (!program) throw new Error("Program not ready");
 
-    const creator = program.provider.publicKey;
-    if (!creator) throw new Error("Wallet not connected");
+    const user = program.provider.publicKey;
+    if (!user) throw new Error("Wallet not connected");
 
     // Derive UserPosition PDA
     const [userPositionPDA] = anchor.web3.PublicKey.findProgramAddressSync(
-      [Buffer.from("position"), marketPDA.toBuffer(), creator.toBuffer()],
+      [Buffer.from("position"), marketPDA.toBuffer(), user.toBuffer()],
       program.programId
     );
-
-    // Derive vault PDA (market token account)
-    const mint = new PublicKey("Hw3EdBhfWFt1LfmL5xLy9VjBUYj8E55wpTC5AaeBdQAt"); // market currency
-    const vault = await anchor.utils.token.associatedAddress({
-      mint,
-      owner: marketPDA,
-    });
-
-    // Derive user token account (SPL token)
-    const userTokenAccount = await anchor.utils.token.associatedAddress({
-      mint,
-      owner: creator,
-    });
 
     try {
       const tx = await program.methods
         .placeBet(outcome, new anchor.BN(amount))
         .accounts({
-          user: creator,
+          user,
           config: configPDA,
           market: marketPDA,
-          userTokenAccount,
-          vault,
           userPosition: userPositionPDA,
-          tokenProgram: TOKEN_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
         })
         .rpc();
 
-      console.log("✅ Bet placed! Tx:", tx);
+      toast.success("Bet placed successfully");
       return tx;
-    } catch (err) {
-      console.error("❌ Error placing bet:", err);
+    } catch (err: any) {
+      console.error("Error placing bet:", err);
+      const msg =
+        err.message ||
+        (err.logs ? err.logs.join("\n") : "Unknown error placing bet");
+      toast.error(`Error placing bet: ${msg}`);
       throw err;
     }
   };
@@ -208,41 +196,21 @@ export default function Methods() {
     }
   };
 
-  const viewPrice = async (marketPDA: PublicKey, priceFeed: PublicKey) => {
-    if (!program) throw new Error("Program not ready");
-
-    try {
-      const priceInfo = await program.methods
-        .viewPrice()
-        .accounts({
-          market: marketPDA,
-          priceFeed: priceFeed,
-        })
-        .view(); // Use `.view()` because it’s read-only
-
-      console.log("✅ Price info:", priceInfo);
-      return priceInfo;
-    } catch (err) {
-      console.error("❌ Error fetching price:", err);
-      throw err;
-    }
-  };
-
   const settleMarket = async (
     marketPDA: PublicKey,
-    resolver: PublicKey,
-    priceFeed?: PublicKey, // optional for manual markets
-    manualOutcome?: boolean // optional for manual markets
+    winningOutcome: boolean
   ) => {
     if (!program) throw new Error("Program not ready");
 
+    const admin = program.provider.publicKey;
+    if (!admin) throw new Error("Wallet not connected");
+
     try {
       const tx = await program.methods
-        .settleMarket(manualOutcome ?? null)
+        .settleMarket(winningOutcome)
         .accounts({
-          resolver,
+          admin,
           market: marketPDA,
-          priceFeed: priceFeed ?? anchor.web3.PublicKey.default,
         })
         .rpc();
 
@@ -253,34 +221,17 @@ export default function Methods() {
       throw err;
     }
   };
-
-  const withdrawWinnings = async (
-    marketPDA: PublicKey,
-    user: PublicKey,
-    userTokenAccount: PublicKey
-  ) => {
+  const withdrawWinnings = async (marketPDA: PublicKey) => {
     if (!program) throw new Error("Program not ready");
 
+    const user = program.provider.publicKey;
+    if (!user) throw new Error("Wallet not connected");
+
     // Derive UserPosition PDA
-    const [userPositionPDA, bump] = PublicKey.findProgramAddressSync(
+    const [userPositionPDA] = PublicKey.findProgramAddressSync(
       [Buffer.from("position"), marketPDA.toBuffer(), user.toBuffer()],
       program.programId
     );
-
-    // Derive vault PDA (market token account)
-    const marketAccount = await program.account.market.fetch(marketPDA);
-    const mint = marketAccount.mint;
-    const vault = await anchor.utils.token.associatedAddress({
-      mint,
-      owner: marketPDA,
-    });
-
-    // Seeds for market authority
-    const seeds = [
-      Buffer.from("market"),
-      marketAccount.marketId.toArrayLike(Buffer, "le", 8),
-      [marketAccount.bump],
-    ];
 
     try {
       const tx = await program.methods
@@ -288,12 +239,9 @@ export default function Methods() {
         .accounts({
           user,
           market: marketPDA,
-          userPosition: userPositionPDA,
-          vault,
-          userTokenAccount,
-          tokenProgram: TOKEN_PROGRAM_ID,
+          user_position: userPositionPDA, // match IDL exactly
+          system_program: SystemProgram.programId,
         })
-        .signers([]) // signer is the connected wallet
         .rpc();
 
       console.log("✅ Winnings withdrawn. Tx:", tx);
@@ -309,7 +257,6 @@ export default function Methods() {
     initMarket,
     placeBet,
     cancelMarket,
-    viewPrice,
     settleMarket,
     withdrawWinnings,
   };
