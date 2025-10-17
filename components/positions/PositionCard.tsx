@@ -37,7 +37,9 @@ export default function PositionCard({
           {/* Category */}
           <div>
             <div className="text-[0.6rem] text-gray-400">Category</div>
-            <span className="uppercase text-purple-400">{position.market?.category}</span>
+            <span className="uppercase text-purple-400">
+              {position.market?.category}
+            </span>
           </div>
 
           {/* Staked */}
@@ -69,7 +71,11 @@ export default function PositionCard({
           {/* Settled */}
           <div>
             <div className="text-[0.6rem] text-gray-400">Settled</div>
-            <span className={position.settled ? "text-green-400" : "text-yellow-400"}>
+            <span
+              className={
+                position.settled ? "text-green-400" : "text-yellow-400"
+              }
+            >
               {position.settled ? "Yes" : "No"}
             </span>
           </div>
@@ -77,7 +83,9 @@ export default function PositionCard({
           {/* Created Date */}
           <div className="col-span-2 sm:col-span-4 text-[0.77rem] text-gray-400">
             {format(new Date(position.created_at), "dd MMM yyyy h:mma")} ·{" "}
-            {formatDistanceToNow(new Date(position.created_at), { addSuffix: true })}
+            {formatDistanceToNow(new Date(position.created_at), {
+              addSuffix: true,
+            })}
           </div>
         </div>
 
@@ -100,19 +108,28 @@ export default function PositionCard({
             <div>
               <div className="text-[0.55rem] text-gray-400">Yes Pool</div>
               <span className="bg-gradient-to-r from-[#9945FF] via-[#14F195] to-[#00BBFF] text-transparent bg-clip-text font-semibold text-[0.65rem]">
-                {(Number(position.market.yes_pool) / LAMPORTS_PER_SOL).toFixed(2)} SOL
+                {(Number(position.market.yes_pool) / LAMPORTS_PER_SOL).toFixed(
+                  2
+                )}{" "}
+                SOL
               </span>
             </div>
             <div>
               <div className="text-[0.55rem] text-gray-400">No Pool</div>
               <span className="bg-gradient-to-r from-[#9945FF] via-[#14F195] to-[#00BBFF] text-transparent bg-clip-text font-semibold text-[0.65rem]">
-                {(Number(position.market.no_pool) / LAMPORTS_PER_SOL).toFixed(2)} SOL
+                {(Number(position.market.no_pool) / LAMPORTS_PER_SOL).toFixed(
+                  2
+                )}{" "}
+                SOL
               </span>
             </div>
             <div>
               <div className="text-[0.55rem] text-gray-400">Volume</div>
               <span className="bg-gradient-to-r from-[#9945FF] via-[#14F195] to-[#00BBFF] text-transparent bg-clip-text font-semibold text-[0.65rem]">
-                {(Number(position.market.total_volume) / LAMPORTS_PER_SOL).toFixed(2)} SOL
+                {(
+                  Number(position.market.total_volume) / LAMPORTS_PER_SOL
+                ).toFixed(2)}{" "}
+                SOL
               </span>
             </div>
           </div>
@@ -120,15 +137,21 @@ export default function PositionCard({
 
         {/* Footer */}
         <div className="mt-3 border-t border-gray-800 pt-3">
-          {ended ? (
+          {position.market.status !== "RESOLVED" ? (
+            <div className="flex items-center gap-1 px-2 py-1 bg-gray-900/60 border border-gray-800 rounded-full text-[0.65rem] text-gray-300">
+              <Loader2 className="w-3 h-3 animate-spin text-gray-400" />
+              <span>Market is yet to be resolved</span>
+            </div>
+          ) : ended ? (
             <Button
               onClick={() => handleWithdraw(position.market.pda)}
-              className="w-full sm:w-auto text-xs sm:text-sm"
+              className="w-full sm:w-auto text-xs sm:text-sm bg-gradient-to-r from-[#a855f7] to-[#9333ea] text-white font-medium rounded-lg shadow-md hover:opacity-90 transition"
               disabled={withdrawing}
             >
               {withdrawing ? (
                 <>
-                  <Loader2 className="w-3 h-3 mr-2 animate-spin" /> Withdrawing...
+                  <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+                  Withdrawing...
                 </>
               ) : (
                 "Withdraw Bet"

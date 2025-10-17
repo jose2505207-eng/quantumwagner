@@ -16,11 +16,11 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { useMarkets } from "../helper/fetchMarkets";
 import toast from "react-hot-toast";
-import { MarketCategory, MarketCategoryLabels } from "@/components/market/types";
 import { Switch } from "../ui/switch";
 import { BACKEND_URL } from "@/config";
 import Methods from "@/app/contract_methods/methods";
 import * as anchor from "@coral-xyz/anchor";
+import { MarketCategory, MarketCategoryLabels } from "@/app/types";
 
 export default function CreateMarkets() {
   const { fetchMarkets } = useMarkets();

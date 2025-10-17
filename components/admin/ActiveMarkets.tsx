@@ -22,12 +22,7 @@ import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import {
-  Market,
-  MarketCategory,
-  MarketCategoryLabels,
-  MarketStatus,
-} from "@/components/market/types";
+
 import { useMarketStore } from "@/store/adminMarketStore";
 import toast from "react-hot-toast";
 import { Label } from "../ui/label";
@@ -46,6 +41,7 @@ import { Switch } from "../ui/switch";
 import { BACKEND_URL } from "@/config";
 import { PublicKey } from "@solana/web3.js";
 import Methods from "@/app/contract_methods/methods";
+import { Market, MarketCategory, MarketCategoryLabels, MarketStatus } from "@/app/types";
 
 export default function ActiveMarkets() {
   const [filterCategory, setFilterCategory] = useState("ALL");

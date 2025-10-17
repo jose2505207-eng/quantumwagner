@@ -78,30 +78,6 @@ export interface Position {
     market: PositoinMarket;
 }
 
-export interface UserProfile {
-    id: string;
-    wallet_address: string;
-    username: string | null;
-    email: string | null;
-    reputation_score: number;
-    total_volume: string;
-    win_rate: string;
-    total_predictions: number;
-    correct_predictions: number;
-    created_at: string;
-    is_verified: boolean;
-    kyc_level: number;
-    referral_code: string | null;
-    referred_by: string | null;
-    signature_count: number;
-    positions: Position[];
-}
-
-export interface UserProfileResponse {
-    success: boolean;
-    message: string;
-    user: UserProfile;
-}
 
 
 

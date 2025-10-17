@@ -1,5 +1,5 @@
-import { UserProfileResponse } from "@/app/types";
 import { create } from "zustand";
+import { UserProfileResponse } from "./types/userInfoType";
 
 interface UserStore {
     userInfo: UserProfileResponse | null;

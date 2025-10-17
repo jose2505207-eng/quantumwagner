@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import * as XLSX from "xlsx";
 import {
   LayoutDashboard,
   Users,
@@ -26,23 +25,6 @@ export default function AdminDashboard() {
   const { userInfo } = useUserStore();
   const [active, setActive] = useState("Dashboard");
 
-  // Export markets
-  const handleExport = () => {
-    const data = markets.map((m) => ({
-      Question: m.question,
-      Category: m.category,
-      Status: m.status,
-      "Created At": new Date(m.created_at).toLocaleString(),
-      "Ends At": new Date(m.end_time).toLocaleString(),
-      Volume: m.total_volume,
-      Positions: m._count.positions,
-      Transactions: m._count.transactions,
-    }));
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Markets");
-    XLSX.writeFile(wb, "markets_export.xlsx");
-  };
 
   // Loading state
   if (!userInfo) {
