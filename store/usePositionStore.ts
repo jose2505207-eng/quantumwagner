@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { Position } from "@/app/types";
+import { Position } from "./types/postionType";
 
 interface PositionState {
   positions: Position[];

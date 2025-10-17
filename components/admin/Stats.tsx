@@ -1,4 +1,4 @@
-import { Market, MarketStatus } from "@/app/types";
+import { Market, MarketStatus } from "@/components/market/types";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 
 interface StatsProps {

@@ -27,7 +27,7 @@ import {
   MarketCategory,
   MarketCategoryLabels,
   MarketStatus,
-} from "@/app/types";
+} from "@/components/market/types";
 import { useMarketStore } from "@/store/adminMarketStore";
 import toast from "react-hot-toast";
 import { Label } from "../ui/label";

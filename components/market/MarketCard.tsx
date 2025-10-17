@@ -1,4 +1,4 @@
-import { Market } from "@/app/types";
+import { Market } from "@/components/market/types";
 import CountdownTimer from "@/app/hooks/CountdownTimer";
 
 const MarketCard = ({ market }: { market: Market }) => {

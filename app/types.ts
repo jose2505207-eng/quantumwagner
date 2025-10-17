@@ -58,34 +58,24 @@ export const MarketCategoryLabels: Record<MarketCategory, string> = {
     [MarketCategory.MARKET_EVENTS]: "Market Events",
 };
 
-export interface PositoinsMarket {
+export interface PositoinMarket {
     id: string;
     question: string;
     category: string;
     status: string;
-    end_time: string; // ISO string from backend
+    end_time: string;
     outcome: string | null;
 }
 
 export interface Position {
     id: string;
-    position_type: "YES" | "NO";
+    market_id: string;
+    user_id: string;
     amount_staked: number;
-    shares_owned: number;
-    average_price: number;
-    settled: boolean;
-    payout_amount: number;
-    profit_loss: number;
-    created_at: string;  // ISO date string
-    settled_at: string | null; // can be null if not settled
-    market: PositoinsMarket;
-}
-
-
-export interface UserProfileResponse {
-    success: boolean;
-    message: string;
-    user: UserProfile;
+    position_type: "YES" | "NO";
+    created_at: string;
+    stake_tx_hash: string;
+    market: PositoinMarket;
 }
 
 export interface UserProfile {
@@ -98,23 +88,21 @@ export interface UserProfile {
     win_rate: string;
     total_predictions: number;
     correct_predictions: number;
-    created_at: string; // ISO date string
+    created_at: string;
     is_verified: boolean;
     kyc_level: number;
     referral_code: string | null;
     referred_by: string | null;
     signature_count: number;
-    positions: UserInfoPosition[];
+    positions: Position[];
 }
 
-export interface UserInfoPosition {
-    id: string;
-    market_id: string;
-    amount_staked: number;
-    shares_owned: number;
-    average_price: number;
-    created_at: string;    // ISO date string
-    position_type: "YES" | "NO";
+export interface UserProfileResponse {
+    success: boolean;
+    message: string;
+    user: UserProfile;
 }
+
+
 
 
