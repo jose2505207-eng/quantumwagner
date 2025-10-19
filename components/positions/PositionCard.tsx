@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import clsx from "clsx";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
-import { Position } from "@/store/types/postionType";
+import { Position } from "@/store/types/user/postionType";
 import { format, formatDistanceToNow } from "date-fns";
 
 export default function PositionCard({
