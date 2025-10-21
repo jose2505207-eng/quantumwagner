@@ -81,6 +81,7 @@ export default function AdminDashboard() {
         )
       );
       setEditingUser(null);
+
     } catch (err: any) {
       console.log(err.response?.data || err);
       toast.error(`${err.response?.data?.message || "Unknown error"}`);
@@ -202,173 +203,192 @@ export default function AdminDashboard() {
             </div>
 
             {/* User Table */}
-            <div className="w-full max-w-6xl mx-auto rounded-lg border border-gray-800 bg-black/20 backdrop-blur-md shadow-xl p-3 overflow-hidden">
-  {/* Desktop / Tablet View */}
-  <div className="hidden md:block overflow-x-auto">
-    <table className="min-w-full text-sm text-left border-collapse">
-      <thead className="bg-gray-800 text-gray-200">
-        <tr>
-          <th className="px-4 py-2 whitespace-nowrap">ID</th>
-          <th className="px-4 py-2 whitespace-nowrap">Wallet</th>
-          <th className="px-4 py-2">Reputation</th>
-          <th className="px-4 py-2">Win Rate</th>
-          <th className="px-4 py-2">Total</th>
-          <th className="px-4 py-2">Correct</th>
-          <th className="px-4 py-2">Verified</th>
-          <th className="px-4 py-2">Role</th>
-          <th className="px-4 py-2 whitespace-nowrap">Created</th>
-        </tr>
-      </thead>
-      <tbody>
-        {filteredUsers.map((u: User) => {
-          const highlight =
-            searchTerm &&
-            (u.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              u.wallet_address.toLowerCase().includes(searchTerm.toLowerCase()));
-          const createdAt = format(new Date(u.created_at), "PPpp");
+            <div className="w-full  mx-auto rounded-lg border border-gray-800 bg-black/20 backdrop-blur-md shadow-xl p-3 overflow-hidden">
+              {/* Desktop / Tablet View */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="min-w-full text-sm text-left border-collapse">
+                  <thead className="bg-gray-800 text-gray-200">
+                    <tr>
+                      <th className="px-4 py-2 whitespace-nowrap">ID</th>
+                      <th className="px-4 py-2 whitespace-nowrap">Wallet</th>
+                      <th className="px-4 py-2">Reputation</th>
+                      <th className="px-4 py-2">Win Rate</th>
+                      <th className="px-4 py-2">Total</th>
+                      <th className="px-4 py-2">Correct</th>
+                      <th className="px-4 py-2">Verified</th>
+                      <th className="px-4 py-2">Role</th>
+                      <th className="px-4 py-2 whitespace-nowrap">Created</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredUsers.map((u: User) => {
+                      const highlight =
+                        searchTerm &&
+                        (u.id
+                          .toLowerCase()
+                          .includes(searchTerm.toLowerCase()) ||
+                          u.wallet_address
+                            .toLowerCase()
+                            .includes(searchTerm.toLowerCase()));
+                      const createdAt = format(new Date(u.created_at), "PPpp");
 
-          return (
-            <tr
-              key={u.id}
-              className={`border-t border-gray-700 hover:bg-gray-900 transition-all ${
-                u.is_verified ? "bg-white/5" : ""
-              }`}
-            >
-              <td className="px-4 py-2 min-w-[80px]">
-                <div className="flex items-center justify-between gap-2">
-                  <span
-                    className={`truncate ${
-                      highlight ? "bg-yellow-200 text-black px-1 rounded" : ""
-                    }`}
-                  >
-                    {u.id.slice(0, 6)}...{u.id.slice(-4)}
-                  </span>
-                  <button
-                    onClick={() => copyToClipboard(u.id, "ID copied")}
-                    className="p-1 rounded hover:bg-gray-700"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </button>
-                </div>
-              </td>
-              <td className="px-4 py-2 min-w-[100px]">
-                <div className="flex items-center justify-between gap-2">
-                  <span
-                    className={`truncate ${
-                      highlight ? "bg-yellow-200 text-black px-1 rounded" : ""
-                    }`}
-                  >
-                    {u.wallet_address.slice(0, 6)}...
-                    {u.wallet_address.slice(-4)}
-                  </span>
-                  <button
-                    onClick={() =>
-                      copyToClipboard(u.wallet_address, "Wallet copied")
-                    }
-                    className="p-1 rounded hover:bg-gray-700"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </button>
-                </div>
-              </td>
-              <td className="px-4 py-2 text-yellow-400 font-semibold">1000</td>
-              <td className="px-4 py-2">{u.win_rate}%</td>
-              <td className="px-4 py-2">{u.total_predictions}</td>
-              <td className="px-4 py-2">{u.correct_predictions}</td>
-              <td
-                className={`px-4 py-2 font-semibold ${
-                  u.is_verified ? "text-green-400" : "text-red-400"
-                }`}
-              >
-                {u.is_verified ? "Yes" : "No"}
-              </td>
-              <td className="px-4 py-2">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span>{u.role}</span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center gap-1 text-xs hover:bg-purple-700 hover:text-white transition-all"
-                    onClick={() => setEditingUser(u)}
-                  >
-                    <Edit2 className="w-3 h-3" /> Edit
-                  </Button>
-                </div>
-              </td>
-              <td className="px-4 py-2 whitespace-nowrap">{createdAt}</td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
-  </div>
+                      return (
+                        <tr
+                          key={u.id}
+                          className={`border-t border-gray-700 hover:bg-gray-900 transition-all ${
+                            u.is_verified ? "bg-white/5" : ""
+                          }`}
+                        >
+                          <td className="px-4 py-2 min-w-[80px]">
+                            <div className="flex items-center justify-between gap-2">
+                              <span
+                                className={`truncate ${
+                                  highlight
+                                    ? "bg-yellow-200 text-black px-1 rounded"
+                                    : ""
+                                }`}
+                              >
+                                {u.id.slice(0, 6)}...{u.id.slice(-4)}
+                              </span>
+                              <button
+                                onClick={() =>
+                                  copyToClipboard(u.id, "ID copied")
+                                }
+                                className="p-1 rounded hover:bg-gray-700"
+                              >
+                                <Copy className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                          <td className="px-4 py-2 min-w-[100px]">
+                            <div className="flex items-center justify-between gap-2">
+                              <span
+                                className={`truncate ${
+                                  highlight
+                                    ? "bg-yellow-200 text-black px-1 rounded"
+                                    : ""
+                                }`}
+                              >
+                                {u.wallet_address.slice(0, 6)}...
+                                {u.wallet_address.slice(-4)}
+                              </span>
+                              <button
+                                onClick={() =>
+                                  copyToClipboard(
+                                    u.wallet_address,
+                                    "Wallet copied"
+                                  )
+                                }
+                                className="p-1 rounded hover:bg-gray-700"
+                              >
+                                <Copy className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                          <td className="px-4 py-2 text-yellow-400 font-semibold">
+                            1000
+                          </td>
+                          <td className="px-4 py-2">{u.win_rate}%</td>
+                          <td className="px-4 py-2">{u.total_predictions}</td>
+                          <td className="px-4 py-2">{u.correct_predictions}</td>
+                          <td
+                            className={`px-4 py-2 font-semibold ${
+                              u.is_verified ? "text-green-400" : "text-red-400"
+                            }`}
+                          >
+                            {u.is_verified ? "Yes" : "No"}
+                          </td>
+                          <td className="px-4 py-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span>{u.role}</span>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex items-center gap-1 text-xs hover:bg-purple-700 hover:text-white transition-all"
+                                onClick={() => setEditingUser(u)}
+                              >
+                                <Edit2 className="w-3 h-3" /> Edit
+                              </Button>
+                            </div>
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap">
+                            {createdAt}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
 
-  {/* Mobile View */}
-  <div className="block md:hidden space-y-3">
-    {filteredUsers.map((u: User) => {
-      const createdAt = format(new Date(u.created_at), "PPpp");
-      return (
-        <div
-          key={u.id}
-          className="border border-gray-700 rounded-lg bg-gray-900 p-3 space-y-2 overflow-hidden"
-        >
-          <div className="flex justify-between text-xs">
-            <span>ID: {u.id.slice(0, 8)}...</span>
-            <button
-              onClick={() => copyToClipboard(u.id, "ID copied")}
-              className="hover:text-yellow-400"
-            >
-              <Copy className="w-4 h-4 inline" />
-            </button>
-          </div>
+              {/* Mobile View */}
+              <div className="block md:hidden space-y-3">
+                {filteredUsers.map((u: User) => {
+                  const createdAt = format(new Date(u.created_at), "PPpp");
+                  return (
+                    <div
+                      key={u.id}
+                      className="border border-gray-700 rounded-lg bg-gray-900 p-3 space-y-2 overflow-hidden"
+                    >
+                      <div className="flex justify-between text-xs">
+                        <span>ID: {u.id.slice(0, 8)}...</span>
+                        <button
+                          onClick={() => copyToClipboard(u.id, "ID copied")}
+                          className="hover:text-yellow-400"
+                        >
+                          <Copy className="w-4 h-4 inline" />
+                        </button>
+                      </div>
 
-          <div className="flex justify-between text-xs">
-            <span>Wallet: {u.wallet_address.slice(0, 8)}...</span>
-            <button
-              onClick={() =>
-                copyToClipboard(u.wallet_address, "Wallet copied")
-              }
-              className="hover:text-yellow-400"
-            >
-              <Copy className="w-4 h-4 inline" />
-            </button>
-          </div>
+                      <div className="flex justify-between text-xs">
+                        <span>Wallet: {u.wallet_address.slice(0, 8)}...</span>
+                        <button
+                          onClick={() =>
+                            copyToClipboard(u.wallet_address, "Wallet copied")
+                          }
+                          className="hover:text-yellow-400"
+                        >
+                          <Copy className="w-4 h-4 inline" />
+                        </button>
+                      </div>
 
-          <div className="text-xs space-y-1">
-            <p>
-              Reputation: <span className="text-yellow-400">1000</span>
-            </p>
-            <p>Win Rate: {u.win_rate}%</p>
-            <p>Total: {u.total_predictions}</p>
-            <p>Correct: {u.correct_predictions}</p>
-            <p>
-              Verified:
-              <span
-                className={
-                  u.is_verified ? "text-green-400 ml-1" : "text-red-400 ml-1"
-                }
-              >
-                {u.is_verified ? "Yes" : "No"}
-              </span>
-            </p>
-            <p>Role: {u.role}</p>
-            <p>Created: {createdAt}</p>
-          </div>
+                      <div className="text-xs space-y-1">
+                        <p>
+                          Reputation:{" "}
+                          <span className="text-yellow-400">1000</span>
+                        </p>
+                        <p>Win Rate: {u.win_rate}%</p>
+                        <p>Total: {u.total_predictions}</p>
+                        <p>Correct: {u.correct_predictions}</p>
+                        <p>
+                          Verified:
+                          <span
+                            className={
+                              u.is_verified
+                                ? "text-green-400 ml-1"
+                                : "text-red-400 ml-1"
+                            }
+                          >
+                            {u.is_verified ? "Yes" : "No"}
+                          </span>
+                        </p>
+                        <p>Role: {u.role}</p>
+                        <p>Created: {createdAt}</p>
+                      </div>
 
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full text-xs flex items-center justify-center gap-1 hover:bg-purple-700 hover:text-white transition-all"
-            onClick={() => setEditingUser(u)}
-          >
-            <Edit2 className="w-3 h-3" /> Edit
-          </Button>
-        </div>
-      );
-    })}
-  </div>
-</div>
-
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full text-xs flex items-center justify-center gap-1 hover:bg-purple-700 hover:text-white transition-all"
+                        onClick={() => setEditingUser(u)}
+                      >
+                        <Edit2 className="w-3 h-3" /> Edit
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
 
             {/* Role Edit Dialog */}
             <Dialog

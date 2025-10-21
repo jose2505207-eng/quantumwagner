@@ -17,6 +17,7 @@ import {
   Users,
   XCircle,
 } from "lucide-react";
+import { headers } from "next/headers";
 
 // Spinner loader
 const Spinner = () => (
@@ -59,11 +60,26 @@ export default function Portfolio() {
     }
   };
 
-  const handleWithdraw = async (marketPda: string) => {
+  const handleWithdraw = async (marketPda: string, positionId: string) => {
     try {
       setWithdrawingMap((prev) => ({ ...prev, [marketPda]: true }));
 
       await withdrawWinnings(new PublicKey(marketPda));
+
+      const res = await axios.put(
+        `${BACKEND_URL}/api/positions`,
+        {
+          settled: true,
+          settled_at: new Date(),
+          position_id: positionId,
+        },
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
+
+      console.log(res);
+
       toast.success("Bet withdrawn");
       await loadPositions();
     } catch (err) {
@@ -190,14 +206,24 @@ export default function Portfolio() {
               <p className="text-center text-gray-400">No expired positions.</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                {expiredPositions.map((p) => (
-                  <PositionCard
-                    key={p.id}
-                    position={p}
-                    withdrawing={!!withdrawingMap[p.market.pda]}
-                    handleWithdraw={handleWithdraw}
-                  />
-                ))}
+                {expiredPositions.filter((p) => !p.settled).length === 0 ? (
+                  <p className="text-gray-400 text-center">
+                    No unsettled positions
+                  </p>
+                ) : (
+                  expiredPositions
+                    .filter(
+                      (p) => !p.settled && p.position_type !== p.market.outcome
+                    )
+                    .map((p) => (
+                      <PositionCard
+                        key={p.id}
+                        position={p}
+                        withdrawing={!!withdrawingMap[p.market.pda]}
+                        handleWithdraw={handleWithdraw}
+                      />
+                    ))
+                )}
               </div>
             )}
           </TabsContent>

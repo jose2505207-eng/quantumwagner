@@ -16,7 +16,7 @@ export default function PositionCard({
 }: {
   position: Position;
   withdrawing: boolean;
-  handleWithdraw: (marketPda: string) => void;
+  handleWithdraw: (marketPda: string, positionId: string) => void;
 }) {
   const ended = new Date(position.market.end_time).getTime() < Date.now();
 
@@ -137,14 +137,24 @@ export default function PositionCard({
 
         {/* Footer */}
         <div className="mt-3 border-t border-gray-800 pt-3">
+          {/* Market not resolved yet */}
           {position.market.status !== "RESOLVED" ? (
             <div className="flex items-center gap-1 px-2 py-1 bg-gray-900/60 border border-gray-800 rounded-full text-[0.65rem] text-gray-300">
               <Loader2 className="w-3 h-3 animate-spin text-gray-400" />
               <span>Market is yet to be resolved</span>
             </div>
+          ) : position.market.outcome !== null &&
+            ((position.market.outcome && position.position_type === "NO") ||
+              (!position.market.outcome &&
+                position.position_type === "YES")) ? (
+            //  Lost Position — no withdraw allowed
+            <div className="px-2 py-1 bg-red-900/50 border border-red-800 rounded-full text-[0.7rem] text-red-300 text-center font-medium">
+              You lost this bet
+            </div>
           ) : ended ? (
+            //  Won / Eligible — show Withdraw
             <Button
-              onClick={() => handleWithdraw(position.market.pda)}
+              onClick={() => handleWithdraw(position.market.pda, position.id)}
               className="w-full sm:w-auto text-xs sm:text-sm bg-gradient-to-r from-[#a855f7] to-[#9333ea] text-white font-medium rounded-lg shadow-md hover:opacity-90 transition"
               disabled={withdrawing}
             >

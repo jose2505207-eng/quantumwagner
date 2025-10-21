@@ -41,7 +41,12 @@ import { Switch } from "../ui/switch";
 import { BACKEND_URL } from "@/config";
 import { PublicKey } from "@solana/web3.js";
 import Methods from "@/app/contract_methods/methods";
-import { Market, MarketCategory, MarketCategoryLabels, MarketStatus } from "@/app/types";
+import {
+  Market,
+  MarketCategory,
+  MarketCategoryLabels,
+  MarketStatus,
+} from "@/app/types";
 
 export default function ActiveMarkets() {
   const [filterCategory, setFilterCategory] = useState("ALL");
@@ -89,6 +94,8 @@ export default function ActiveMarkets() {
         toast.success(`Market settled on-chain (${outcome})`);
 
         // Only if chain succeeded, update backend
+        console.log("from admin active page ", data);
+
         await axios.put(`${BACKEND_URL}/api/admin/markets/${id}`, data, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });

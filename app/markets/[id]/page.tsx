@@ -76,7 +76,7 @@ export default function MarketDetailPage() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
   const [hasBet, setHasBet] = useState(false);
-  const program = useProgram();
+  // const program = useProgram();
   const [betting, setBetting] = useState(false);
   const [solBal, setSolBal] = useState<number>(0);
   const { publicKey } = useWallet();
@@ -85,12 +85,12 @@ export default function MarketDetailPage() {
   const [amount, setAmount] = useState("");
   const [betResult, setBetResult] = useState<any | null>(null);
   const {
-    initProgram,
+    // initProgram,
     placeBet,
-    initMarket,
-    cancelMarket,
-    settleMarket,
-    withdrawWinnings,
+    // initMarket,
+    // cancelMarket,
+    // settleMarket,
+    // withdrawWinnings,
   } = Methods();
 
   const handleBet = async () => {
@@ -132,7 +132,7 @@ export default function MarketDetailPage() {
           market_id: market.id,
           position_type: selected.toUpperCase(),
           amount_staked: Number(amount) * LAMPORTS_PER_SOL,
-          stake_tx_hash: "tx",
+          stake_tx_hash: tx,
         },
         {
           headers: {
