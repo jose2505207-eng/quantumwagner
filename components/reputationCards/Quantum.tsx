@@ -10,11 +10,11 @@ interface ReputationCardProps {
   percentile?: number;
 }
 
-export default function DiamondReputationCard({
-  score = 42500,
-  nextTier = "Quantum",
-  nextScore = 7500,
-  percentile = 1.8,
+export default function QuantumReputationCard({
+  score = 87300,
+  nextTier = "MAX",
+  nextScore = 12700,
+  percentile = 0.3,
 }: ReputationCardProps) {
   const totalNeeded = score + nextScore;
   const progress = Math.min((score / totalNeeded) * 100, 100);
@@ -27,18 +27,17 @@ export default function DiamondReputationCard({
       className="w-[186.67px] h-[222.6px]"
     >
       <Card
-        className="relative w-full h-full rounded-[14px] border border-white/10 p-[16.89px]
-        shadow-[0_0_25px_rgba(0,0,0,0.4)] flex items-center justify-center text-white overflow-hidden"
+        className="relative w-full h-full rounded-[14px] border border-white/10 p-[16.89px] 
+          bg-[radial-gradient(circle_at_30%_30%,rgba(30,0,50,0.6),rgba(10,0,20,0.9)),linear-gradient(135deg,rgba(152,16,250,0.25)_0%,rgba(246,51,154,0.15)_50%,rgba(130,0,219,0.25)_100%)]
+          backdrop-blur-[10px] flex items-center justify-center text-white overflow-hidden"
       >
-        {/* Background Frosted Layer */}
-        <div className="absolute inset-0 backdrop-blur-[8px]" />
-
-        {/* Gradient Base (Diamond blue tones) */}
-        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(0,184,219,0.25)_0%,rgba(81,162,255,0.1)_50%,rgba(0,146,184,0.25)_100%)]" />
-
-        {/* Liquid Shine Layer */}
+        {/* Animated light overlay */}
         <motion.div
-          className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.25)_0%,transparent_60%)] mix-blend-overlay"
+          className="absolute inset-0 mix-blend-overlay"
+          style={{
+            background:
+              "radial-gradient(circle at 30% 20%, rgba(255,255,255,0.25) 0%, transparent 60%)",
+          }}
           animate={{
             backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"],
           }}
@@ -49,14 +48,11 @@ export default function DiamondReputationCard({
           }}
         />
 
-  
-
-        {/* Content */}
-        <CardContent className="relative z-10 p-0 flex flex-col items-center justify-center w-full text-center">
+        <CardContent className="p-0 flex flex-col items-center justify-center w-full text-center relative z-10">
           {/* Tier Title */}
-          <div className="text-[#00B8DB] font-medium text-[13px] mb-[6px] flex items-center gap-[6px]">
+          <div className="text-[#C280FF] font-medium text-[13px] mb-[6px] flex items-center gap-[6px]">
             <span>◆</span>
-            <span>Diamond</span>
+            <span>Quantum</span>
             <span>◆</span>
           </div>
 
@@ -87,7 +83,7 @@ export default function DiamondReputationCard({
           {/* Progress Bar */}
           <div className="w-full h-[6px] bg-white/10 rounded-full overflow-hidden mb-[4px]">
             <motion.div
-              className="h-full bg-gradient-to-r from-[#00B8DB] via-[#4EC3FF] to-[#0092B8]"
+              className="h-full bg-gradient-to-r from-[#9810FA] via-[#F6339A] to-[#8200DB]"
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
               transition={{ duration: 0.6, ease: "easeOut" }}
@@ -100,7 +96,7 @@ export default function DiamondReputationCard({
           {/* Percentile */}
           <p className="text-[11.5px] text-gray-300">
             Top{" "}
-            <span className="text-[#00B8DB] font-semibold">{percentile}%</span>{" "}
+            <span className="text-[#D28BFF] font-semibold">{percentile}%</span>{" "}
             of all players
           </p>
         </CardContent>
