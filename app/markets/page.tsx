@@ -61,14 +61,14 @@ export default function Markets() {
       <MarketCategories />
 
       {/* Popular Markets Section */}
-      <div className="mb-16">
+      <div className="mb-10">
         <div className="text-center mb-8">
           <p className="text-gray-400 mb-6">
             Browse all active prediction markets that offer the best trading
             opportunities
           </p>
           <div className="flex justify-center gap-4">
-            <button className="px-4 py-2 text-white border-b-2 border-purple-500">
+            <button className="px-2 py-2 text-white border-b-2 border-purple-500">
               Active Now
             </button>
 
@@ -76,19 +76,6 @@ export default function Markets() {
             {/* <button className="px-4 py-2 text-gray-400 hover:text-white transition-colors">
               All
             </button> */}
-
-            {/* refresh button */}
-            <button
-              onClick={loadMarkets}
-              className="p-2 rounded-full hover:bg-gray-800 transition"
-              title="Refresh Markets"
-            >
-              <RefreshCw
-                className={`w-6 h-6 ${
-                  loading ? "animate-spin text-purple-400" : "text-gray-400"
-                }`}
-              />
-            </button>
           </div>
         </div>
 

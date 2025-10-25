@@ -53,7 +53,7 @@
   font-weight: 500 !important;
   border: 1px solid var(--border) !important;
   transition: all 0.25s ease-in-out;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important; 
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important;
 }
 
 .wallet-adapter-button-trigger:hover {
@@ -62,9 +62,9 @@
     135deg,
     rgba(0, 212, 255, 0.04),
     rgba(255, 0, 150, 0.04)
-  ) !important; 
+  ) !important;
   border-color: rgba(0, 212, 255, 0.25) !important; /* soft cyan edge */
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06), 0 6px 14px rgba(0, 212, 255, 0.08) !important; 
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06), 0 6px 14px rgba(0, 212, 255, 0.08) !important;
 }
 
 :root {
@@ -143,4 +143,18 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* NProgress Custom Color */
+#nprogress .bar {
+  background: #a855f7 !important;
+  height: 3px;
+}
+
+#nprogress .peg {
+  box-shadow: 0 0 10px #a855f7, 0 0 5px #a855f7 !important;
+}
+
+#nprogress .spinner {
+  display: none !important; 
 }

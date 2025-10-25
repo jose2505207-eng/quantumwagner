@@ -8,7 +8,6 @@ import { BACKEND_URL } from "@/config";
 import { useMarketStore } from "@/store/adminMarketStore";
 import axios from "axios";
 import { motion } from "framer-motion";
-// import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -58,20 +57,9 @@ export default function Home() {
         {/* Hero Section */}
         <HeroSection />
 
-        {/* <div className="relative w-full my-16 rounded-2xl bg-gradient-to-b from-[#8B5CF6]/80 to-transparent">
-          <Image
-            src="/QuantumWager.png"
-            alt="Product Showcase"
-            width={1500}
-            height={500}
-            className="w-full h-auto object-contain"
-          />
-        </div> */}
-
         {loading ? (
           // Pleasant Loading State
           <div className="flex flex-col items-center justify-center py-20 gap-6">
-            <div className="animate-spin rounded-full h-14 w-14 border-4 border-purple-600 border-t-transparent"></div>
             <p className="text-gray-400 text-lg animate-pulse">
               Loading markets...
             </p>

@@ -17,7 +17,6 @@ import {
   Users,
   XCircle,
 } from "lucide-react";
-import { headers } from "next/headers";
 
 // Spinner loader
 const Spinner = () => (

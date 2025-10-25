@@ -6,6 +6,7 @@ import { SolanaProvider } from "../lib/SolanaProvider";
 import Footer from "@/components/Footer";
 import { WalletAuth } from "@/app/utils/walletAuth";
 import { Toaster } from "react-hot-toast";
+import RouteProgress from "./routeProgress";
 
 export const metadata: Metadata = {
   title: "Quantum Wager ",
@@ -23,6 +24,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className="relative bg-black text-white min-h-screen flex flex-col">
+        <RouteProgress />
         <Background />
         <SolanaProvider>
           <AppBar />
