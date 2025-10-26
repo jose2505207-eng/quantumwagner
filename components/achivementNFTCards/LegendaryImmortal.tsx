@@ -4,11 +4,13 @@ import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Lock } from "lucide-react";
 
-interface EpicWhaleProps {
+interface LegendaryImmortalProps {
   locked?: boolean;
 }
 
-export default function EpicWhale({ locked = false }: EpicWhaleProps) {
+export default function LegendaryImmortal({
+  locked = false,
+}: LegendaryImmortalProps) {
   return (
     <Card
       className="
@@ -24,23 +26,15 @@ export default function EpicWhale({ locked = false }: EpicWhaleProps) {
         flex flex-col justify-between
       "
     >
-      {/*  Top Gradient Glow Line */}
-      <div
-        className="absolute top-0 left-0 w-full h-[2px] rounded-t-[16px] shadow-[0_0_10px_#F6339A]"
-        style={{
-          background: "linear-gradient(90deg, #C27AFF 0%, #F6339A 100%)",
-        }}
-      />
-
       {/* Header */}
       <div className="flex justify-between items-center relative z-10 shrink-0">
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <div
               className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: "rgba(194, 122, 255, 1)" }}
+              style={{ backgroundColor: "rgba(255, 105, 0, 1)" }}
             />
-            <span className="text-[15px] font-medium text-[#C27AFF]">Epic</span>
+            <span className="text-[15px] font-medium text-[#FF6900]">Epic</span>
           </div>
         </div>
         <span className="text-[13px] text-gray-400">12mo ago</span>
@@ -50,17 +44,17 @@ export default function EpicWhale({ locked = false }: EpicWhaleProps) {
       <div className="flex flex-col items-center justify-center flex-1 relative z-10">
         <div className="relative w-[150px] h-[150px] mb-6">
           <Image
-            src="/whale.png" // your image path
+            src="/immortal.png"
             alt="Oracle"
             fill
             className="object-contain"
           />
         </div>
         <h2 className="text-[22px] font-bold tracking-wide text-white text-center">
-          WHALE
+          IMMORTAL
         </h2>
         <p className="text-[15px] text-gray-300 mt-1 text-center">
-          $1M+ Porfolio Value
+          100 Win Streak
         </p>
       </div>
 
@@ -77,33 +71,34 @@ export default function EpicWhale({ locked = false }: EpicWhaleProps) {
       >
         <div className="flex justify-between items-center mb-3">
           <span className="text-[15px] text-gray-200 font-medium">Rewards</span>
-          <span className="text-[13px] text-gray-500">3 perks</span>
+          <span className="text-[13px] text-gray-500">4 perks</span>
         </div>
         <ul className="space-y-2 text-[14px] text-gray-300">
           <li className="flex items-center gap-2">
             <div
               className="w-1.5 h-1.5 rounded-full"
-              style={{ backgroundColor: "rgba(194, 122, 255, 1)" }}
+              style={{ backgroundColor: "rgba(255, 105, 0, 1)" }}
             />
-            6% Fee Discount
+            10% Fee Discount
           </li>
           <li className="flex items-center gap-2">
             <div
               className="w-1.5 h-1.5 rounded-full"
-              style={{ backgroundColor: "rgba(194, 122, 255, 1)" }}
+              style={{ backgroundColor: "rgba(255, 105, 0, 1)" }}
             />
-            Whale Badge
+            Legendary Status
           </li>
           <li className="flex items-center gap-2">
             <div
               className="w-1.5 h-1.5 rounded-full"
-              style={{ backgroundColor: "rgba(194, 122, 255, 1)" }}
+              style={{ backgroundColor: "rgba(255, 105, 0, 1)" }}
             />
-            Priority Listings
+            All Features
           </li>
         </ul>
       </CardContent>
 
+      {/* Locked Overlay */}
       {locked && (
         <div
           className="
