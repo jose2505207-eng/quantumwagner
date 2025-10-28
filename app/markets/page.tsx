@@ -106,9 +106,18 @@ export default function Markets() {
               // calculate odds
               const yesPool = Number(market.yes_pool || 0);
               const noPool = Number(market.no_pool || 0);
-              const totalPool = yesPool + noPool || 1;
-              const yesOdds = Math.round((yesPool / totalPool) * 100);
-              const noOdds = 100 - yesOdds;
+
+              let yesOdds = 0;
+              let noOdds = 0;
+              let noBets = false;
+
+              if (yesPool === 0 && noPool === 0) {
+                noBets = true;
+              } else {
+                const totalPool = yesPool + noPool;
+                yesOdds = Math.round((yesPool / totalPool) * 100);
+                noOdds = 100 - yesOdds;
+              }
 
               return (
                 <Link

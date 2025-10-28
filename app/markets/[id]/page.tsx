@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import axios from "axios";
-import { useProgram } from "@/lib/useProgram";
+// import { useProgram } from "@/lib/useProgram";
 import { BACKEND_URL } from "@/config";
 import Methods from "@/app/contract_methods/methods";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
@@ -215,10 +215,18 @@ export default function MarketDetailPage() {
   // calculate odds
   const yesPool = lamportsToSol(market?.yes_pool);
   const noPool = lamportsToSol(market?.no_pool);
-  const totalPool = yesPool + noPool;
 
-  const yesPct = totalPool === 0 ? 0 : (yesPool / totalPool) * 100;
-  const noPct = 100 - yesPct;
+  let yesPct = 0;
+  let noPct = 0;
+  let noBets = false;
+
+  if (yesPool === 0 && noPool === 0) {
+    noBets = true;
+  } else {
+    const totalPool = yesPool + noPool;
+    yesPct = (yesPool / totalPool) * 100;
+    noPct = 100 - yesPct;
+  }
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-black text-white px-6 py-10 pt-24">

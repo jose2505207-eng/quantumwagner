@@ -68,6 +68,7 @@ export default function ActiveMarkets() {
   // Fetch markets
   const fetchMarkets = async () => {
     try {
+      setLoading(true);
       const res = await axios.get(`${BACKEND_URL}/api/admin/markets`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
@@ -86,6 +87,7 @@ export default function ActiveMarkets() {
     outcome?: "YES" | "NO"
   ) => {
     try {
+      setLoading(true);
       if (data.status === "RESOLVED" && pda && outcome) {
         const outcomeBool = outcome === "YES";
 
@@ -106,6 +108,7 @@ export default function ActiveMarkets() {
         await axios.put(`${BACKEND_URL}/api/admin/markets/${id}`, data, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
+
         toast.success(`${editing?.question} updated successfully`);
       }
 
@@ -113,11 +116,14 @@ export default function ActiveMarkets() {
     } catch (err) {
       console.error("handleUpdateMarket failed:", err);
       toast.error(`${err}`);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleCancelMarket = async (id: string, pda: string) => {
     try {
+      setLoading(true);
       setConfirmText("");
       await axios
         .delete(`${BACKEND_URL}/api/admin/markets/${id}`, {
@@ -132,6 +138,7 @@ export default function ActiveMarkets() {
         });
       fetchMarkets();
     } catch (err) {
+      setLoading(false);
       console.error("Failed to cancel market:", err);
     }
   };
@@ -146,6 +153,12 @@ export default function ActiveMarkets() {
 
   return (
     <Card className="border border-border bg-black/30 backdrop-blur-xl">
+      {loading && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="animate-spin h-12 w-12 border-4 border-t-transparent border-purple-500 rounded-full"></div>
+        </div>
+      )}
+
       {/* Filter Markets */}
       <CardHeader>
         <div className="flex justify-between items-center">
