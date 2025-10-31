@@ -17,6 +17,7 @@ import {
   Users,
   XCircle,
 } from "lucide-react";
+import ProfileCard from "@/components/custom/UserRepution";
 
 // Spinner loader
 const Spinner = () => (
@@ -144,6 +145,13 @@ export default function Portfolio() {
             )}
           </div>
         </div>
+
+        {/* Repution card */}
+        <ProfileCard
+          reputation_score={userInfo?.user.reputation_score || 0}
+          win_rate={userInfo?.user.win_rate || "error"}
+          battels_won={userInfo?.user.win_rate || "error"}
+        ></ProfileCard>
 
         {/* Positions Section */}
         <Tabs defaultValue="active" onValueChange={setTab} className="w-full">
