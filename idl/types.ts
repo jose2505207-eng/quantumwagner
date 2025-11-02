@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/prediction_market.json`.
  */
 export type PredictionMarket = {
-  "address": "3TECSe2FnZu94CmwpoRdTb25iV5uRUtu7Y81EpFrfXEe",
+  "address": "4Xy8ofd1k1vhn9ptx44G93ZiraUHrridKYQmtoY8i51U",
   "metadata": {
     "name": "predictionMarket",
     "version": "0.1.0",
@@ -237,6 +237,7 @@ export type PredictionMarket = {
         },
         {
           "name": "config",
+          "writable": true,
           "pda": {
             "seeds": [
               {
@@ -403,6 +404,29 @@ export type PredictionMarket = {
           }
         },
         {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "treasury",
+          "writable": true
+        },
+        {
           "name": "systemProgram",
           "address": "11111111111111111111111111111111"
         }
@@ -466,6 +490,19 @@ export type PredictionMarket = {
       ]
     },
     {
+      "name": "launchpadInitialized",
+      "discriminator": [
+        53,
+        108,
+        116,
+        169,
+        67,
+        140,
+        109,
+        98
+      ]
+    },
+    {
       "name": "marketCancelled",
       "discriminator": [
         139,
@@ -515,6 +552,58 @@ export type PredictionMarket = {
         140,
         112,
         162
+      ]
+    },
+    {
+      "name": "tokenLaunchCreated",
+      "discriminator": [
+        200,
+        177,
+        217,
+        82,
+        127,
+        93,
+        98,
+        216
+      ]
+    },
+    {
+      "name": "tokenMigrated",
+      "discriminator": [
+        109,
+        61,
+        145,
+        107,
+        50,
+        158,
+        28,
+        154
+      ]
+    },
+    {
+      "name": "tokenPurchased",
+      "discriminator": [
+        3,
+        73,
+        186,
+        50,
+        15,
+        181,
+        213,
+        37
+      ]
+    },
+    {
+      "name": "tokenSold",
+      "discriminator": [
+        88,
+        61,
+        1,
+        247,
+        185,
+        6,
+        252,
+        86
       ]
     },
     {
@@ -765,6 +854,59 @@ export type PredictionMarket = {
           },
           {
             "name": "userNoTotal",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "curveType",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "linear"
+          },
+          {
+            "name": "exponential"
+          },
+          {
+            "name": "logarithmic"
+          }
+        ]
+      }
+    },
+    {
+      "name": "launchpadInitialized",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "treasury",
+            "type": "pubkey"
+          },
+          {
+            "name": "platformFeeBps",
+            "type": "u16"
+          },
+          {
+            "name": "tokenTradingFeeBps",
+            "type": "u16"
+          },
+          {
+            "name": "battleFeeBps",
+            "type": "u16"
+          },
+          {
+            "name": "migrationThreshold",
+            "type": "u64"
+          },
+          {
+            "name": "battleEligibilityThreshold",
             "type": "u64"
           }
         ]
@@ -1080,12 +1222,88 @@ export type PredictionMarket = {
             "type": "u16"
           },
           {
-            "name": "minBetAmount",
+            "name": "tokenTradingFeeBps",
+            "type": "u16"
+          },
+          {
+            "name": "battleFeeBps",
+            "type": "u16"
+          },
+          {
+            "name": "creatorRoyaltyBps",
+            "type": "u16"
+          },
+          {
+            "name": "battleContributionBps",
+            "type": "u16"
+          },
+          {
+            "name": "minTokenCreationFee",
             "type": "u64"
           },
           {
-            "name": "maxBetAmount",
+            "name": "minTokenSupply",
             "type": "u64"
+          },
+          {
+            "name": "maxTokenSupply",
+            "type": "u64"
+          },
+          {
+            "name": "minInitialPrice",
+            "type": "u64"
+          },
+          {
+            "name": "creatorAllocationBps",
+            "type": "u16"
+          },
+          {
+            "name": "minLockDuration",
+            "type": "i64"
+          },
+          {
+            "name": "defaultCurveType",
+            "type": {
+              "defined": {
+                "name": "curveType"
+              }
+            }
+          },
+          {
+            "name": "curveSteepness",
+            "type": "u64"
+          },
+          {
+            "name": "migrationThreshold",
+            "type": "u64"
+          },
+          {
+            "name": "dexMigrationFee",
+            "type": "u64"
+          },
+          {
+            "name": "minLiquidityPercentage",
+            "type": "u16"
+          },
+          {
+            "name": "battleEligibilityThreshold",
+            "type": "u64"
+          },
+          {
+            "name": "minBattleDuration",
+            "type": "i64"
+          },
+          {
+            "name": "maxBattleDuration",
+            "type": "i64"
+          },
+          {
+            "name": "minBattlePool",
+            "type": "u64"
+          },
+          {
+            "name": "maxTokensPerBattleSide",
+            "type": "u8"
           },
           {
             "name": "marketCreationFee",
@@ -1100,12 +1318,68 @@ export type PredictionMarket = {
             "type": "i64"
           },
           {
-            "name": "emergencyPause",
-            "type": "bool"
+            "name": "marketCreationReputation",
+            "type": "u64"
+          },
+          {
+            "name": "battleCreationReputation",
+            "type": "u64"
+          },
+          {
+            "name": "minBetAmount",
+            "type": "u64"
+          },
+          {
+            "name": "maxBetAmount",
+            "type": "u64"
           },
           {
             "name": "treasury",
             "type": "pubkey"
+          },
+          {
+            "name": "battlePoolVault",
+            "type": "pubkey"
+          },
+          {
+            "name": "royaltyVault",
+            "type": "pubkey"
+          },
+          {
+            "name": "emergencyPause",
+            "type": "bool"
+          },
+          {
+            "name": "tokenCreationEnabled",
+            "type": "bool"
+          },
+          {
+            "name": "battleCreationEnabled",
+            "type": "bool"
+          },
+          {
+            "name": "marketCreationEnabled",
+            "type": "bool"
+          },
+          {
+            "name": "nextLaunchId",
+            "type": "u64"
+          },
+          {
+            "name": "nextBattleId",
+            "type": "u64"
+          },
+          {
+            "name": "nextMarketId",
+            "type": "u64"
+          },
+          {
+            "name": "totalTokensCreated",
+            "type": "u64"
+          },
+          {
+            "name": "totalBattles",
+            "type": "u64"
           },
           {
             "name": "totalMarkets",
@@ -1117,10 +1391,6 @@ export type PredictionMarket = {
           },
           {
             "name": "totalFeesCollected",
-            "type": "u64"
-          },
-          {
-            "name": "nextMarketId",
             "type": "u64"
           }
         ]
@@ -1142,6 +1412,182 @@ export type PredictionMarket = {
           {
             "name": "platformFeeBps",
             "type": "u16"
+          }
+        ]
+      }
+    },
+    {
+      "name": "tokenLaunchCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "launchId",
+            "type": "u64"
+          },
+          {
+            "name": "tokenMint",
+            "type": "pubkey"
+          },
+          {
+            "name": "creator",
+            "type": "pubkey"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "symbol",
+            "type": "string"
+          },
+          {
+            "name": "initialPrice",
+            "type": "u64"
+          },
+          {
+            "name": "totalSupply",
+            "type": "u64"
+          },
+          {
+            "name": "bondingCurveType",
+            "type": {
+              "defined": {
+                "name": "curveType"
+              }
+            }
+          },
+          {
+            "name": "creatorAllocation",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "tokenMigrated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "launchId",
+            "type": "u64"
+          },
+          {
+            "name": "tokenMint",
+            "type": "pubkey"
+          },
+          {
+            "name": "dexPool",
+            "type": "pubkey"
+          },
+          {
+            "name": "liquiditySol",
+            "type": "u64"
+          },
+          {
+            "name": "liquidityTokens",
+            "type": "u64"
+          },
+          {
+            "name": "migrationFee",
+            "type": "u64"
+          },
+          {
+            "name": "finalMarketCap",
+            "type": "u64"
+          },
+          {
+            "name": "migratedAt",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "tokenPurchased",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "launchId",
+            "type": "u64"
+          },
+          {
+            "name": "buyer",
+            "type": "pubkey"
+          },
+          {
+            "name": "tokenAmount",
+            "type": "u64"
+          },
+          {
+            "name": "solCost",
+            "type": "u64"
+          },
+          {
+            "name": "tradingFee",
+            "type": "u64"
+          },
+          {
+            "name": "totalCost",
+            "type": "u64"
+          },
+          {
+            "name": "newPrice",
+            "type": "u64"
+          },
+          {
+            "name": "newMarketCap",
+            "type": "u64"
+          },
+          {
+            "name": "circulatingSupply",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "tokenSold",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "launchId",
+            "type": "u64"
+          },
+          {
+            "name": "seller",
+            "type": "pubkey"
+          },
+          {
+            "name": "tokenAmount",
+            "type": "u64"
+          },
+          {
+            "name": "solReturn",
+            "type": "u64"
+          },
+          {
+            "name": "tradingFee",
+            "type": "u64"
+          },
+          {
+            "name": "netSolReturn",
+            "type": "u64"
+          },
+          {
+            "name": "newPrice",
+            "type": "u64"
+          },
+          {
+            "name": "newMarketCap",
+            "type": "u64"
+          },
+          {
+            "name": "circulatingSupply",
+            "type": "u64"
           }
         ]
       }

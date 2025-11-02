@@ -3,7 +3,7 @@ import { AnchorProvider, Program } from "@coral-xyz/anchor";
 import { useAnchorWallet } from "@solana/wallet-adapter-react";
 import { Connection } from "@solana/web3.js";
 import idl from "@/idl/prediction_market.json";
-import type { PredictionMarket } from "@/lib/types"
+import type { PredictionMarket } from "@/idl/types"
 
 export function useProgram() {
     const wallet = useAnchorWallet();

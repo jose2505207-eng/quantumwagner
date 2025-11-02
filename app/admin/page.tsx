@@ -29,6 +29,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import Methods from "../contract_methods/methods";
 
 const navItems = [
   { name: "Dashboard", icon: LayoutDashboard },
@@ -43,6 +44,8 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [editingUser, setEditingUser] = useState<User | null>(null);
+
+  const { initProgram } = Methods();
 
   useEffect(() => {
     const fetchAllUsers = async () => {
@@ -81,7 +84,6 @@ export default function AdminDashboard() {
         )
       );
       setEditingUser(null);
-
     } catch (err: any) {
       console.log(err.response?.data || err);
       toast.error(`${err.response?.data?.message || "Unknown error"}`);
@@ -156,6 +158,15 @@ export default function AdminDashboard() {
           </Button>
         ))}
       </aside>
+
+      {/* for  init plateform  */}
+{/* 
+      <Button
+        className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-medium px-5 py-2 rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
+        onClick={initProgram}
+      >
+        Init Platform
+      </Button> */}
 
       {/* Main */}
       <main className="flex-1 p-4 pb-20 md:pb-4">

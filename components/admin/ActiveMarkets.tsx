@@ -125,6 +125,8 @@ export default function ActiveMarkets() {
     try {
       setLoading(true);
       setConfirmText("");
+
+
       await axios
         .delete(`${BACKEND_URL}/api/admin/markets/${id}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -333,9 +335,7 @@ export default function ActiveMarkets() {
                                 <SelectItem value={MarketStatus.RESOLVED}>
                                   RESOLVED
                                 </SelectItem>
-                                <SelectItem value={MarketStatus.CANCELLED}>
-                                  CANCELLED
-                                </SelectItem>
+                                
                               </SelectContent>
                             </Select>
 

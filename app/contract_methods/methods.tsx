@@ -3,35 +3,42 @@
 import { PublicKey, SystemProgram } from "@solana/web3.js";
 import { useProgram } from "@/lib/useProgram";
 import * as anchor from "@coral-xyz/anchor";
-import { treasury, emergencyAdmin, getConfigPDA } from "@/config";
+import {
+  treasury,
+  emergencyAdmin,
+  platformFeeBps,
+  minBetAmount,
+  maxBetAmount,
+  marketCreationFee,
+  minMarketDuration,
+  maxMarketDuration,
+  PROGRAM_ID,
+} from "@/config";
+
 import toast from "react-hot-toast";
 
 export default function Methods() {
   const program = useProgram();
-  const configPDA = getConfigPDA();
 
   const initProgram = async () => {
     if (!program) {
-      console.error("Program not ready");
+      toast.error("Please connect wallet!");
       return;
     }
 
     const admin = program.provider.publicKey;
     if (!admin) {
-      console.error("Wallet not connected");
+      toast.error("Wallet not connected");
       return;
     }
-
-    const platformFeeBps = 1000; // 5%
-    const minBetAmount = new anchor.BN(10_000_000);
-    const maxBetAmount = new anchor.BN(1_000_000_000);
-    const marketCreationFee = new anchor.BN(0);
-    const minMarketDuration = new anchor.BN(60); // 1 min
-    const maxMarketDuration = new anchor.BN(604800); // 7 days
+    const [configPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from("config")],
+      PROGRAM_ID
+    );
 
     try {
       const configAccount = await program.account.platformConfig.fetch(
-        await configPDA
+        configPDA
       );
       console.log("Config account exists:", configAccount);
     } catch (err) {
@@ -56,13 +63,13 @@ export default function Methods() {
           emergencyAdmin,
           systemProgram: SystemProgram.programId,
         })
-        .rpc();
+        .rpc({ skipPreflight: false, preflightCommitment: "confirmed" });
 
-      console.log("✅ Platform initialized! Transaction:", tx);
+      toast.success(`Platform initialized! Transaction :  ${tx}`);
+      console.log(`Platform initialized! Transaction : `, tx);
       return tx;
     } catch (err) {
-      console.error("❌ Error initializing platform:", err);
-      throw err;
+      console.error(" Error initializing platform:", err);
     }
   };
 
@@ -82,23 +89,27 @@ export default function Methods() {
     imageUrl?: string | null;
   }) => {
     if (!program) {
-      console.error("Program not ready");
+      toast.error("Program not ready");
       return;
     }
 
     const creator = program.provider.publicKey;
     if (!creator) {
-      console.error("wallet not connected");
+      toast.error("wallet not connected");
       return;
     }
 
-    // fetching Market PDA
-    // You’ll need to fetch config.next_market_id first
-    const configAccount = await program.account.platformConfig.fetch(
-      await configPDA
+    // 🧩 Derive config PDA
+
+    const [configPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from("config")],
+      PROGRAM_ID
     );
+
+    const configAccount = await program.account.platformConfig.fetch(configPDA);
     const nextMarketId = configAccount.nextMarketId.toNumber();
 
+    // 🧩 Derive market PDA using nextMarketId
     const [marketPDA] = PublicKey.findProgramAddressSync(
       [
         Buffer.from("market"),
@@ -106,6 +117,14 @@ export default function Methods() {
       ],
       program.programId
     );
+
+    console.log("🧠 Creating market...");
+    console.table({
+      creator: creator.toBase58(),
+      config: configPDA.toBase58(),
+      market: marketPDA.toBase58(),
+      treasury: configAccount.treasury.toBase58(),
+    });
 
     try {
       const tx = await program.methods
@@ -124,7 +143,7 @@ export default function Methods() {
           treasury: configAccount.treasury,
           systemProgram: SystemProgram.programId,
         })
-        .rpc();
+        .rpc({ skipPreflight: false, preflightCommitment: "confirmed" });
 
       console.log(
         "✅ Market initialized! Tx:",
@@ -132,9 +151,14 @@ export default function Methods() {
         "Market PDA:",
         marketPDA.toBase58()
       );
+
+      toast.success("Market created succssfully!");
       return marketPDA.toBase58();
-    } catch (err) {
+    } catch (err: any) {
       console.error("❌ Error initializing market:", err);
+      if (err instanceof anchor.AnchorError)
+        toast.error(`AnchorError: ${err.error.errorMessage}`);
+      else toast.error("Market creation failed");
       throw err;
     }
   };
@@ -148,6 +172,16 @@ export default function Methods() {
 
     const user = program.provider.publicKey;
     if (!user) throw new Error("Wallet not connected");
+
+    const [configPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from("config")],
+      PROGRAM_ID
+    );
+
+    //  Fetch config to get treasury address
+
+    const configAccount = await program.account.platformConfig.fetch(configPDA);
+    const treasury = configAccount.treasury;
 
     // Derive UserPosition PDA
     const [userPositionPDA] = anchor.web3.PublicKey.findProgramAddressSync(
@@ -163,11 +197,13 @@ export default function Methods() {
           config: configPDA,
           market: marketPDA,
           userPosition: userPositionPDA,
+          treasury,
           systemProgram: SystemProgram.programId,
         })
-        .rpc();
+        .rpc({ skipPreflight: false, preflightCommitment: "confirmed" });
 
       toast.success("Bet placed successfully");
+      console.log("✅ Bet placed TX:", tx);
       return tx;
     } catch (err: any) {
       console.error("Error placing bet:", err);
@@ -189,7 +225,7 @@ export default function Methods() {
           admin,
           market: marketPDA,
         })
-        .rpc();
+        .rpc({ skipPreflight: false, preflightCommitment: "confirmed" });
       console.log("✅ Market cancelled! Tx:", tx);
     } catch (err) {
       console.error("❌ Error cancelling market:", err);
@@ -212,7 +248,7 @@ export default function Methods() {
           admin,
           market: marketPDA,
         })
-        .rpc();
+        .rpc({ skipPreflight: false, preflightCommitment: "confirmed" });
 
       console.log("✅ Market settled. Tx:", tx);
       return tx;
@@ -221,11 +257,21 @@ export default function Methods() {
       throw err;
     }
   };
+
   const withdrawWinnings = async (marketPDA: PublicKey) => {
     if (!program) throw new Error("Program not ready");
 
     const user = program.provider.publicKey;
     if (!user) throw new Error("Wallet not connected");
+
+    const [configPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from("config")],
+      program.programId
+    );
+
+    // Fetch config to get treasury
+    const configAccount = await program.account.platformConfig.fetch(configPDA);
+    const treasury = configAccount.treasury;
 
     // Derive UserPosition PDA
     const [userPositionPDA] = PublicKey.findProgramAddressSync(
@@ -239,10 +285,12 @@ export default function Methods() {
         .accounts({
           user,
           market: marketPDA,
-          user_position: userPositionPDA, // match IDL exactly
-          system_program: SystemProgram.programId,
+          userPosition: userPositionPDA,
+          config: configPDA,
+          treasury,
+          systemProgram: SystemProgram.programId,
         })
-        .rpc();
+        .rpc({ skipPreflight: false, preflightCommitment: "confirmed" });
 
       console.log("✅ Winnings withdrawn. Tx:", tx);
       return tx;

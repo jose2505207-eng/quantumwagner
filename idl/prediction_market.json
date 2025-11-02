@@ -1,5 +1,5 @@
 {
-  "address": "3TECSe2FnZu94CmwpoRdTb25iV5uRUtu7Y81EpFrfXEe",
+  "address": "E2cK464TgkSX1VWr3r95FX4kiS5zuYiaberVJvGQBBpy",
   "metadata": {
     "name": "prediction_market",
     "version": "0.1.0",
@@ -231,6 +231,7 @@
         },
         {
           "name": "config",
+          "writable": true,
           "pda": {
             "seeds": [
               {
@@ -316,6 +317,7 @@
         }
       ]
     },
+    
     {
       "name": "settle_market",
       "discriminator": [
@@ -397,6 +399,29 @@
           }
         },
         {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "treasury",
+          "writable": true
+        },
+        {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
         }
@@ -460,6 +485,19 @@
       ]
     },
     {
+      "name": "LaunchpadInitialized",
+      "discriminator": [
+        53,
+        108,
+        116,
+        169,
+        67,
+        140,
+        109,
+        98
+      ]
+    },
+    {
       "name": "MarketCancelled",
       "discriminator": [
         139,
@@ -509,6 +547,58 @@
         140,
         112,
         162
+      ]
+    },
+    {
+      "name": "TokenLaunchCreated",
+      "discriminator": [
+        200,
+        177,
+        217,
+        82,
+        127,
+        93,
+        98,
+        216
+      ]
+    },
+    {
+      "name": "TokenMigrated",
+      "discriminator": [
+        109,
+        61,
+        145,
+        107,
+        50,
+        158,
+        28,
+        154
+      ]
+    },
+    {
+      "name": "TokenPurchased",
+      "discriminator": [
+        3,
+        73,
+        186,
+        50,
+        15,
+        181,
+        213,
+        37
+      ]
+    },
+    {
+      "name": "TokenSold",
+      "discriminator": [
+        88,
+        61,
+        1,
+        247,
+        185,
+        6,
+        252,
+        86
       ]
     },
     {
@@ -759,6 +849,59 @@
           },
           {
             "name": "user_no_total",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CurveType",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Linear"
+          },
+          {
+            "name": "Exponential"
+          },
+          {
+            "name": "Logarithmic"
+          }
+        ]
+      }
+    },
+    {
+      "name": "LaunchpadInitialized",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "treasury",
+            "type": "pubkey"
+          },
+          {
+            "name": "platform_fee_bps",
+            "type": "u16"
+          },
+          {
+            "name": "token_trading_fee_bps",
+            "type": "u16"
+          },
+          {
+            "name": "battle_fee_bps",
+            "type": "u16"
+          },
+          {
+            "name": "migration_threshold",
+            "type": "u64"
+          },
+          {
+            "name": "battle_eligibility_threshold",
             "type": "u64"
           }
         ]
@@ -1074,12 +1217,88 @@
             "type": "u16"
           },
           {
-            "name": "min_bet_amount",
+            "name": "token_trading_fee_bps",
+            "type": "u16"
+          },
+          {
+            "name": "battle_fee_bps",
+            "type": "u16"
+          },
+          {
+            "name": "creator_royalty_bps",
+            "type": "u16"
+          },
+          {
+            "name": "battle_contribution_bps",
+            "type": "u16"
+          },
+          {
+            "name": "min_token_creation_fee",
             "type": "u64"
           },
           {
-            "name": "max_bet_amount",
+            "name": "min_token_supply",
             "type": "u64"
+          },
+          {
+            "name": "max_token_supply",
+            "type": "u64"
+          },
+          {
+            "name": "min_initial_price",
+            "type": "u64"
+          },
+          {
+            "name": "creator_allocation_bps",
+            "type": "u16"
+          },
+          {
+            "name": "min_lock_duration",
+            "type": "i64"
+          },
+          {
+            "name": "default_curve_type",
+            "type": {
+              "defined": {
+                "name": "CurveType"
+              }
+            }
+          },
+          {
+            "name": "curve_steepness",
+            "type": "u64"
+          },
+          {
+            "name": "migration_threshold",
+            "type": "u64"
+          },
+          {
+            "name": "dex_migration_fee",
+            "type": "u64"
+          },
+          {
+            "name": "min_liquidity_percentage",
+            "type": "u16"
+          },
+          {
+            "name": "battle_eligibility_threshold",
+            "type": "u64"
+          },
+          {
+            "name": "min_battle_duration",
+            "type": "i64"
+          },
+          {
+            "name": "max_battle_duration",
+            "type": "i64"
+          },
+          {
+            "name": "min_battle_pool",
+            "type": "u64"
+          },
+          {
+            "name": "max_tokens_per_battle_side",
+            "type": "u8"
           },
           {
             "name": "market_creation_fee",
@@ -1094,12 +1313,68 @@
             "type": "i64"
           },
           {
-            "name": "emergency_pause",
-            "type": "bool"
+            "name": "market_creation_reputation",
+            "type": "u64"
+          },
+          {
+            "name": "battle_creation_reputation",
+            "type": "u64"
+          },
+          {
+            "name": "min_bet_amount",
+            "type": "u64"
+          },
+          {
+            "name": "max_bet_amount",
+            "type": "u64"
           },
           {
             "name": "treasury",
             "type": "pubkey"
+          },
+          {
+            "name": "battle_pool_vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "royalty_vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "emergency_pause",
+            "type": "bool"
+          },
+          {
+            "name": "token_creation_enabled",
+            "type": "bool"
+          },
+          {
+            "name": "battle_creation_enabled",
+            "type": "bool"
+          },
+          {
+            "name": "market_creation_enabled",
+            "type": "bool"
+          },
+          {
+            "name": "next_launch_id",
+            "type": "u64"
+          },
+          {
+            "name": "next_battle_id",
+            "type": "u64"
+          },
+          {
+            "name": "next_market_id",
+            "type": "u64"
+          },
+          {
+            "name": "total_tokens_created",
+            "type": "u64"
+          },
+          {
+            "name": "total_battles",
+            "type": "u64"
           },
           {
             "name": "total_markets",
@@ -1111,10 +1386,6 @@
           },
           {
             "name": "total_fees_collected",
-            "type": "u64"
-          },
-          {
-            "name": "next_market_id",
             "type": "u64"
           }
         ]
@@ -1136,6 +1407,182 @@
           {
             "name": "platform_fee_bps",
             "type": "u16"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TokenLaunchCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "launch_id",
+            "type": "u64"
+          },
+          {
+            "name": "token_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "creator",
+            "type": "pubkey"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "symbol",
+            "type": "string"
+          },
+          {
+            "name": "initial_price",
+            "type": "u64"
+          },
+          {
+            "name": "total_supply",
+            "type": "u64"
+          },
+          {
+            "name": "bonding_curve_type",
+            "type": {
+              "defined": {
+                "name": "CurveType"
+              }
+            }
+          },
+          {
+            "name": "creator_allocation",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TokenMigrated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "launch_id",
+            "type": "u64"
+          },
+          {
+            "name": "token_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "dex_pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "liquidity_sol",
+            "type": "u64"
+          },
+          {
+            "name": "liquidity_tokens",
+            "type": "u64"
+          },
+          {
+            "name": "migration_fee",
+            "type": "u64"
+          },
+          {
+            "name": "final_market_cap",
+            "type": "u64"
+          },
+          {
+            "name": "migrated_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TokenPurchased",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "launch_id",
+            "type": "u64"
+          },
+          {
+            "name": "buyer",
+            "type": "pubkey"
+          },
+          {
+            "name": "token_amount",
+            "type": "u64"
+          },
+          {
+            "name": "sol_cost",
+            "type": "u64"
+          },
+          {
+            "name": "trading_fee",
+            "type": "u64"
+          },
+          {
+            "name": "total_cost",
+            "type": "u64"
+          },
+          {
+            "name": "new_price",
+            "type": "u64"
+          },
+          {
+            "name": "new_market_cap",
+            "type": "u64"
+          },
+          {
+            "name": "circulating_supply",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TokenSold",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "launch_id",
+            "type": "u64"
+          },
+          {
+            "name": "seller",
+            "type": "pubkey"
+          },
+          {
+            "name": "token_amount",
+            "type": "u64"
+          },
+          {
+            "name": "sol_return",
+            "type": "u64"
+          },
+          {
+            "name": "trading_fee",
+            "type": "u64"
+          },
+          {
+            "name": "net_sol_return",
+            "type": "u64"
+          },
+          {
+            "name": "new_price",
+            "type": "u64"
+          },
+          {
+            "name": "new_market_cap",
+            "type": "u64"
+          },
+          {
+            "name": "circulating_supply",
+            "type": "u64"
           }
         ]
       }

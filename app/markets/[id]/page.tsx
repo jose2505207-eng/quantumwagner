@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import axios from "axios";
-// import { useProgram } from "@/lib/useProgram";
 import { BACKEND_URL } from "@/config";
 import Methods from "@/app/contract_methods/methods";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
@@ -76,7 +75,6 @@ export default function MarketDetailPage() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
   const [hasBet, setHasBet] = useState(false);
-  // const program = useProgram();
   const [betting, setBetting] = useState(false);
   const [solBal, setSolBal] = useState<number>(0);
   const { publicKey } = useWallet();
@@ -84,14 +82,7 @@ export default function MarketDetailPage() {
   const [selected, setSelected] = useState<"yes" | "no" | null>(null);
   const [amount, setAmount] = useState("");
   const [betResult, setBetResult] = useState<any | null>(null);
-  const {
-    // initProgram,
-    placeBet,
-    // initMarket,
-    // cancelMarket,
-    // settleMarket,
-    // withdrawWinnings,
-  } = Methods();
+  const { placeBet } = Methods();
 
   const handleBet = async () => {
     if (betting) return;
@@ -152,17 +143,6 @@ export default function MarketDetailPage() {
     } finally {
       setBetting(false);
     }
-
-    // settleMarket(
-    //   new PublicKey("5KZeFdhGbVzHCYrmcgo4fwTBxfzknyQsMdupoK3QJJPX"),
-    //   false
-    // );
-
-    // initProgram();
-
-    // withdrawWinnings(
-    //   new PublicKey("HZAkVKFzwbkQuzvEA65xL9e2HostX7VwH2upoFcdkLdN")
-    // );
   };
 
   useEffect(() => {
