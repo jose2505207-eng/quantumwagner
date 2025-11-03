@@ -18,7 +18,8 @@ import {
 } from "@solana/spl-token";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import Image from "next/image";
-
+import Methods, { createToeknParams } from "../contract_methods/methods";
+import { CurveTypes } from "@/config";
 const TOKEN_2022_PROGRAM_ID = new PublicKey(
   "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
 );
@@ -44,114 +45,119 @@ export default function LaunchPage() {
   const [status, setStatus] = useState<string>("Idle");
   const [mintPubkey, setMintPubkey] = useState<string | null>(null);
   const [deploying, setDeploying] = useState(false);
-
+  const { createTokenLaunch } = Methods();
   async function handleCreateToken() {
-    try {
-      if (!wallet.connected || !wallet.publicKey || !wallet.signTransaction) {
-        setStatus("Please connect your wallet (Phantom).");
-        return;
-      }
+    // try {
+    //   if (!wallet.connected || !wallet.publicKey || !wallet.signTransaction) {
+    //     setStatus("Please connect your wallet (Phantom).");
+    //     return;
+    //   }
+    //   setDeploying(true);
+    //   setStatus("Preparing mint account...");
+    //   const payerPubkey = wallet.publicKey;
+    //   const mintKeypair = Keypair.generate();
+    //   const mintRent = await getMinimumBalanceForRentExemptMint(connection);
+    //   const tx = new Transaction();
+    //   tx.add(
+    //     SystemProgram.createAccount({
+    //       fromPubkey: payerPubkey,
+    //       newAccountPubkey: mintKeypair.publicKey,
+    //       space: 82,
+    //       lamports: mintRent,
+    //       programId: TOKEN_2022_PROGRAM_ID,
+    //     })
+    //   );
+    //   // signer = mint authority, no freeze authority => mintable only by signer
+    //   tx.add(
+    //     createInitializeMintInstruction(
+    //       mintKeypair.publicKey,
+    //       decimals,
+    //       payerPubkey,
+    //       null,
+    //       TOKEN_2022_PROGRAM_ID
+    //     )
+    //   );
+    //   tx.feePayer = payerPubkey;
+    //   tx.recentBlockhash = (
+    //     await connection.getLatestBlockhash("finalized")
+    //   ).blockhash;
+    //   setStatus("Requesting wallet signature...");
+    //   const signedByWallet = await wallet.signTransaction!(tx);
+    //   signedByWallet.partialSign(mintKeypair);
+    //   setStatus("Creating mint...");
+    //   const txid = await connection.sendRawTransaction(
+    //     signedByWallet.serialize()
+    //   );
+    //   await connection.confirmTransaction(txid, "finalized");
+    //   setMintPubkey(mintKeypair.publicKey.toBase58());
+    //   setStatus(`Mint created: ${mintKeypair.publicKey.toBase58()}`);
+    //   const ata = await getAssociatedTokenAddress(
+    //     mintKeypair.publicKey,
+    //     payerPubkey,
+    //     false,
+    //     TOKEN_2022_PROGRAM_ID,
+    //     ASSOCIATED_TOKEN_PROGRAM_ID
+    //   );
+    //   const mintTx = new Transaction();
+    //   mintTx.feePayer = payerPubkey;
+    //   mintTx.recentBlockhash = (
+    //     await connection.getLatestBlockhash("finalized")
+    //   ).blockhash;
+    //   const ataInfo = await connection.getAccountInfo(ata);
+    //   if (!ataInfo) {
+    //     mintTx.add(
+    //       createAssociatedTokenAccountInstruction(
+    //         payerPubkey,
+    //         ata,
+    //         payerPubkey,
+    //         mintKeypair.publicKey,
+    //         TOKEN_2022_PROGRAM_ID,
+    //         ASSOCIATED_TOKEN_PROGRAM_ID
+    //       )
+    //     );
+    //   }
+    //   const amountToMint = BigInt(supply) * BigInt(10 ** decimals);
+    //   mintTx.add(
+    //     createMintToInstruction(
+    //       mintKeypair.publicKey,
+    //       ata,
+    //       payerPubkey,
+    //       amountToMint,
+    //       [],
+    //       TOKEN_2022_PROGRAM_ID
+    //     )
+    //   );
+    //   const signedMintTx = await wallet.signTransaction!(mintTx);
+    //   const mintTxid = await connection.sendRawTransaction(
+    //     signedMintTx.serialize()
+    //   );
+    //   await connection.confirmTransaction(mintTxid, "finalized");
+    //   setStatus("Minted initial supply to your wallet.");
+    // } catch (err: any) {
+    //   console.error(err);
+    //   setStatus("Error: " + (err?.message || String(err)));
+    // } finally {
+    //   setDeploying(false);
+    // }
 
-      setDeploying(true);
-      setStatus("Preparing mint account...");
+    const data: createToeknParams = {
+      name: "AD",
+      symbol: "AD",
+      description: "Demo token",
+      imageUrl:
+        "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
+      socialLinks: {
+        website: "https://github.com/akash-wt",
+        twitter: "https://twitter.com/example",
+        telegram: "https://t.me/example",
+      },
+      initialPrice: 100000000,
+      totalSupply: 1_000_000,
+      CurveTypes: "linear", //
+      tags: ["defi", "utility"],
+    };
 
-      const payerPubkey = wallet.publicKey;
-      const mintKeypair = Keypair.generate();
-      const mintRent = await getMinimumBalanceForRentExemptMint(connection);
-
-      const tx = new Transaction();
-      tx.add(
-        SystemProgram.createAccount({
-          fromPubkey: payerPubkey,
-          newAccountPubkey: mintKeypair.publicKey,
-          space: 82,
-          lamports: mintRent,
-          programId: TOKEN_2022_PROGRAM_ID,
-        })
-      );
-
-      // signer = mint authority, no freeze authority => mintable only by signer
-      tx.add(
-        createInitializeMintInstruction(
-          mintKeypair.publicKey,
-          decimals,
-          payerPubkey,
-          null,
-          TOKEN_2022_PROGRAM_ID
-        )
-      );
-
-      tx.feePayer = payerPubkey;
-      tx.recentBlockhash = (
-        await connection.getLatestBlockhash("finalized")
-      ).blockhash;
-
-      setStatus("Requesting wallet signature...");
-      const signedByWallet = await wallet.signTransaction!(tx);
-      signedByWallet.partialSign(mintKeypair);
-
-      setStatus("Creating mint...");
-      const txid = await connection.sendRawTransaction(
-        signedByWallet.serialize()
-      );
-      await connection.confirmTransaction(txid, "finalized");
-
-      setMintPubkey(mintKeypair.publicKey.toBase58());
-      setStatus(`Mint created: ${mintKeypair.publicKey.toBase58()}`);
-
-      const ata = await getAssociatedTokenAddress(
-        mintKeypair.publicKey,
-        payerPubkey,
-        false,
-        TOKEN_2022_PROGRAM_ID,
-        ASSOCIATED_TOKEN_PROGRAM_ID
-      );
-
-      const mintTx = new Transaction();
-      mintTx.feePayer = payerPubkey;
-      mintTx.recentBlockhash = (
-        await connection.getLatestBlockhash("finalized")
-      ).blockhash;
-
-      const ataInfo = await connection.getAccountInfo(ata);
-      if (!ataInfo) {
-        mintTx.add(
-          createAssociatedTokenAccountInstruction(
-            payerPubkey,
-            ata,
-            payerPubkey,
-            mintKeypair.publicKey,
-            TOKEN_2022_PROGRAM_ID,
-            ASSOCIATED_TOKEN_PROGRAM_ID
-          )
-        );
-      }
-
-      const amountToMint = BigInt(supply) * BigInt(10 ** decimals);
-      mintTx.add(
-        createMintToInstruction(
-          mintKeypair.publicKey,
-          ata,
-          payerPubkey,
-          amountToMint,
-          [],
-          TOKEN_2022_PROGRAM_ID
-        )
-      );
-
-      const signedMintTx = await wallet.signTransaction!(mintTx);
-      const mintTxid = await connection.sendRawTransaction(
-        signedMintTx.serialize()
-      );
-      await connection.confirmTransaction(mintTxid, "finalized");
-
-      setStatus("Minted initial supply to your wallet.");
-    } catch (err: any) {
-      console.error(err);
-      setStatus("Error: " + (err?.message || String(err)));
-    } finally {
-      setDeploying(false);
-    }
+    await createTokenLaunch(data);
   }
 
   return (

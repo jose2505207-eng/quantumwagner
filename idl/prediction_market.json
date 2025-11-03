@@ -8,6 +8,236 @@
   },
   "instructions": [
     {
+      "name": "buy_token",
+      "discriminator": [
+        138,
+        127,
+        14,
+        91,
+        38,
+        87,
+        115,
+        105
+      ],
+      "accounts": [
+        {
+          "name": "buyer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  116,
+                  102,
+                  111,
+                  114,
+                  109,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_launch",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  111,
+                  107,
+                  101,
+                  110,
+                  95,
+                  108,
+                  97,
+                  117,
+                  110,
+                  99,
+                  104
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "token_launch.launch_id",
+                "account": "TokenLaunch"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_vault",
+          "writable": true
+        },
+        {
+          "name": "sol_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  111,
+                  108,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "token_launch"
+              }
+            ]
+          }
+        },
+        {
+          "name": "buyer_token_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "buyer"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "token_mint"
+        },
+        {
+          "name": "treasury",
+          "writable": true
+        },
+        {
+          "name": "royalty_vault",
+          "writable": true
+        },
+        {
+          "name": "battle_pool_vault",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "token_amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
       "name": "cancel_market",
       "discriminator": [
         205,
@@ -30,6 +260,571 @@
         }
       ],
       "args": []
+    },
+    {
+      "name": "claim_creator_tokens",
+      "discriminator": [
+        126,
+        208,
+        113,
+        43,
+        222,
+        70,
+        91,
+        48
+      ],
+      "accounts": [
+        {
+          "name": "creator",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "token_launch",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  111,
+                  107,
+                  101,
+                  110,
+                  95,
+                  108,
+                  97,
+                  117,
+                  110,
+                  99,
+                  104
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "token_launch.launch_id",
+                "account": "TokenLaunch"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_mint"
+        },
+        {
+          "name": "token_vault",
+          "writable": true
+        },
+        {
+          "name": "creator_token_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "creator"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "create_token_launch",
+      "discriminator": [
+        93,
+        87,
+        58,
+        126,
+        88,
+        75,
+        172,
+        233
+      ],
+      "accounts": [
+        {
+          "name": "creator",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  116,
+                  102,
+                  111,
+                  114,
+                  109,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_launch",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  111,
+                  107,
+                  101,
+                  110,
+                  95,
+                  108,
+                  97,
+                  117,
+                  110,
+                  99,
+                  104
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "config.next_launch_id",
+                "account": "PlatformConfig"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_mint",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  111,
+                  107,
+                  101,
+                  110,
+                  95,
+                  109,
+                  105,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "token_launch"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  111,
+                  107,
+                  101,
+                  110,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "token_launch"
+              }
+            ]
+          }
+        },
+        {
+          "name": "sol_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  111,
+                  108,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "token_launch"
+              }
+            ]
+          }
+        },
+        {
+          "name": "treasury",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "rent",
+          "address": "SysvarRent111111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "symbol",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "name": "image_uri",
+          "type": "string"
+        },
+        {
+          "name": "social_links",
+          "type": {
+            "defined": {
+              "name": "SocialLinks"
+            }
+          }
+        },
+        {
+          "name": "initial_price",
+          "type": "u64"
+        },
+        {
+          "name": "total_supply",
+          "type": "u64"
+        },
+        {
+          "name": "bonding_curve_type",
+          "type": {
+            "defined": {
+              "name": "CurveType"
+            }
+          }
+        },
+        {
+          "name": "tags",
+          "type": {
+            "vec": "string"
+          }
+        }
+      ]
+    },
+    {
+      "name": "initialize_launchpad",
+      "discriminator": [
+        220,
+        172,
+        45,
+        121,
+        79,
+        84,
+        246,
+        3
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  116,
+                  102,
+                  111,
+                  114,
+                  109,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "emergency_admin"
+        },
+        {
+          "name": "treasury"
+        },
+        {
+          "name": "battle_pool_vault"
+        },
+        {
+          "name": "royalty_vault"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "platform_fee_bps",
+          "type": "u16"
+        },
+        {
+          "name": "token_trading_fee_bps",
+          "type": "u16"
+        },
+        {
+          "name": "battle_fee_bps",
+          "type": "u16"
+        },
+        {
+          "name": "creator_royalty_bps",
+          "type": "u16"
+        },
+        {
+          "name": "battle_contribution_bps",
+          "type": "u16"
+        },
+        {
+          "name": "min_token_creation_fee",
+          "type": "u64"
+        },
+        {
+          "name": "min_token_supply",
+          "type": "u64"
+        },
+        {
+          "name": "max_token_supply",
+          "type": "u64"
+        },
+        {
+          "name": "min_initial_price",
+          "type": "u64"
+        },
+        {
+          "name": "creator_allocation_bps",
+          "type": "u16"
+        },
+        {
+          "name": "min_lock_duration",
+          "type": "i64"
+        },
+        {
+          "name": "default_curve_type",
+          "type": {
+            "defined": {
+              "name": "CurveType"
+            }
+          }
+        },
+        {
+          "name": "curve_steepness",
+          "type": "u64"
+        },
+        {
+          "name": "migration_threshold",
+          "type": "u64"
+        },
+        {
+          "name": "dex_migration_fee",
+          "type": "u64"
+        },
+        {
+          "name": "min_liquidity_percentage",
+          "type": "u16"
+        },
+        {
+          "name": "battle_eligibility_threshold",
+          "type": "u64"
+        },
+        {
+          "name": "min_battle_duration",
+          "type": "i64"
+        },
+        {
+          "name": "max_battle_duration",
+          "type": "i64"
+        },
+        {
+          "name": "min_battle_pool",
+          "type": "u64"
+        },
+        {
+          "name": "max_tokens_per_battle_side",
+          "type": "u8"
+        },
+        {
+          "name": "market_creation_fee",
+          "type": "u64"
+        },
+        {
+          "name": "min_market_duration",
+          "type": "i64"
+        },
+        {
+          "name": "max_market_duration",
+          "type": "i64"
+        },
+        {
+          "name": "market_creation_reputation",
+          "type": "u64"
+        },
+        {
+          "name": "battle_creation_reputation",
+          "type": "u64"
+        },
+        {
+          "name": "min_bet_amount",
+          "type": "u64"
+        },
+        {
+          "name": "max_bet_amount",
+          "type": "u64"
+        }
+      ]
     },
     {
       "name": "initialize_market",
@@ -212,6 +1007,161 @@
       ]
     },
     {
+      "name": "migrate_to_dex",
+      "discriminator": [
+        246,
+        150,
+        122,
+        141,
+        49,
+        26,
+        211,
+        26
+      ],
+      "accounts": [
+        {
+          "name": "creator",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  116,
+                  102,
+                  111,
+                  114,
+                  109,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_launch",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  111,
+                  107,
+                  101,
+                  110,
+                  95,
+                  108,
+                  97,
+                  117,
+                  110,
+                  99,
+                  104
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "token_launch.launch_id",
+                "account": "TokenLaunch"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_mint",
+          "writable": true
+        },
+        {
+          "name": "token_vault",
+          "writable": true
+        },
+        {
+          "name": "sol_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  111,
+                  108,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "token_launch"
+              }
+            ]
+          }
+        },
+        {
+          "name": "treasury",
+          "writable": true
+        },
+        {
+          "name": "raydium_program",
+          "docs": [
+            "This will be the actual Raydium program ID in production"
+          ]
+        },
+        {
+          "name": "pool_account",
+          "writable": true
+        },
+        {
+          "name": "pool_token_mint",
+          "writable": true
+        },
+        {
+          "name": "pool_sol_account",
+          "writable": true
+        },
+        {
+          "name": "pool_token_account",
+          "writable": true
+        },
+        {
+          "name": "creator_lp_account",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "rent",
+          "address": "SysvarRent111111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "place_bet",
       "discriminator": [
         222,
@@ -317,7 +1267,143 @@
         }
       ]
     },
-    
+    {
+      "name": "sell_token",
+      "discriminator": [
+        109,
+        61,
+        40,
+        187,
+        230,
+        176,
+        135,
+        174
+      ],
+      "accounts": [
+        {
+          "name": "seller",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  116,
+                  102,
+                  111,
+                  114,
+                  109,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_launch",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  111,
+                  107,
+                  101,
+                  110,
+                  95,
+                  108,
+                  97,
+                  117,
+                  110,
+                  99,
+                  104
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "token_launch.launch_id",
+                "account": "TokenLaunch"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_vault",
+          "writable": true
+        },
+        {
+          "name": "sol_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  111,
+                  108,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "token_launch"
+              }
+            ]
+          }
+        },
+        {
+          "name": "seller_token_account",
+          "writable": true
+        },
+        {
+          "name": "treasury",
+          "writable": true
+        },
+        {
+          "name": "royalty_vault",
+          "writable": true
+        },
+        {
+          "name": "battle_pool_vault",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "token_amount",
+          "type": "u64"
+        }
+      ]
+    },
     {
       "name": "settle_market",
       "discriminator": [
@@ -346,6 +1432,92 @@
           "type": "bool"
         }
       ]
+    },
+    {
+      "name": "withdraw_creator_royalties",
+      "discriminator": [
+        57,
+        177,
+        102,
+        112,
+        81,
+        31,
+        244,
+        179
+      ],
+      "accounts": [
+        {
+          "name": "creator",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  116,
+                  102,
+                  111,
+                  114,
+                  109,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_launch",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  111,
+                  107,
+                  101,
+                  110,
+                  95,
+                  108,
+                  97,
+                  117,
+                  110,
+                  99,
+                  104
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "token_launch.launch_id",
+                "account": "TokenLaunch"
+              }
+            ]
+          }
+        },
+        {
+          "name": "royalty_vault",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
     },
     {
       "name": "withdraw_winnings",
@@ -457,6 +1629,19 @@
       ]
     },
     {
+      "name": "TokenLaunch",
+      "discriminator": [
+        92,
+        242,
+        228,
+        230,
+        214,
+        216,
+        8,
+        148
+      ]
+    },
+    {
       "name": "UserPosition",
       "discriminator": [
         251,
@@ -482,6 +1667,32 @@
         206,
         32,
         0
+      ]
+    },
+    {
+      "name": "CreatorRoyaltiesWithdrawn",
+      "discriminator": [
+        153,
+        207,
+        238,
+        188,
+        136,
+        11,
+        174,
+        166
+      ]
+    },
+    {
+      "name": "CreatorTokensClaimed",
+      "discriminator": [
+        170,
+        220,
+        148,
+        128,
+        126,
+        198,
+        180,
+        231
       ]
     },
     {
@@ -855,6 +2066,70 @@
       }
     },
     {
+      "name": "CreatorRoyaltiesWithdrawn",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "launch_id",
+            "type": "u64"
+          },
+          {
+            "name": "creator",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount_withdrawn",
+            "type": "u64"
+          },
+          {
+            "name": "withdrawn_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CreatorTokensClaimed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "launch_id",
+            "type": "u64"
+          },
+          {
+            "name": "creator",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount_claimed",
+            "type": "u64"
+          },
+          {
+            "name": "total_claimed",
+            "type": "u64"
+          },
+          {
+            "name": "total_allocation",
+            "type": "u64"
+          },
+          {
+            "name": "current_market_cap",
+            "type": "u64"
+          },
+          {
+            "name": "unlock_percentage",
+            "type": "u16"
+          },
+          {
+            "name": "claimed_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
       "name": "CurveType",
       "type": {
         "kind": "enum",
@@ -867,6 +2142,23 @@
           },
           {
             "name": "Logarithmic"
+          }
+        ]
+      }
+    },
+    {
+      "name": "LaunchStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Active"
+          },
+          {
+            "name": "Migrated"
+          },
+          {
+            "name": "Cancelled"
           }
         ]
       }
@@ -1407,6 +2699,236 @@
           {
             "name": "platform_fee_bps",
             "type": "u16"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SocialLinks",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "twitter",
+            "type": {
+              "option": "string"
+            }
+          },
+          {
+            "name": "telegram",
+            "type": {
+              "option": "string"
+            }
+          },
+          {
+            "name": "website",
+            "type": {
+              "option": "string"
+            }
+          },
+          {
+            "name": "discord",
+            "type": {
+              "option": "string"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "TokenLaunch",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "launch_id",
+            "type": "u64"
+          },
+          {
+            "name": "token_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "creator",
+            "type": "pubkey"
+          },
+          {
+            "name": "token_vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "sol_vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "LaunchStatus"
+              }
+            }
+          },
+          {
+            "name": "trading_paused",
+            "type": "bool"
+          },
+          {
+            "name": "emergency_withdrawal_enabled",
+            "type": "bool"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "symbol",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "image_uri",
+            "type": "string"
+          },
+          {
+            "name": "social_links",
+            "type": {
+              "defined": {
+                "name": "SocialLinks"
+              }
+            }
+          },
+          {
+            "name": "initial_price",
+            "type": "u64"
+          },
+          {
+            "name": "current_price",
+            "type": "u64"
+          },
+          {
+            "name": "total_supply",
+            "type": "u64"
+          },
+          {
+            "name": "circulating_supply",
+            "type": "u64"
+          },
+          {
+            "name": "bonding_curve_type",
+            "type": {
+              "defined": {
+                "name": "CurveType"
+              }
+            }
+          },
+          {
+            "name": "migration_threshold",
+            "type": "u64"
+          },
+          {
+            "name": "current_market_cap",
+            "type": "u64"
+          },
+          {
+            "name": "migrated",
+            "type": "bool"
+          },
+          {
+            "name": "dex_pool",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "battle_eligible",
+            "type": "bool"
+          },
+          {
+            "name": "battle_participation_count",
+            "type": "u32"
+          },
+          {
+            "name": "battle_wins",
+            "type": "u32"
+          },
+          {
+            "name": "total_battle_volume",
+            "type": "u64"
+          },
+          {
+            "name": "total_volume",
+            "type": "u64"
+          },
+          {
+            "name": "trading_fee_percentage",
+            "type": "u16"
+          },
+          {
+            "name": "accumulated_fees",
+            "type": "u64"
+          },
+          {
+            "name": "battle_pool_contribution",
+            "type": "u64"
+          },
+          {
+            "name": "creator_royalties",
+            "type": "u64"
+          },
+          {
+            "name": "total_buyers",
+            "type": "u32"
+          },
+          {
+            "name": "total_trades",
+            "type": "u32"
+          },
+          {
+            "name": "creator_allocation",
+            "type": "u64"
+          },
+          {
+            "name": "creator_unlocked",
+            "type": "u64"
+          },
+          {
+            "name": "creator_claimed",
+            "type": "u64"
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "launch_start_time",
+            "type": "i64"
+          },
+          {
+            "name": "migrated_at",
+            "type": {
+              "option": "i64"
+            }
+          },
+          {
+            "name": "last_trade_at",
+            "type": "i64"
+          },
+          {
+            "name": "tags",
+            "type": {
+              "vec": "string"
+            }
+          },
+          {
+            "name": "featured",
+            "type": "bool"
           }
         ]
       }

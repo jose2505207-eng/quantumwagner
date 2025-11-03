@@ -5,6 +5,7 @@ import { useProgram } from "@/lib/useProgram";
 import * as anchor from "@coral-xyz/anchor";
 import {
   treasury,
+  royaltyVault,
   emergencyAdmin,
   platformFeeBps,
   minBetAmount,
@@ -13,9 +14,50 @@ import {
   minMarketDuration,
   maxMarketDuration,
   PROGRAM_ID,
+  tokenTradingFeeBps,
+  battlePoolVault,
+  battleFeeBps,
+  creatorRoyaltyBps,
+  battleCreationReputation,
+  minTokenCreationFee,
+  minTokenSupply,
+  minInitialPrice,
+  creatorAllocationBps,
+  minLockDuration,
+  curveSteepness,
+  migrationThreshold,
+  dexMigrationFee,
+  minLiquidityPercentage,
+  battleEligibilityThreshold,
+  minBattleDuration,
+  maxBattleDuration,
+  marketCreationReputation,
+  maxTokenSupply,
+  minBattlePool,
+  maxTokensPerBattleSide,
+  CurveTypes,
+  battleContributionBps,
+  BondingCurveKey,
 } from "@/config";
 
 import toast from "react-hot-toast";
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+
+export interface createToeknParams {
+  name: string;
+  symbol: string;
+  description: string;
+  imageUrl: string;
+  socialLinks: {
+    website?: string;
+    twitter?: string;
+    telegram?: string;
+  };
+  initialPrice: number;
+  totalSupply: number;
+  CurveTypes: "linear" | "exponential" | "logarithmic";
+  tags: string[];
+}
 
 export default function Methods() {
   const program = useProgram();
@@ -300,6 +342,148 @@ export default function Methods() {
     }
   };
 
+  const initializeLaunchpad = async () => {
+    if (!program) throw new Error("Program not connected");
+    const admin = program.provider.publicKey;
+    if (!admin) throw new Error("Wallet not connected");
+
+    const [configPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from("platform_config")],
+      program.programId
+    );
+
+    try {
+      const tx = await program.methods
+        .initializeLaunchpad(
+          platformFeeBps, // u16
+          tokenTradingFeeBps, // u16
+          battleFeeBps, // u16
+          creatorRoyaltyBps, // u16
+          battleContributionBps, // u16
+          minTokenCreationFee, // u64
+          minTokenSupply, // u64
+          maxTokenSupply, // u64
+          minInitialPrice, // u64
+          creatorAllocationBps, // u16
+          minLockDuration, // i64
+          CurveTypes.linear, // enum
+          curveSteepness, // u64
+          migrationThreshold, // u64
+          dexMigrationFee, // u64
+          minLiquidityPercentage, // u16
+          battleEligibilityThreshold, // u64
+          minBattleDuration, // i64
+          maxBattleDuration, // i64
+          minBattlePool, // u64
+          maxTokensPerBattleSide, // u8
+          marketCreationFee, // u64
+          minMarketDuration, // i64
+          maxMarketDuration, // i64
+          marketCreationReputation, // u64
+          battleCreationReputation, // u64
+          minBetAmount, // u64
+          maxBetAmount // u64
+        )
+        .accounts({
+          config: configPda,
+          admin,
+          emergencyAdmin,
+          treasury,
+          battlePoolVault,
+          royaltyVault,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc({ skipPreflight: false, preflightCommitment: "confirmed" });
+
+      toast.success("Launchpad initialized successfully ");
+      console.log("Transaction Signature:", tx);
+      return tx;
+    } catch (e) {
+      console.error("Launchpad initialization failed:", e);
+      toast.error("Launchpad failed to initialize ");
+    }
+  };
+
+  const createTokenLaunch = async (data: createToeknParams) => {
+    if (!program) throw new Error("Program not ready");
+
+    const user = program.provider.publicKey;
+    if (!user) throw new Error("Wallet not connected");
+
+    const [configPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from("platform_config")],
+      program.programId
+    );
+
+    // Fetch config to get treasury
+    const configAccount = await program.account.platformConfig.fetch(configPDA);
+    const treasury = configAccount.treasury;
+
+    const nextLaunchId = Number(configAccount.nextLaunchId);
+
+    const [tokenLaunchPda] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("token_launch"),
+        new anchor.BN(nextLaunchId).toArrayLike(Buffer, "le", 8),
+      ],
+      program.programId
+    );
+
+    const [tokenMintPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from("token_mint"), tokenLaunchPda.toBuffer()],
+      program.programId
+    );
+
+    const [tokenVaultPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from("token_vault"), tokenLaunchPda.toBuffer()],
+      program.programId
+    );
+
+    const [solVaultPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from("sol_vault"), tokenLaunchPda.toBuffer()],
+      program.programId
+    );
+
+    try {
+      const tx = await program.methods
+        .createTokenLaunch(
+          data.name,
+          data.symbol,
+          data.description,
+          data.imageUrl,
+          {
+            website: data.socialLinks.website ?? "",
+            twitter: data.socialLinks.twitter ?? "",
+            telegram: data.socialLinks.telegram ?? "",
+          },
+          new anchor.BN(data.initialPrice),
+          new anchor.BN(data.totalSupply),
+          CurveTypes[data.CurveTypes],
+          data.tags
+        )
+        .accounts({
+          creator: user,
+          config: configPDA,
+          tokenLaunch: tokenLaunchPda,
+          tokenMint: tokenMintPda,
+          tokenVault: tokenVaultPda,
+          solVault: solVaultPda,
+          treasury,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+          rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+        })
+        .rpc();
+
+      console.log("Token Launch Created:", tx);
+      toast.success("Token launched successfully!");
+      return tx;
+    } catch (e) {
+      console.error(e);
+      toast.error("Token failed to create");
+    }
+  };
+
   return {
     initProgram,
     initMarket,
@@ -307,5 +491,7 @@ export default function Methods() {
     cancelMarket,
     settleMarket,
     withdrawWinnings,
+    initializeLaunchpad,
+    createTokenLaunch,
   };
 }
