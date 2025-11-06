@@ -7,41 +7,45 @@ import {
   treasury,
   royaltyVault,
   emergencyAdmin,
-  platformFeeBps,
-  minBetAmount,
-  maxBetAmount,
-  marketCreationFee,
-  minMarketDuration,
-  maxMarketDuration,
+  PLATFORM_FEE_BPS,
+  MIN_BET_AMOUNT,
+  MAX_BET_AMOUNT,
+  MARKET_CREATION_FEE,
+  MIN_MARKET_DURATION,
+  MAX_MARKET_DURATION,
   PROGRAM_ID,
-  tokenTradingFeeBps,
   battlePoolVault,
-  battleFeeBps,
-  creatorRoyaltyBps,
-  battleCreationReputation,
-  minTokenCreationFee,
-  minTokenSupply,
-  minInitialPrice,
-  creatorAllocationBps,
-  minLockDuration,
-  curveSteepness,
-  migrationThreshold,
-  dexMigrationFee,
-  minLiquidityPercentage,
-  battleEligibilityThreshold,
-  minBattleDuration,
-  maxBattleDuration,
-  marketCreationReputation,
-  maxTokenSupply,
-  minBattlePool,
-  maxTokensPerBattleSide,
-  CurveTypes,
-  battleContributionBps,
-  BondingCurveKey,
+  TOKEN_TRADING_FEE_BPS,
+  BATTLE_FEE_BPS,
+  CREATOR_ROYALTY_BPS,
+  BATTLE_CONTRIBUTION_BPS,
+  MIN_TOKEN_CREATION_FEE,
+  MIN_TOKEN_SUPPLY,
+  MAX_TOKEN_SUPPLY,
+  MIN_INITIAL_PRICE,
+  CREATOR_ALLOCATION_BPS,
+  MIN_LOCK_DURATION,
+  DEFAULT_CURVE_TYPE,
+  CURVE_STEEPNESS,
+  MIGRATION_THRESHOLD,
+  DEX_MIGRATION_FEE,
+  MIN_LIQUIDITY_PERCENTAGE,
+  BATTLE_ELIGIBILITY_THRESHOLD,
+  MIN_BATTLE_DURATION,
+  MAX_BATTLE_DURATION,
+  MIN_BATTLE_POOL,
+  MAX_TOKENS_PER_BATTLE_SIDE,
+  MARKET_CREATION_REPUTATION,
+  BATTLE_CREATION_REPUTATION,
 } from "@/config";
 
 import toast from "react-hot-toast";
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  getAssociatedTokenAddressSync,
+  TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
+import { ASSOCIATED_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/utils/token";
 
 export interface createToeknParams {
   name: string;
@@ -90,12 +94,12 @@ export default function Methods() {
     try {
       const tx = await program.methods
         .initializePlatform(
-          platformFeeBps,
-          minBetAmount,
-          maxBetAmount,
-          marketCreationFee,
-          minMarketDuration,
-          maxMarketDuration
+          PLATFORM_FEE_BPS,
+          MIN_BET_AMOUNT,
+          MAX_BET_AMOUNT,
+          MARKET_CREATION_FEE,
+          MIN_MARKET_DURATION,
+          MAX_MARKET_DURATION
         )
 
         .accounts({
@@ -355,34 +359,34 @@ export default function Methods() {
     try {
       const tx = await program.methods
         .initializeLaunchpad(
-          platformFeeBps, // u16
-          tokenTradingFeeBps, // u16
-          battleFeeBps, // u16
-          creatorRoyaltyBps, // u16
-          battleContributionBps, // u16
-          minTokenCreationFee, // u64
-          minTokenSupply, // u64
-          maxTokenSupply, // u64
-          minInitialPrice, // u64
-          creatorAllocationBps, // u16
-          minLockDuration, // i64
-          CurveTypes.linear, // enum
-          curveSteepness, // u64
-          migrationThreshold, // u64
-          dexMigrationFee, // u64
-          minLiquidityPercentage, // u16
-          battleEligibilityThreshold, // u64
-          minBattleDuration, // i64
-          maxBattleDuration, // i64
-          minBattlePool, // u64
-          maxTokensPerBattleSide, // u8
-          marketCreationFee, // u64
-          minMarketDuration, // i64
-          maxMarketDuration, // i64
-          marketCreationReputation, // u64
-          battleCreationReputation, // u64
-          minBetAmount, // u64
-          maxBetAmount // u64
+          PLATFORM_FEE_BPS,
+          TOKEN_TRADING_FEE_BPS,
+          BATTLE_FEE_BPS,
+          CREATOR_ROYALTY_BPS,
+          BATTLE_CONTRIBUTION_BPS,
+          MIN_TOKEN_CREATION_FEE,
+          MIN_TOKEN_SUPPLY,
+          MAX_TOKEN_SUPPLY,
+          MIN_INITIAL_PRICE,
+          CREATOR_ALLOCATION_BPS,
+          MIN_LOCK_DURATION,
+          DEFAULT_CURVE_TYPE,
+          CURVE_STEEPNESS,
+          MIGRATION_THRESHOLD,
+          DEX_MIGRATION_FEE,
+          MIN_LIQUIDITY_PERCENTAGE,
+          BATTLE_ELIGIBILITY_THRESHOLD,
+          MIN_BATTLE_DURATION,
+          MAX_BATTLE_DURATION,
+          MIN_BATTLE_POOL,
+          MAX_TOKENS_PER_BATTLE_SIDE,
+          MARKET_CREATION_FEE,
+          MIN_MARKET_DURATION,
+          MAX_MARKET_DURATION,
+          MARKET_CREATION_REPUTATION,
+          BATTLE_CREATION_REPUTATION,
+          MIN_BET_AMOUNT,
+          MAX_BET_AMOUNT
         )
         .accounts({
           config: configPda,
@@ -477,13 +481,282 @@ export default function Methods() {
 
       console.log("Token Launch Created:", tx);
       toast.success("Token launched successfully!");
-      return tx;
+      return {
+        tx,
+        tokenMint: tokenMintPda.toBase58(),
+        tokenVault: tokenVaultPda.toBase58(),
+        solVault: solVaultPda.toBase58(),
+      };
     } catch (e) {
       console.error(e);
       toast.error("Token failed to create");
     }
   };
 
+  const buyToken = async (launchId: number, tokenAmount: number) => {
+    if (!program) throw new Error("Program not ready");
+
+    const buyer = program.provider.publicKey;
+    if (!buyer) throw new Error("Wallet not connected");
+
+    // 1️⃣ Platform config PDA
+    const [configPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from("platform_config")],
+      program.programId
+    );
+
+    // 2️⃣ TokenLaunch PDA (based on launch_id)
+    const [tokenLaunchPDA] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("token_launch"),
+        new anchor.BN(launchId).toArrayLike(Buffer, "le", 8),
+      ],
+      program.programId
+    );
+
+    // 3️⃣ Sol vault derived using token_launch PDA
+    const [solVaultPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from("sol_vault"), tokenLaunchPDA.toBuffer()],
+      program.programId
+    );
+
+    // 4️⃣ Fetch config (to get real treasury + vaults)
+    const config = await program.account.platformConfig.fetch(configPDA);
+    const treasury = config.treasury;
+    const royaltyVault = config.royaltyVault;
+    const battlePoolVault = config.battlePoolVault;
+
+    // 5️⃣ Fetch token_launch (to get tokenMint & vault)
+    const tokenLaunch = await program.account.tokenLaunch.fetch(tokenLaunchPDA);
+    const tokenMint = tokenLaunch.tokenMint;
+    const tokenVault = tokenLaunch.tokenVault;
+
+    // 6️⃣ Buyer ATA
+    const buyerTokenAccount = getAssociatedTokenAddressSync(
+      tokenMint,
+      buyer,
+      false,
+      TOKEN_PROGRAM_ID,
+      ASSOCIATED_TOKEN_PROGRAM_ID
+    );
+
+    console.log("➡️  Passing RoyaltyVault:", royaltyVault.toBase58());
+    console.log("➡️  Passing Treasury:", treasury.toBase58());
+    console.log("➡️  Passing BattlePoolVault:", battlePoolVault.toBase58());
+
+    try {
+      const tx = await program.methods
+        .buyToken(new anchor.BN(tokenAmount))
+        .accounts({
+          buyer,
+          config: configPDA,
+          tokenLaunch: tokenLaunchPDA,
+          tokenVault,
+          solVault: solVaultPDA,
+          buyerTokenAccount,
+          tokenMint,
+          treasury,
+          royaltyVault,
+          battlePoolVault,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      console.log("✅ Buy Token TX:", tx);
+      toast.success("Token purchase successful!");
+    } catch (e) {
+      console.error("❌ Buy token failed:", e);
+      toast.error("Token purchase failed");
+    }
+  };
+
+  const sellToken = async (launchId: number, tokenAmount: number) => {
+    if (!program) throw new Error("Program not ready");
+    const seller = program.provider.publicKey;
+    if (!seller) throw new Error("Wallet not connected");
+
+    // 1) PDAs
+    const [configPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from("platform_config")],
+      program.programId
+    );
+
+    const [tokenLaunchPDA] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("token_launch"),
+        new anchor.BN(launchId).toArrayLike(Buffer, "le", 8),
+      ],
+      program.programId
+    );
+
+    const [solVaultPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from("sol_vault"), tokenLaunchPDA.toBuffer()],
+      program.programId
+    );
+
+    // 2) Fetch config + tokenLaunch to get authoritative addresses
+    const config = await program.account.platformConfig.fetch(configPDA);
+    const tokenLaunch = await program.account.tokenLaunch.fetch(tokenLaunchPDA);
+
+    const tokenMint: PublicKey = tokenLaunch.tokenMint;
+    const tokenVault: PublicKey = tokenLaunch.tokenVault;
+
+    // 3) Seller’s ATA for this mint (must exist and have tokens)
+    const sellerTokenAccount = getAssociatedTokenAddressSync(
+      tokenMint,
+      seller,
+      false
+    );
+
+    // (optional) quick client-side sanity check
+    const bal = await program.provider.connection
+      .getTokenAccountBalance(sellerTokenAccount)
+      .catch(() => null);
+    if (!bal || Number(bal.value.amount) < tokenAmount)
+      throw new Error("Not enough tokens in seller ATA");
+
+    // 4) Build + send tx
+    const tx = await program.methods
+      .sellToken(new anchor.BN(tokenAmount))
+      .accounts({
+        seller,
+        config: configPDA,
+        tokenLaunch: tokenLaunchPDA,
+        tokenVault,
+        solVault: solVaultPDA,
+        sellerTokenAccount,
+        treasury: config.treasury,
+        royaltyVault: config.royaltyVault,
+        battlePoolVault: config.battlePoolVault,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+      })
+      .rpc();
+
+    console.log("✅ Sell Token TX:", tx);
+    return tx;
+  };
+
+  // const migreateToDex = async (tokenId: number) => {
+  //   if (!program) {
+  //     throw new Error("Progrma not ready!");
+  //   }
+
+  //   const creator = program.provider.publicKey;
+  //   if (!creator) {
+  //     throw new Error("Wallet not connected!");
+  //   }
+
+  //   const [configPDA] = PublicKey.findProgramAddressSync(
+  //     [Buffer.from("platform_config")],
+  //     program.programId
+  //   );
+
+  //   const [tokenLaunchPDA] = PublicKey.findProgramAddressSync(
+  //     [
+  //       Buffer.from("token_launch"),
+  //       new anchor.BN(tokenId).toArrayLike(Buffer, "le", 8),
+  //     ],
+  //     program.programId
+  //   );
+
+  //   const [solVaulet] = PublicKey.findProgramAddressSync(
+  //     [Buffer.from("sol_vault"), tokenLaunchPDA.toBuffer()],
+  //     program.programId
+  //   );
+
+  //   const configAccount = await program?.account.platformConfig.fetch(
+  //     configPDA
+  //   );
+  //   const tokenlaunchAccount = await program.account.tokenLaunch.fetch(
+  //     tokenLaunchPDA
+  //   );
+
+  // const poolAccount = new PublicKey("YOUR_POOL_ACCOUNT_PUBKEY");
+  // const poolTokenMint = new PublicKey("YOUR_POOL_TOKEN_MINT_PUBKEY");
+  // const poolSolAccount = new PublicKey("YOUR_POOL_SOL_ACCOUNT_PUBKEY");
+  // const poolTokenAccount = new PublicKey("YOUR_POOL_TOKEN_ACCOUNT_PUBKEY");
+
+  //  // Creator LP account (this must be associated token account for poolTokenMint)
+  // const creatorLpAccount = await getAssociatedTokenAddress(
+  //   poolTokenMint,
+  //   creator
+  // );
+
+  //   try {
+  //     const tx;= await program.methods.migrateToDex().accounts({
+  //       creator,
+  //       config:configPDA,
+  //       tokenLaunch:tokenLaunchPDA,
+  //       tokenMint:tokenlaunchAccount.tokenMint,
+  //       tokenVault:tokenlaunchAccount.tokenVault,
+  //       solVault:solVaulet,
+  //       treasury:configAccount.treasury,
+  //       raydiumProgram:new PublicKey("Raydium111111111111111111111111111111111"),
+  //       poolAccount:pool
+
+  //     })
+  //   } catch (e) {}
+  // };
+
+  const claimCreatorTokens = async (tokenId: number) => {
+    if (!program) {
+      throw new Error("Program not ready!");
+    }
+    const creator = program.provider.publicKey;
+    if (!creator) {
+      throw new Error("Wallet not connected!");
+    }
+
+    const [tokenLaunchPDA] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("token_launch"),
+        new anchor.BN(tokenId).toArrayLike(Buffer, "le", 8),
+      ],
+      program.programId
+    );
+
+    const tokenLaunchAccount = await program.account.tokenLaunch.fetch(
+      tokenLaunchPDA
+    );
+
+    const tokenMint = new PublicKey(tokenLaunchAccount.tokenMint);
+    const tokenVault = new PublicKey(tokenLaunchAccount.tokenVault);
+
+    const creatorTokenAccount = getAssociatedTokenAddressSync(
+      tokenMint,
+      creator,
+      false
+    );
+
+    try {
+      console.log("Claiming creator token...");
+
+      const tx = await program.methods
+        .claimCreatorTokens()
+        .accounts({
+          creator,
+          tokenLaunch: tokenLaunchPDA,
+          tokenMint,
+          tokenVault,
+          creatorTokenAccount,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      toast.success("Token claimed successfully!");
+      console.log("Token claimed successfully :", tx);
+    } catch (e) {
+      console.error("Claim failed:", e);
+      toast.error("Creator claim failed!");
+    }
+  };
+
+  
   return {
     initProgram,
     initMarket,
@@ -493,5 +766,8 @@ export default function Methods() {
     withdrawWinnings,
     initializeLaunchpad,
     createTokenLaunch,
+    buyToken,
+    sellToken,
+    claimCreatorTokens,
   };
 }

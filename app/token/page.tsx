@@ -2,27 +2,13 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import {
-  PublicKey,
-  Keypair,
-  SystemProgram,
-  Transaction,
-} from "@solana/web3.js";
-import {
-  getMinimumBalanceForRentExemptMint,
-  createInitializeMintInstruction,
-  getAssociatedTokenAddress,
-  createAssociatedTokenAccountInstruction,
-  createMintToInstruction,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-} from "@solana/spl-token";
-import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { PublicKey } from "@solana/web3.js";
+import { useWallet } from "@solana/wallet-adapter-react";
 import Image from "next/image";
 import Methods, { createToeknParams } from "../contract_methods/methods";
-import { CurveTypes } from "@/config";
-const TOKEN_2022_PROGRAM_ID = new PublicKey(
-  "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
-);
+import * as anchor from "@coral-xyz/anchor";
+import { useProgram } from "@/lib/useProgram";
+import toast from "react-hot-toast";
 
 function short(pk?: PublicKey | string | null) {
   if (!pk) return "";
@@ -31,137 +17,97 @@ function short(pk?: PublicKey | string | null) {
 }
 
 export default function LaunchPage() {
-  const { connection } = useConnection();
+  const program = useProgram();
   const wallet = useWallet();
-
-  const [name, setName] = useState("Nebula");
-  const [symbol, setSymbol] = useState("NEB");
-  const [supply, setSupply] = useState<number>(1000000);
-  const [decimals, setDecimals] = useState<number>(9);
-  const [imgUrl, setImgUrl] = useState<string>(
-    "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png"
-  );
+  const [desc, setDesc] = useState("");
+  const [initialPrice, setInitialPrice] = useState<number>(100000000);
+  // const [curve, setCurve] = useState<"linear" | "exponential" | "logarithmic">(
+  //   "linear"
+  // );
+  const [tags, setTags] = useState<string>("defi,utility");
+  const [website, setWebsite] = useState("");
+  const [twitter, setTwitter] = useState("");
+  const [telegram, setTelegram] = useState("");
+  const [name, setName] = useState("");
+  const [symbol, setSymbol] = useState<string>("");
+  const [supply, setSupply] = useState<number>();
+  const [decimals, setDecimals] = useState<number>();
+  const [imgUrl, setImgUrl] = useState<string>();
 
   const [status, setStatus] = useState<string>("Idle");
   const [mintPubkey, setMintPubkey] = useState<string | null>(null);
   const [deploying, setDeploying] = useState(false);
-  const { createTokenLaunch } = Methods();
+  const { createTokenLaunch, buyToken, sellToken, claimCreatorTokens } =
+    Methods();
+
+  const findLaunchIdByMint = async (mintAddress: PublicKey) => {
+    try {
+      // Fetch all token launch accounts
+      const launches = await program?.account.tokenLaunch.all();
+      if (!launches) {
+        toast.error("token not found ");
+        return;
+      }
+      // Look for the one that matches the mint address
+      for (const launch of launches) {
+        if (launch.account.tokenMint.toBase58() === mintAddress.toBase58()) {
+          console.log(
+            "✅ Found Launch ID:",
+            launch.account.launchId.toNumber()
+          );
+          return launch.account.launchId.toNumber();
+        }
+      }
+
+      console.warn("⚠️ No launch found for mint:", mintAddress.toBase58());
+      return null;
+    } catch (e) {
+      console.error("❌ Failed to fetch TokenLaunch accounts:", e);
+      return null;
+    }
+  };
+
   async function handleCreateToken() {
-    // try {
-    //   if (!wallet.connected || !wallet.publicKey || !wallet.signTransaction) {
-    //     setStatus("Please connect your wallet (Phantom).");
-    //     return;
-    //   }
-    //   setDeploying(true);
-    //   setStatus("Preparing mint account...");
-    //   const payerPubkey = wallet.publicKey;
-    //   const mintKeypair = Keypair.generate();
-    //   const mintRent = await getMinimumBalanceForRentExemptMint(connection);
-    //   const tx = new Transaction();
-    //   tx.add(
-    //     SystemProgram.createAccount({
-    //       fromPubkey: payerPubkey,
-    //       newAccountPubkey: mintKeypair.publicKey,
-    //       space: 82,
-    //       lamports: mintRent,
-    //       programId: TOKEN_2022_PROGRAM_ID,
-    //     })
-    //   );
-    //   // signer = mint authority, no freeze authority => mintable only by signer
-    //   tx.add(
-    //     createInitializeMintInstruction(
-    //       mintKeypair.publicKey,
-    //       decimals,
-    //       payerPubkey,
-    //       null,
-    //       TOKEN_2022_PROGRAM_ID
-    //     )
-    //   );
-    //   tx.feePayer = payerPubkey;
-    //   tx.recentBlockhash = (
-    //     await connection.getLatestBlockhash("finalized")
-    //   ).blockhash;
-    //   setStatus("Requesting wallet signature...");
-    //   const signedByWallet = await wallet.signTransaction!(tx);
-    //   signedByWallet.partialSign(mintKeypair);
-    //   setStatus("Creating mint...");
-    //   const txid = await connection.sendRawTransaction(
-    //     signedByWallet.serialize()
-    //   );
-    //   await connection.confirmTransaction(txid, "finalized");
-    //   setMintPubkey(mintKeypair.publicKey.toBase58());
-    //   setStatus(`Mint created: ${mintKeypair.publicKey.toBase58()}`);
-    //   const ata = await getAssociatedTokenAddress(
-    //     mintKeypair.publicKey,
-    //     payerPubkey,
-    //     false,
-    //     TOKEN_2022_PROGRAM_ID,
-    //     ASSOCIATED_TOKEN_PROGRAM_ID
-    //   );
-    //   const mintTx = new Transaction();
-    //   mintTx.feePayer = payerPubkey;
-    //   mintTx.recentBlockhash = (
-    //     await connection.getLatestBlockhash("finalized")
-    //   ).blockhash;
-    //   const ataInfo = await connection.getAccountInfo(ata);
-    //   if (!ataInfo) {
-    //     mintTx.add(
-    //       createAssociatedTokenAccountInstruction(
-    //         payerPubkey,
-    //         ata,
-    //         payerPubkey,
-    //         mintKeypair.publicKey,
-    //         TOKEN_2022_PROGRAM_ID,
-    //         ASSOCIATED_TOKEN_PROGRAM_ID
-    //       )
-    //     );
-    //   }
-    //   const amountToMint = BigInt(supply) * BigInt(10 ** decimals);
-    //   mintTx.add(
-    //     createMintToInstruction(
-    //       mintKeypair.publicKey,
-    //       ata,
-    //       payerPubkey,
-    //       amountToMint,
-    //       [],
-    //       TOKEN_2022_PROGRAM_ID
-    //     )
-    //   );
-    //   const signedMintTx = await wallet.signTransaction!(mintTx);
-    //   const mintTxid = await connection.sendRawTransaction(
-    //     signedMintTx.serialize()
-    //   );
-    //   await connection.confirmTransaction(mintTxid, "finalized");
-    //   setStatus("Minted initial supply to your wallet.");
-    // } catch (err: any) {
-    //   console.error(err);
-    //   setStatus("Error: " + (err?.message || String(err)));
-    // } finally {
-    //   setDeploying(false);
-    // }
+    try {
+      const tokenID = await findLaunchIdByMint(
+        new PublicKey("33T6Lj5hgYnR1Q9u5vngqDHmEXp3FLacfddWGxxT8vA5")
+      );
 
-    const data: createToeknParams = {
-      name: "AD",
-      symbol: "AD",
-      description: "Demo token",
-      imageUrl:
-        "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
-      socialLinks: {
-        website: "https://github.com/akash-wt",
-        twitter: "https://twitter.com/example",
-        telegram: "https://t.me/example",
-      },
-      initialPrice: 100000000,
-      totalSupply: 1_000_000,
-      CurveTypes: "linear", //
-      tags: ["defi", "utility"],
-    };
+      await claimCreatorTokens(tokenID);
+      // await buyToken(tokenID, 100);
+      // await sellToken(tokenID, 10);
 
-    await createTokenLaunch(data);
+      // const data: createToeknParams = {
+      //   name,
+      //   symbol,
+      //   description: desc,
+      //   imageUrl:
+      //     imgUrl ||
+      //     " https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
+      //   socialLinks: {
+      //     website,
+      //     twitter,
+      //     telegram,
+      //   },
+      //   initialPrice,
+      //   totalSupply: supply || 100000000,
+      //   CurveTypes: "exponential",
+      //   tags: tags.split(",").map((t) => t.trim()),
+      // };
+      // const { tx, tokenMint, tokenVault, solVault } = await createTokenLaunch(
+      //   data
+      // );
+      // console.table({ tx, tokenMint, tokenVault, solVault });
+    } catch (err: any) {
+      console.error(err);
+      setStatus("Error: " + (err?.message || String(err)));
+    } finally {
+      setDeploying(false);
+    }
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-zinc-950 via-black to-zinc-900">
+    <main className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-zinc-950 via-black to-zinc-900 mt-20">
       <div className="w-full max-w-2xl">
         <motion.div
           initial={{ y: 10, opacity: 0 }}
@@ -178,6 +124,7 @@ export default function LaunchPage() {
             <span className="text-xs text-zinc-500">Program: Token-2022</span>
           </header>
 
+          {/* Input Fields */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm text-zinc-400 mb-1">
@@ -198,6 +145,18 @@ export default function LaunchPage() {
                 onChange={(e) => setSymbol(e.target.value)}
                 placeholder="e.g. NEB"
                 className="w-full bg-zinc-800/60 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block text-sm text-zinc-400 mb-1">
+                Description
+              </label>
+              <textarea
+                value={desc}
+                onChange={(e) => setDesc(e.target.value)}
+                placeholder="Brief description about your token"
+                className="w-full bg-zinc-800/60 border border-zinc-700 rounded-lg px-3 py-2 text-sm h-20 focus:ring-2 focus:ring-purple-500"
               />
             </div>
 
@@ -236,6 +195,67 @@ export default function LaunchPage() {
                 onChange={(e) => setImgUrl(e.target.value)}
                 placeholder="https://example.com/token.png"
                 className="w-full bg-zinc-800/60 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block text-sm text-zinc-400 mb-1">
+                Initial Price (Lamports)
+              </label>
+              <input
+                value={initialPrice}
+                onChange={(e) => setInitialPrice(Number(e.target.value))}
+                type="number"
+                placeholder="100000000"
+                className="w-full bg-zinc-800/60 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
+
+            {/* <div>
+              <label className="block text-sm text-zinc-400 mb-1">
+                Curve Type
+              </label>
+              <select
+                value={curve}
+                onChange={(e) => setCurve(e.target.value)}
+                className="w-full bg-zinc-800/60 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="linear">Linear</option>
+                <option value="exponential">Exponential</option>
+                <option value="sigmoid">Sigmoid</option>
+              </select>
+            </div> */}
+
+            <div>
+              <label className="block text-sm text-zinc-400 mb-1">
+                Tags (comma separated)
+              </label>
+              <input
+                value={tags}
+                onChange={(e) => setTags(e.target.value)}
+                placeholder="defi, utility"
+                className="w-full bg-zinc-800/60 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
+
+            <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <input
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
+                placeholder="Website URL"
+                className="bg-zinc-800/60 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500"
+              />
+              <input
+                value={twitter}
+                onChange={(e) => setTwitter(e.target.value)}
+                placeholder="Twitter link"
+                className="bg-zinc-800/60 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500"
+              />
+              <input
+                value={telegram}
+                onChange={(e) => setTelegram(e.target.value)}
+                placeholder="Telegram link"
+                className="bg-zinc-800/60 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500"
               />
             </div>
           </div>
