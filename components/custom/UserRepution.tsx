@@ -93,11 +93,13 @@ export default function ProfileCard(p: Props) {
   return (
     <Card
       className="
-        relative flex flex-col md:flex-row justify-between items-center
-        bg-black/60 text-white border border-white/10 rounded-2xl
-        p-6 overflow-hidden backdrop-blur-xl w-full max-w-5xl mx-auto
-        gap-6 md:gap-10
-      "
+    relative flex flex-col md:flex-row justify-between items-center
+    bg-gradient-to-b from-[#0d0d10]/90 to-[#0a0a14]/80
+    border border-gray-800 rounded-2xl shadow-md
+    p-8 w-full h-[320px] md:h-[250px] 
+    max-w-6xl mx-auto
+    backdrop-blur-xl
+  "
     >
       {/* Border Overlay */}
       <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-purple-600/20 via-transparent to-blue-500/20 border border-white/10 pointer-events-none"></div>

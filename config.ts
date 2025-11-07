@@ -5,7 +5,7 @@ import { BN } from "@coral-xyz/anchor";
 
 export const BACKEND_URL = "http://localhost:8000"
 
-export const PROGRAM_ID = new PublicKey("E2cK464TgkSX1VWr3r95FX4kiS5zuYiaberVJvGQBBpy")
+export const PROGRAM_ID = new PublicKey("2bspSR5RkqBNiRh7SENQ8i34zuw6BLwjzeyT83BsCrCn")
 
 //admin treasury
 export const treasury = new PublicKey("9Mv6tanREUmkYVS1jSgj27GrapJvK3ynkCWsRJKCMpn5")
@@ -28,39 +28,6 @@ export const MIN_MARKET_DURATION = new BN(5); // 5 minutes
 export const MAX_MARKET_DURATION = new BN(31536000); // 1 year
 export const BET_AMOUNT = new BN(1 * LAMPORTS_PER_SOL);
 export const MARKET_DURATION = new BN(310); // 310 seconds (~5 minutes) - just above minimum
-
-
-// token
-// export const tokenTradingFeeBps = 300;
-// export const battleFeeBps = 200;
-// export const creatorRoyaltyBps = 800;
-// export const creatorAllocationBps = 1500;// 15%
-// export const minLiquidityPercentage = 6000; //60 %
-// export const maxTokensPerBattleSide = 5;
-// export const minTokenCreationFee = new BN(100000000);
-// export const minTokenSupply = new BN(1000);
-// export const maxTokenSupply = new BN(1000000);
-// export const minInitialPrice = new BN(1_000_000);
-// export const minLockDuration = new BN(3600);
-// export const CurveTypes = {
-//     linear: { linear: {} },
-//     exponential: { exponential: {} },
-//     logarithmic: { logarithmic: {} },
-// } as const;
-// export type BondingCurveKey = keyof typeof CurveTypes;
-
-// export const curveSteepness = new BN(100);
-// export const migrationThreshold = new BN(1000000000);
-// export const dexMigrationFee = new BN(1000000);
-// export const battleEligibilityThreshold = new BN(10000);
-// export const minBattleDuration = new BN(60);// 60 sec
-// export const maxBattleDuration = new BN(604800);//  7 days
-// export const minBattlePool = new BN(1000000);
-// export const maxMarketDuration = new BN(604800); //7 Days
-// export const battleCreationReputation = new BN(50);
-// export const marketCreationReputation = new BN(100);
-
-
 
 
 // Platform Config Parameters

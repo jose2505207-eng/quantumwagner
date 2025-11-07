@@ -1,5 +1,5 @@
 {
-  "address": "E2cK464TgkSX1VWr3r95FX4kiS5zuYiaberVJvGQBBpy",
+  "address": "2bspSR5RkqBNiRh7SENQ8i34zuw6BLwjzeyT83BsCrCn",
   "metadata": {
     "name": "prediction_market",
     "version": "0.1.0",
@@ -261,7 +261,6 @@
       ],
       "args": []
     },
-
     {
       "name": "claim_creator_tokens",
       "discriminator": [
@@ -422,7 +421,6 @@
       ],
       "args": []
     },
-    
     {
       "name": "create_token_launch",
       "discriminator": [
@@ -1008,8 +1006,6 @@
         }
       ]
     },
-
-
     {
       "name": "migrate_to_dex",
       "discriminator": [
@@ -1125,10 +1121,7 @@
           "writable": true
         },
         {
-          "name": "raydium_program",
-          "docs": [
-            "This will be the actual Raydium program ID in production"
-          ]
+          "name": "raydium_program"
         },
         {
           "name": "pool_account",
@@ -1165,10 +1158,6 @@
       ],
       "args": []
     },
-
-
-
-
     {
       "name": "place_bet",
       "discriminator": [

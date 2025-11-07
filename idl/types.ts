@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/prediction_market.json`.
  */
 export type PredictionMarket = {
-  "address": "E2cK464TgkSX1VWr3r95FX4kiS5zuYiaberVJvGQBBpy",
+  "address": "2bspSR5RkqBNiRh7SENQ8i34zuw6BLwjzeyT83BsCrCn",
   "metadata": {
     "name": "predictionMarket",
     "version": "0.1.0",
@@ -1127,10 +1127,7 @@ export type PredictionMarket = {
           "writable": true
         },
         {
-          "name": "raydiumProgram",
-          "docs": [
-            "This will be the actual Raydium program ID in production"
-          ]
+          "name": "raydiumProgram"
         },
         {
           "name": "poolAccount",

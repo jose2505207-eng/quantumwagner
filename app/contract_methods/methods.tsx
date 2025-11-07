@@ -462,7 +462,7 @@ export default function Methods() {
           },
           new anchor.BN(data.initialPrice),
           new anchor.BN(data.totalSupply),
-          CurveTypes[data.CurveTypes],
+          { exponential: {} },
           data.tags
         )
         .accounts({
@@ -756,7 +756,30 @@ export default function Methods() {
     }
   };
 
-  
+  const getUserAllTokens = async () => {
+    if (!program) {
+      throw new Error("Progrma not found");
+    }
+
+    const creator =  program.provider.publicKey;
+    if (!creator) {
+      throw new Error("Wallet not connected!");
+    }
+
+    const accounts = await program.account.tokenLaunch.all([
+      {
+        memcmp: {
+          offset: 48,
+          bytes: creator.toBase58(),
+        },
+      },
+    ]);
+    console.log(accounts);
+    
+
+    return accounts;
+  };
+
   return {
     initProgram,
     initMarket,
@@ -769,5 +792,6 @@ export default function Methods() {
     buyToken,
     sellToken,
     claimCreatorTokens,
+    getUserAllTokens,
   };
 }
