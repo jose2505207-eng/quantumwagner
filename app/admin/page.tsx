@@ -29,7 +29,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import Methods from "../contract_methods/methods";
+import Methods from "../utils/methods";
 
 const navItems = [
   { name: "Dashboard", icon: LayoutDashboard },
@@ -160,7 +160,7 @@ export default function AdminDashboard() {
       </aside>
 
       {/* for  init plateform  */}
-
+{/* 
       <Button
         className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-medium px-5 py-2 rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
         onClick={initProgram}
@@ -173,7 +173,7 @@ export default function AdminDashboard() {
         onClick={initializeLaunchpad}
       >
         Init launchpad
-      </Button>
+      </Button> */}
 
       {/* Main */}
       <main className="flex-1 p-4 pb-20 md:pb-4">

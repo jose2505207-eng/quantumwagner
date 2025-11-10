@@ -4,8 +4,8 @@ import { useParams } from "next/navigation";
 import { useMarketStore } from "@/store/adminMarketStore";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import CountdownTimer from "@/app/hooks/CountdownTimer";
 import Link from "next/link";
+import CountdownTimer from "@/app/utils/hooks/CountdownTimer";
 
 export default function CategoryPage() {
   const params = useParams();

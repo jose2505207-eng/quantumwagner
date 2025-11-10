@@ -1,7 +1,7 @@
-import Methods from "@/app/contract_methods/methods";
 import { useAnchorWallet } from "@solana/wallet-adapter-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import Methods from "./methods";
 
 export function useUserTokens() {
   const [tokens, setTokens] = useState<any[]>([]);

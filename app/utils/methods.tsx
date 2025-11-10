@@ -1,7 +1,7 @@
 "use client";
 
 import { PublicKey, SystemProgram } from "@solana/web3.js";
-import { useProgram } from "@/lib/useProgram";
+import { useProgram } from "@/app/utils/useProgram";
 import * as anchor from "@coral-xyz/anchor";
 import {
   treasury,

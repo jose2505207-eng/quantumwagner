@@ -19,9 +19,9 @@ import { useMarkets } from "../helper/fetchMarkets";
 import toast from "react-hot-toast";
 import { Switch } from "../ui/switch";
 import { BACKEND_URL } from "@/config";
-import Methods from "@/app/contract_methods/methods";
 import * as anchor from "@coral-xyz/anchor";
 import { MarketCategory, MarketCategoryLabels } from "@/app/types";
+import Methods from "@/app/utils/methods";
 
 export default function CreateMarkets() {
   const { fetchMarkets } = useMarkets();

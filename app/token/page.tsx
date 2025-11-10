@@ -4,14 +4,14 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { PublicKey } from "@solana/web3.js";
 import { useWallet } from "@solana/wallet-adapter-react";
-import Methods, { createToeknParams } from "../contract_methods/methods";
-import { useProgram } from "@/lib/useProgram";
 import toast from "react-hot-toast";
 import {
   MAX_TOKEN_SUPPLY,
   MIN_INITIAL_PRICE,
   MIN_TOKEN_SUPPLY,
 } from "@/config";
+import { useProgram } from "@/utils/useProgram";
+import Methods, { createToeknParams } from "../utils/methods";
 
 // Shorten wallet pubkey
 function short(pk?: PublicKey | string | null) {
@@ -154,7 +154,7 @@ export default function LaunchPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-zinc-950 via-black to-zinc-900 mt-20">
+    <main className="min-h-screen flex items-center justify-center p-6 mt-20">
       <div className="w-full max-w-2xl">
         <motion.div
           initial={{ y: 10, opacity: 0 }}

@@ -6,7 +6,6 @@ import axios from "axios";
 import { BACKEND_URL } from "@/config";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import toast from "react-hot-toast";
-import Methods from "../contract_methods/methods";
 import PositionCard from "@/components/positions/PositionCard";
 import { PublicKey } from "@solana/web3.js";
 import { useUserStore } from "@/store/userInfo";
@@ -20,11 +19,10 @@ import {
 } from "lucide-react";
 import ProfileCard from "@/components/custom/UserRepution";
 import { useRouter } from "next/navigation";
-// import { useAnchorWallet } from "@solana/wallet-adapter-react";
-// import { BN } from "@coral-xyz/anchor";
-import { useUserTokens } from "@/lib/useUserTokens";
 import { toDisplay } from "./token/[mid]/page";
 import Image from "next/image";
+import Methods from "../utils/methods";
+import { useUserTokens } from "../utils/useUserTokens";
 
 export const Spinner = () => (
   <div className="flex items-center justify-center h-64">

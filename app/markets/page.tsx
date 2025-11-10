@@ -1,15 +1,14 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { RefreshCw } from "lucide-react";
 import PlateformStats from "@/components/market/PlateformStats";
 import { useMarketStore } from "@/store/adminMarketStore";
 import axios from "axios";
-import CountdownTimer from "../hooks/CountdownTimer";
 import { BACKEND_URL } from "@/config";
 import MarketCategories from "@/components/MarketCategories";
 import Faq from "@/components/landing/FAQ";
 import Link from "next/link";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
+import CountdownTimer from "../utils/hooks/CountdownTimer";
 
 export default function Markets() {
   const { markets, setMarkets } = useMarketStore();
@@ -201,14 +200,6 @@ export default function Markets() {
         )}
       </div>
 
-      {/* todo */}
-      {/* <div className="text-center mt-8">
-          <button className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 mx-auto">
-            Explore Markets
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div> */}
-
       {/* Stats Section */}
       <div className="text-center mb-16">
         <div className="inline-block px-4 py-2 border border-gray-600 rounded-full text-sm mb-8">
@@ -230,16 +221,6 @@ export default function Markets() {
           rewards based on their market insights.
         </p>
 
-        {/* todo */}
-        {/* <div className="flex gap-4 justify-center">
-          <button className="px-8 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center gap-2">
-            Explore Markets
-            <ArrowRight className="w-4 h-4" />
-          </button>
-          <button className="px-8 py-3 border border-gray-600 text-white rounded-lg font-medium hover:border-gray-500 transition-colors">
-            Learn More
-          </button>
-        </div> */}
       </div>
 
       <Faq />

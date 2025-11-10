@@ -1,5 +1,6 @@
 "use client";
 
+import { Background } from "@/components/background";
 import { Button } from "@/components/custom/primary";
 import Faq from "@/components/landing/FAQ";
 import HeroSection from "@/components/landing/Hero";
@@ -47,6 +48,7 @@ export default function Home() {
       transition={{ duration: 0.6, ease: "easeOut" }}
       className="min-h-screen text-white relative overflow-hidden"
     >
+      <Background></Background>
       {/* Background Image */}
       <div
         className="absolute inset-0 -z-10 bg-top bg-no-repeat bg-contain"

@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Background } from "@/components/background";
 import { AppBar } from "@/components/Appbar";
-import { SolanaProvider } from "../lib/SolanaProvider";
 import Footer from "@/components/Footer";
-import { WalletAuth } from "@/app/utils/walletAuth";
 import { Toaster } from "react-hot-toast";
-import RouteProgress from "./routeProgress";
+import RouteProgress from "./utils/hooks/routeProgress";
+import { SolanaProvider } from "./utils/SolanaProvider";
+import { WalletAuth } from "./utils/walletAuth";
 
 export const metadata: Metadata = {
   title: "Quantum Wager ",
@@ -21,16 +20,15 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+ 
   return (
     <html lang="en" className="dark">
-      <body className="relative bg-black text-white min-h-screen flex flex-col">
+      <body className="relative bg-[#0b0d11] text-white min-h-screen flex flex-col">
         <RouteProgress />
-        <Background />
         <SolanaProvider>
           <AppBar />
           <WalletAuth></WalletAuth>
           <main className="flex-grow ">{children}</main>
-
           <Toaster
             position="top-center"
             toastOptions={{

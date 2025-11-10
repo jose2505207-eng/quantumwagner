@@ -40,13 +40,13 @@ import {
 import { Switch } from "../ui/switch";
 import { BACKEND_URL } from "@/config";
 import { PublicKey } from "@solana/web3.js";
-import Methods from "@/app/contract_methods/methods";
 import {
   Market,
   MarketCategory,
   MarketCategoryLabels,
   MarketStatus,
 } from "@/app/types";
+import Methods from "@/app/utils/methods";
 
 export default function ActiveMarkets() {
   const [filterCategory, setFilterCategory] = useState("ALL");

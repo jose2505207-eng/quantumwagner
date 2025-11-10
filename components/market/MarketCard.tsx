@@ -1,5 +1,5 @@
 import { Market } from "@/components/market/types";
-import CountdownTimer from "@/app/hooks/CountdownTimer";
+import CountdownTimer from "@/lib/hooks/CountdownTimer";
 
 const MarketCard = ({ market }: { market: Market }) => {
   const isFeatured = market.featured;

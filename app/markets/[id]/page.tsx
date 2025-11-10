@@ -5,13 +5,13 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 import axios from "axios";
 import { BACKEND_URL } from "@/config";
-import Methods from "@/app/contract_methods/methods";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import toast from "react-hot-toast";
+import Methods from "@/app/utils/methods";
+import { cn } from "@/app/utils/utils";
 
 export interface MarketResponse {
   success: boolean;
