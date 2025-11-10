@@ -20,67 +20,21 @@ import {
 } from "lucide-react";
 import ProfileCard from "@/components/custom/UserRepution";
 import { useRouter } from "next/navigation";
-import { useAnchorWallet } from "@solana/wallet-adapter-react";
+// import { useAnchorWallet } from "@solana/wallet-adapter-react";
+// import { BN } from "@coral-xyz/anchor";
+import { useUserTokens } from "@/lib/useUserTokens";
+import { toDisplay } from "./token/[mid]/page";
 import Image from "next/image";
-import { BN } from "@coral-xyz/anchor";
 
-// Spinner loader
-const Spinner = () => (
+export const Spinner = () => (
   <div className="flex items-center justify-center h-64">
     <div className="w-10 h-10 border-4 border-gray-500 border-t-purple-500 rounded-full animate-spin"></div>
   </div>
 );
 
-function useUserTokens() {
-  const [tokens, setTokens] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const wallet = useAnchorWallet();
-
-  const { getUserAllTokens } = Methods();
-
-  useEffect(() => {
-    if (!wallet?.publicKey) return; // Wait until wallet connects
-    let cancelled = false;
-
-    const fetchTokens = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Retry loop for program initialization
-        let attempts = 0;
-        while (attempts < 10) {
-          try {
-            const acc = await getUserAllTokens();
-            if (!cancelled) setTokens(acc || []);
-            break;
-          } catch (err: any) {
-            if (err.message?.includes("Progrma not found")) {
-              attempts++;
-              console.log(`⏳ Retrying getUserAllTokens (${attempts}/10)`);
-              await new Promise((res) => setTimeout(res, 1000));
-              continue;
-            }
-            throw err;
-          }
-        }
-      } catch (err) {
-        console.error("Failed to fetch tokens:", err);
-        toast.error("Could not load tokens");
-        setError("Failed to load tokens");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    fetchTokens();
-    return () => {
-      cancelled = true;
-    };
-  }, [wallet?.publicKey]);
-
-  return { tokens, loading, error };
+export function shortenAddress(addr: string) {
+  if (!addr) return "Unknown";
+  return addr.slice(0, 4) + "..." + addr.slice(-4);
 }
 
 export default function Portfolio() {
@@ -91,7 +45,6 @@ export default function Portfolio() {
   const [withdrawingMap, setWithdrawingMap] = useState<Record<string, boolean>>(
     {}
   );
-  const [expanded, setExpanded] = useState(false);
 
   const { tokens: userToken, loading: tokenLoading } = useUserTokens();
   const { userInfo } = useUserStore();
@@ -152,26 +105,6 @@ export default function Portfolio() {
     }
   };
 
-  const toDisplay = (val: any): string => {
-    if (val === null || val === undefined) return "N/A";
-    try {
-      if (typeof val === "object" && val.words) {
-        // Anchor BN internal structure
-        return new BN(val).toString();
-      }
-      if (BN.isBN?.(val)) {
-        return val.toString();
-      }
-      if (typeof val === "string" && /^[0-9a-fA-F]+$/.test(val)) {
-        // hex string like "0186a0"
-        return parseInt(val, 16).toLocaleString();
-      }
-      return val.toString();
-    } catch {
-      return String(val);
-    }
-  };
-
   const activePositions = positions.filter(
     (p) => new Date(p.market.end_time).getTime() >= Date.now()
   );
@@ -183,6 +116,7 @@ export default function Portfolio() {
     <div className="min-h-screen p-6 pt-24 text-white">
       <div className="max-w-6xl mx-auto space-y-10">
         {/* User Info Card */}
+
         <div className="flex flex-wrap items-center gap-6 bg-gray-900/70 border border-gray-800 rounded-lg p-5">
           <div className="flex items-center gap-2">
             <BadgeCheck className="w-5 h-5 text-purple-400" />
@@ -230,135 +164,115 @@ export default function Portfolio() {
           </div>
         </div>
 
+        {/* Reputation Card */}
+        <ProfileCard
+          reputation_score={userInfo?.user.reputation_score || 0}
+          win_rate={userInfo?.user.win_rate || "error"}
+          battels_won={userInfo?.user.win_rate || "error"}
+        />
         {/* User Tokens Section */}
-        <div>
-          <h3 className="text-xl sm:text-2xl font-semibold bg-gradient-to-r from-[#a855f7] to-[#9333ea] bg-clip-text text-transparent mb-4">
+        <div className="relative overflow-hidden">
+          <h3 className="text-xl sm:text-2xl font-semibold bg-gradient-to-r from-[#a855f7] to-[#9333ea] bg-clip-text text-transparent mb-8 ">
             Your Tokens
           </h3>
+
           {tokenLoading ? (
-            <Spinner />
+            <div className="flex justify-center items-center h-40">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-500"></div>
+            </div>
           ) : userToken.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {userToken.map((token: any, i: number) => {
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 justify-items-center items-start w-full max-w-6xl mx-auto">
+              {userToken.map((token, i: number) => {
                 const acc = token.account;
                 const mint = acc.tokenMint?.toBase58?.() ?? acc.tokenMint;
-                const creator = acc.creator?.toBase58?.() ?? acc.creator;
 
                 return (
                   <div
                     key={i}
-                    className="bg-gray-900/50 border border-gray-700 rounded-2xl p-5 hover:border-purple-500/50 hover:shadow-lg transition-all duration-200 flex flex-col"
+                    onClick={() => router.push(`portfolio/token/${mint}`)}
+                    className="relative
+    w-full max-w-[500px]
+    rounded-2xl
+    p-6
+    overflow-hidden
+    border border-[rgba(255,255,255,0.06)]
+    shadow-[0_8px_25px_rgba(0,0,0,0.45)]
+    hover:shadow-[0_0_30px_rgba(140,120,255,0.2)]
+    transition-all duration-500
+    cursor-pointer
+    hover:-translate-y-[2px]
+  "
                   >
-                    {/* Image & Header */}
-                    <div className="flex flex-col items-center text-center">
-                      {acc.imageUri && acc.imageUri.startsWith("http") ? (
-                        <img
-                          src={acc.imageUri}
-                          alt={acc.name}
-                          className="w-20 h-20 object-cover rounded-full border border-gray-600 mb-3"
-                          onError={(e) =>
-                            ((e.target as HTMLImageElement).src =
-                              "https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg")
-                          }
-                        />
-                      ) : (
-                        <div className="w-20 h-20 flex items-center justify-center bg-gray-700 text-gray-400 rounded-full mb-3">
-                          No Image
-                        </div>
-                      )}
-
-                      <h4 className="text-lg font-semibold text-white">
-                        {acc.name}
-                      </h4>
-                      <p className="text-sm text-gray-400 mb-2">{acc.symbol}</p>
-
-                      {acc.tags?.length > 0 && (
-                        <div className="flex flex-wrap justify-center gap-2 mb-2">
-                          {acc.tags.map((t: string, idx: number) => (
-                            <span
-                              key={idx}
-                              className="text-xs px-2 py-1 rounded-full bg-gradient-to-r from-purple-500/30 to-blue-500/30 text-purple-300"
-                            >
-                              #{t}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
-                      <button
-                        onClick={() => setExpanded(!expanded)}
-                        className="text-xs text-purple-400 hover:text-purple-300 transition mt-2"
-                      >
-                        {expanded ? "Hide Details ▲" : "View Details ▼"}
-                      </button>
-                    </div>
-
-                    {/* Expandable Details */}
                     <div
-                      className={`overflow-hidden transition-all duration-500 ${
-                        expanded ? "max-h-[800px] mt-4" : "max-h-0"
-                      }`}
-                    >
-                      <div className="text-sm space-y-1 text-gray-300 mt-2">
-                        <p>
-                          <strong>Mint:</strong> {mint}
-                        </p>
-                        <p>
-                          <strong>Creator:</strong> {creator}
-                        </p>
-                        <p>
-                          <strong>Total Supply:</strong>{" "}
-                          {toDisplay(acc.totalSupply)}
-                        </p>
-                        <p>
-                          <strong>Initial Price:</strong>{" "}
-                          {toDisplay(acc.initialPrice)}
-                        </p>
-                        <p>
-                          <strong>Current Price:</strong>{" "}
-                          {toDisplay(acc.currentPrice)}
-                        </p>
-                        <p>
-                          <strong>Battle Eligible:</strong>{" "}
-                          {acc.battleEligible ? "Yes" : "No"}
-                        </p>
+                      className="
+      absolute inset-0 rounded-2xl
+      bg-[rgba(255,255,255,0.08)]
+      backdrop-blur-2xl backdrop-saturate-150
+      pointer-events-none
+      -z-10
+    "
+                    />
+
+                    <div className="flex items-center gap-5 w-full relative z-10">
+                      {/* Token Image */}
+                      <div className="flex-shrink-0">
+                        {acc.imageUri && acc.imageUri.startsWith("http") ? (
+                          <Image
+                            src={
+                              acc.imageUri ||
+                              "https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg"
+                            }
+                            alt={acc.name}
+                            width={80}
+                            height={80}
+                            className="w-20 h-20 object-cover rounded-full border border-[#22242c] shadow-[0_0_10px_rgba(255,255,255,0.05)]"
+                          />
+                        ) : (
+                          <div className="w-20 h-20 flex items-center justify-center bg-[#10131d] text-gray-400 rounded-full text-xs font-medium border border-[#1f2230]">
+                            No Image
+                          </div>
+                        )}
                       </div>
 
-                      {/* Links */}
-                      <div className="flex flex-wrap gap-3 mt-4 text-xs">
-                        {acc.socialLinks?.website && (
+                      {/* Token Info */}
+                      <div className="flex-1 text-left leading-relaxed">
+                        <p className="text-[13px] text-[#9ca3af] mb-1">
+                          Token Address:{" "}
+                          <span className="font-mono text-[#b7bdfb]">
+                            {shortenAddress(mint)}
+                          </span>
                           <a
-                            href={acc.socialLinks.website}
+                            href={`https://solscan.io/account/${mint}?cluster=devnet`}
                             target="_blank"
-                            className="text-blue-400 hover:text-blue-300"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="ml-1 underline text-[#7c81ff] hover:text-[#9fa4ff] text-[11px]"
                           >
-                            Website
+                            View ↗
                           </a>
-                        )}
-                        {acc.socialLinks?.twitter && (
-                          <a
-                            href={`https://twitter.com/${acc.socialLinks.twitter.replace(
-                              "@",
-                              ""
-                            )}`}
-                            target="_blank"
-                            className="text-sky-400 hover:text-sky-300"
-                          >
-                            Twitter
-                          </a>
-                        )}
-                        {acc.socialLinks?.telegram && (
-                          <a
-                            href={`https://t.me/${acc.socialLinks.telegram.replace(
-                              "@",
-                              ""
-                            )}`}
-                            target="_blank"
-                            className="text-blue-500 hover:text-blue-300"
-                          >
-                            Telegram
-                          </a>
-                        )}
+                        </p>
+
+                        <p className="text-sm sm:text-base font-medium text-[#E5E7EB]/90">
+                          Total Supply:&nbsp;
+                          <span className="text-xl font-semibold text-[#C8CCFF] align-middle">
+                            {toDisplay(acc.totalSupply)}
+                          </span>
+                          &nbsp;
+                          <span className="text-[#A1A5B7] text-base font-normal">
+                            {acc.symbol}
+                          </span>
+                        </p>
+
+                        <p className="text-sm sm:text-base font-medium text-[#E5E7EB]/90 mt-1">
+                          Current Price:&nbsp;
+                          <span className="text-lg font-semibold text-[#BFC3FF] align-middle">
+                            {toDisplay(acc.currentPrice)}
+                          </span>
+                          &nbsp;
+                          <span className="text-[#9CA3AF]/80 text-sm">
+                            lamports
+                          </span>
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -366,17 +280,10 @@ export default function Portfolio() {
               })}
             </div>
           ) : (
-            <p className="text-gray-400">No tokens found</p>
+            <p className="text-gray-400 text-center">No tokens found</p>
           )}
         </div>
 
-        {/* Reputation Card */}
-
-        <ProfileCard
-          reputation_score={userInfo?.user.reputation_score || 0}
-          win_rate={userInfo?.user.win_rate || "error"}
-          battels_won={userInfo?.user.win_rate || "error"}
-        />
         {/* Positions Section */}
         <Tabs defaultValue="active" onValueChange={setTab} className="w-full">
           <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-6 mb-10">
