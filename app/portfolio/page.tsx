@@ -168,6 +168,7 @@ export default function Portfolio() {
           win_rate={userInfo?.user.win_rate || "error"}
           battels_won={userInfo?.user.win_rate || "error"}
         />
+
         {/* User Tokens Section */}
         <div className="relative overflow-hidden">
           <h3 className="text-xl sm:text-2xl font-semibold bg-gradient-to-r from-[#a855f7] to-[#9333ea] bg-clip-text text-transparent mb-8 ">
@@ -204,7 +205,7 @@ export default function Portfolio() {
                     <div
                       className="
       absolute inset-0 rounded-2xl
-      bg-[rgba(255,255,255,0.08)]
+      bg-[#0F1521]
       backdrop-blur-2xl backdrop-saturate-150
       pointer-events-none
       -z-10

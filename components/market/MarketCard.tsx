@@ -1,7 +1,6 @@
-import { Market } from "@/components/market/types";
-import CountdownTimer from "@/lib/hooks/CountdownTimer";
+import CountdownTimer from "@/app/utils/hooks/CountdownTimer";
 
-const MarketCard = ({ market }: { market: Market }) => {
+const MarketCard = ( market ) => {
   const isFeatured = market.featured;
 
   // --- NORMALIZE numeric pools (strings => numbers) ---

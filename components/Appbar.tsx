@@ -34,6 +34,7 @@ export function AppBar() {
 
   const navItems = [
     { label: "Markets", path: "/markets" },
+    { label: "Battle Arena", path: "/token/battlearena" },
     { label: "Portfolio", path: "/portfolio" },
     { label: "leaderboard", path: "/leaderboard" },
   ];

@@ -71,25 +71,19 @@ export default function Markets() {
               Active Now
             </button>
 
-            {/* todo */}
-            {/* <button className="px-4 py-2 text-gray-400 hover:text-white transition-colors">
-              All
-            </button> */}
+           
           </div>
         </div>
 
         {loading ? (
-          //  Loading State
           <div className="flex justify-center items-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
           </div>
         ) : markets.length === 0 ? (
-          //  Empty State
           <div className="text-center text-gray-400 py-20">
             <p>No markets available</p>
             <button
               onClick={() => {
-                // window.location.reload();
                 loadMarkets();
               }}
               className="mt-6 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
@@ -98,11 +92,9 @@ export default function Markets() {
             </button>
           </div>
         ) : (
-          //  Data Render
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-4 sm:px-8 lg:px-20 py-10">
             {markets.map((market, index) => {
-              // calculate odds
               const yesPool = Number(market.yes_pool || 0);
               const noPool = Number(market.no_pool || 0);
 
@@ -174,9 +166,7 @@ export default function Markets() {
                         </div>
                         <div>Volume</div>
                       </div>
-                      {/* <div className="text-center">
-                        <div>Traders</div>
-                      </div> */}
+                   
                       <div className="text-center">
                         <CountdownTimer endTime={market.end_time} />
                         <div>Left</div>

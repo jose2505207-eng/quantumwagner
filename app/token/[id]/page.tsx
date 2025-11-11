@@ -1,6 +1,5 @@
 "use client";
 import { useParams } from "next/navigation";
-import { Spinner } from "../../page";
 import { BN, web3 } from "@coral-xyz/anchor";
 import Image from "next/image";
 import {
@@ -18,6 +17,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { useState } from "react";
 import { useUserTokens } from "@/app/utils/useUserTokens";
 import Methods from "@/app/utils/methods";
+import { Spinner } from "@/app/portfolio/page";
 
 const { PublicKey } = web3;
 

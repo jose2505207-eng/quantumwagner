@@ -750,9 +750,25 @@ export default function Methods() {
 
       toast.success("Token claimed successfully!");
       console.log("Token claimed successfully :", tx);
-    } catch (e) {
-      console.error("Claim failed:", e);
-      toast.error("Creator claim failed!");
+    } catch (e: any) {
+      const message = e?.error?.message || e?.message || String(e);
+      if (message.includes("No tokens available to claim")) {
+        toast.success("Already Claimed!");
+        return;
+      } else if (message.includes("UnauthorizedCreator")) {
+        toast.error("You are not the creator of this token.");
+        return;
+      } else if (message.includes("InsufficientTokens")) {
+        toast.error("Vault doesn't have enough tokens to transfer.");
+        return;
+      } else if (message.includes("LaunchCancelled")) {
+        toast.error("Launch is not active or has been cancelled.");
+        return;
+      } else {
+        toast.error("Creator claim failed!");
+        console.error("Claim failed:", e);
+        return;
+      }
     }
   };
 
@@ -761,7 +777,7 @@ export default function Methods() {
       throw new Error("Progrma not found");
     }
 
-    const creator =  program.provider.publicKey;
+    const creator = program.provider.publicKey;
     if (!creator) {
       throw new Error("Wallet not connected!");
     }
@@ -775,7 +791,16 @@ export default function Methods() {
       },
     ]);
     console.log(accounts);
-    
+
+    return accounts;
+  };
+  const getAllTokens = async () => {
+    if (!program) {
+      throw new Error("Progrma not found");
+    }
+
+    const accounts = await program.account.tokenLaunch.all();
+    console.log(accounts);
 
     return accounts;
   };
@@ -789,9 +814,12 @@ export default function Methods() {
     withdrawWinnings,
     initializeLaunchpad,
     createTokenLaunch,
+
     buyToken,
     sellToken,
+
     claimCreatorTokens,
     getUserAllTokens,
+    getAllTokens,
   };
 }
