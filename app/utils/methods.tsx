@@ -1,6 +1,6 @@
 "use client";
 
-import { PublicKey, SystemProgram } from "@solana/web3.js";
+import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js";
 import { useProgram } from "@/app/utils/useProgram";
 import * as anchor from "@coral-xyz/anchor";
 import {
@@ -42,10 +42,14 @@ import {
 import toast from "react-hot-toast";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
+  getAccount,
+  getAssociatedTokenAddress,
   getAssociatedTokenAddressSync,
+  getOrCreateAssociatedTokenAccount,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { ASSOCIATED_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/utils/token";
+import { useConnection } from "@solana/wallet-adapter-react";
 
 export interface createToeknParams {
   name: string;
@@ -63,9 +67,16 @@ export interface createToeknParams {
   tags: string[];
 }
 
+type BoughtToken = {
+  mint: string;
+  balance: number;
+  ata: string;
+  tokenData: any; // You can make this more specific later with your TokenLaunch type
+};
+
 export default function Methods() {
   const program = useProgram();
-
+  const { connection } = useConnection();
   const initProgram = async () => {
     if (!program) {
       toast.error("Please connect wallet!");
@@ -499,13 +510,11 @@ export default function Methods() {
     const buyer = program.provider.publicKey;
     if (!buyer) throw new Error("Wallet not connected");
 
-    // 1️⃣ Platform config PDA
     const [configPDA] = PublicKey.findProgramAddressSync(
       [Buffer.from("platform_config")],
       program.programId
     );
 
-    // 2️⃣ TokenLaunch PDA (based on launch_id)
     const [tokenLaunchPDA] = PublicKey.findProgramAddressSync(
       [
         Buffer.from("token_launch"),
@@ -514,24 +523,20 @@ export default function Methods() {
       program.programId
     );
 
-    // 3️⃣ Sol vault derived using token_launch PDA
     const [solVaultPDA] = PublicKey.findProgramAddressSync(
       [Buffer.from("sol_vault"), tokenLaunchPDA.toBuffer()],
       program.programId
     );
 
-    // 4️⃣ Fetch config (to get real treasury + vaults)
     const config = await program.account.platformConfig.fetch(configPDA);
     const treasury = config.treasury;
     const royaltyVault = config.royaltyVault;
     const battlePoolVault = config.battlePoolVault;
 
-    // 5️⃣ Fetch token_launch (to get tokenMint & vault)
     const tokenLaunch = await program.account.tokenLaunch.fetch(tokenLaunchPDA);
     const tokenMint = tokenLaunch.tokenMint;
     const tokenVault = tokenLaunch.tokenVault;
 
-    // 6️⃣ Buyer ATA
     const buyerTokenAccount = getAssociatedTokenAddressSync(
       tokenMint,
       buyer,
@@ -539,10 +544,6 @@ export default function Methods() {
       TOKEN_PROGRAM_ID,
       ASSOCIATED_TOKEN_PROGRAM_ID
     );
-
-    console.log("➡️  Passing RoyaltyVault:", royaltyVault.toBase58());
-    console.log("➡️  Passing Treasury:", treasury.toBase58());
-    console.log("➡️  Passing BattlePoolVault:", battlePoolVault.toBase58());
 
     try {
       const tx = await program.methods
@@ -639,66 +640,106 @@ export default function Methods() {
     return tx;
   };
 
-  // const migreateToDex = async (tokenId: number) => {
-  //   if (!program) {
-  //     throw new Error("Progrma not ready!");
-  //   }
-
-  //   const creator = program.provider.publicKey;
-  //   if (!creator) {
-  //     throw new Error("Wallet not connected!");
-  //   }
-
-  //   const [configPDA] = PublicKey.findProgramAddressSync(
-  //     [Buffer.from("platform_config")],
-  //     program.programId
-  //   );
-
-  //   const [tokenLaunchPDA] = PublicKey.findProgramAddressSync(
-  //     [
-  //       Buffer.from("token_launch"),
-  //       new anchor.BN(tokenId).toArrayLike(Buffer, "le", 8),
-  //     ],
-  //     program.programId
-  //   );
-
-  //   const [solVaulet] = PublicKey.findProgramAddressSync(
-  //     [Buffer.from("sol_vault"), tokenLaunchPDA.toBuffer()],
-  //     program.programId
-  //   );
-
-  //   const configAccount = await program?.account.platformConfig.fetch(
-  //     configPDA
-  //   );
-  //   const tokenlaunchAccount = await program.account.tokenLaunch.fetch(
-  //     tokenLaunchPDA
-  //   );
-
-  // const poolAccount = new PublicKey("YOUR_POOL_ACCOUNT_PUBKEY");
-  // const poolTokenMint = new PublicKey("YOUR_POOL_TOKEN_MINT_PUBKEY");
-  // const poolSolAccount = new PublicKey("YOUR_POOL_SOL_ACCOUNT_PUBKEY");
-  // const poolTokenAccount = new PublicKey("YOUR_POOL_TOKEN_ACCOUNT_PUBKEY");
-
-  //  // Creator LP account (this must be associated token account for poolTokenMint)
-  // const creatorLpAccount = await getAssociatedTokenAddress(
-  //   poolTokenMint,
-  //   creator
-  // );
-
+  // const migrateToDex = async (tokenId: number) => {
   //   try {
-  //     const tx;= await program.methods.migrateToDex().accounts({
-  //       creator,
-  //       config:configPDA,
-  //       tokenLaunch:tokenLaunchPDA,
-  //       tokenMint:tokenlaunchAccount.tokenMint,
-  //       tokenVault:tokenlaunchAccount.tokenVault,
-  //       solVault:solVaulet,
-  //       treasury:configAccount.treasury,
-  //       raydiumProgram:new PublicKey("Raydium111111111111111111111111111111111"),
-  //       poolAccount:pool
+  //     if (!program) throw new Error("Program not ready!");
+  //     const provider = program.provider as anchor.AnchorProvider;
+  //     const creator = provider.publicKey;
+  //     if (!creator) throw new Error("Wallet not connected!");
 
-  //     })
-  //   } catch (e) {}
+  //     toast.loading("Migrating token to DEX...");
+
+  //     // === Derive PDAs ===
+  //     const [configPDA] = PublicKey.findProgramAddressSync(
+  //       [Buffer.from("platform_config")],
+  //       program.programId
+  //     );
+
+  //     const [tokenLaunchPDA] = PublicKey.findProgramAddressSync(
+  //       [
+  //         Buffer.from("token_launch"),
+  //         new anchor.BN(tokenId).toArrayLike(Buffer, "le", 8),
+  //       ],
+  //       program.programId
+  //     );
+
+  //     const [solVaultPDA] = PublicKey.findProgramAddressSync(
+  //       [Buffer.from("sol_vault"), tokenLaunchPDA.toBuffer()],
+  //       program.programId
+  //     );
+
+  //     // === Fetch Accounts ===
+  //     const configAccount = await program.account.platformConfig.fetch(
+  //       configPDA
+  //     );
+  //     const tokenLaunchAccount = await program.account.tokenLaunch.fetch(
+  //       tokenLaunchPDA
+  //     );
+
+  //     // === Pool-related PDAs (mock Raydium) ===
+  //     const [poolAccount] = PublicKey.findProgramAddressSync(
+  //       [Buffer.from("pool_account"), tokenLaunchPDA.toBuffer()],
+  //       program.programId
+  //     );
+  //     const [poolTokenMint] = PublicKey.findProgramAddressSync(
+  //       [Buffer.from("pool_token_mint"), tokenLaunchPDA.toBuffer()],
+  //       program.programId
+  //     );
+  //     const [poolSolAccount] = PublicKey.findProgramAddressSync(
+  //       [Buffer.from("pool_sol_account"), tokenLaunchPDA.toBuffer()],
+  //       program.programId
+  //     );
+  //     const [poolTokenAccount] = PublicKey.findProgramAddressSync(
+  //       [Buffer.from("pool_token_account"), tokenLaunchPDA.toBuffer()],
+  //       program.programId
+  //     );
+  //     const [raydiumProgram] = PublicKey.findProgramAddressSync(
+  //       [Buffer.from("mock_raydium")],
+  //       program.programId
+  //     );
+
+  //     // === Creator LP Account (must exist before call) ===
+  //     const creatorLpAccount = await getOrCreateAssociatedTokenAccount(
+  //       provider.connection,
+  //       provider.wallet.payer,
+  //       poolTokenMint, // LP mint from DEX mock
+  //       creator,
+  //       true // allow owner off-curve
+  //     );
+
+  //     // === Execute Transaction ===
+  //     const tx = await program.methods
+  //       .migrateToDex()
+  //       .accounts({
+  //         creator,
+  //         config: configPDA,
+  //         tokenLaunch: tokenLaunchPDA,
+  //         tokenMint: tokenLaunchAccount.tokenMint,
+  //         tokenVault: tokenLaunchAccount.tokenVault,
+  //         solVault: solVaultPDA,
+  //         treasury: configAccount.treasury,
+  //         raydiumProgram,
+  //         poolAccount,
+  //         poolTokenMint,
+  //         poolSolAccount,
+  //         poolTokenAccount,
+  //         creatorLpAccount: creatorLpAccount.address,
+  //         tokenProgram: TOKEN_PROGRAM_ID,
+  //         systemProgram: SystemProgram.programId,
+  //         rent: SYSVAR_RENT_PUBKEY,
+  //       })
+  //       .rpc();
+
+  //     toast.dismiss();
+  //     toast.success("Token migrated to DEX successfully!");
+  //     console.log("Transaction Signature:", tx);
+  //     return tx;
+  //   } catch (err: any) {
+  //     toast.dismiss();
+  //     console.error("Migration error:", err);
+  //     toast.error(err.message || "Migration failed!");
+  //     throw err;
+  //   }
   // };
 
   const claimCreatorTokens = async (tokenId: number) => {
@@ -771,7 +812,6 @@ export default function Methods() {
       }
     }
   };
-
   const getUserAllTokens = async () => {
     if (!program) {
       throw new Error("Progrma not found");
@@ -790,7 +830,6 @@ export default function Methods() {
         },
       },
     ]);
-    console.log(accounts);
 
     return accounts;
   };
@@ -805,6 +844,129 @@ export default function Methods() {
     return accounts;
   };
 
+  const getBoughtTokens = async (): Promise<BoughtToken[]> => {
+    try {
+      if (!program) throw new Error("Program not found");
+
+      const user = program.provider?.publicKey;
+      if (!user) throw new Error("Wallet not connected");
+
+      const allTokens = await program.account.tokenLaunch.all();
+      if (!allTokens || allTokens.length === 0) {
+        console.log("No token launches found.");
+        return [];
+      }
+
+      const boughtTokens: BoughtToken[] = [];
+
+      for (const token of allTokens) {
+        if (!token?.account) continue;
+
+        const mintAddress = token.account.tokenMint || token.account.token_mint;
+        if (!mintAddress) continue;
+
+        let mint: PublicKey;
+        try {
+          mint = new PublicKey(mintAddress);
+        } catch {
+          console.warn("Invalid mint address:", mintAddress);
+          continue;
+        }
+
+        try {
+          const ata = await getAssociatedTokenAddress(mint, user);
+          const account = await getAccount(connection, ata).catch(() => null);
+
+          if (account && Number(account.amount) > 0) {
+            boughtTokens.push({
+              mint: mint.toBase58(),
+              balance: Number(account.amount),
+              ata: ata.toBase58(),
+              tokenData: token.account,
+            });
+          }
+        } catch (err) {
+          if (!err.message.includes("could not find account")) {
+            console.warn("Skipping mint:", mintAddress, err.message);
+          }
+        }
+      }
+
+      console.log("Bought Tokens:", boughtTokens);
+      return boughtTokens;
+    } catch (err) {
+      console.error("Error fetching bought tokens:", err);
+      toast.error("Failed to fetch bought tokens");
+      return [];
+    }
+  };
+
+  const withdrawCreatorRoyalties = async (tokenId: number) => {
+    try {
+      if (!program) throw new Error("Program not ready!");
+      const provider = program.provider as anchor.AnchorProvider;
+      const creator = provider.publicKey;
+      if (!creator) throw new Error("Wallet not connected!");
+
+      toast.loading("Withdrawing royalties...");
+
+      // === Derive PDAs ===
+      const [configPDA] = PublicKey.findProgramAddressSync(
+        [Buffer.from("platform_config")],
+        program.programId
+      );
+
+      const [tokenLaunchPDA] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("token_launch"),
+          new anchor.BN(tokenId).toArrayLike(Buffer, "le", 8),
+        ],
+        program.programId
+      );
+
+      // === Fetch program data ===
+      const configAccount = await program.account.platformConfig.fetch(
+        configPDA
+      );
+      const tokenLaunchAccount = await program.account.tokenLaunch.fetch(
+        tokenLaunchPDA
+      );
+
+      // Royalty vault (comes from config)
+      const royaltyVault = configAccount.royaltyVault as PublicKey;
+
+      // === Execute transaction ===
+      const tx = await program.methods
+        .withdrawCreatorRoyalties()
+        .accounts({
+          creator,
+          config: configPDA,
+          tokenLaunch: tokenLaunchPDA,
+          royaltyVault,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      toast.dismiss();
+      toast.success("💰 Royalties withdrawn successfully!");
+      console.log("Transaction Signature:", tx);
+      return tx;
+    } catch (err: any) {
+      const errMsg = err?.message || err?.toString() || "";
+
+      if (errMsg.includes("NoRoyaltiesToWithdraw")) {
+        toast.dismiss();
+        toast.success("No royalties found to withdraw!");
+        return;
+      }
+
+      toast.dismiss();
+      console.error("Withdraw error:", err);
+      toast.error(errMsg || "Withdraw failed!");
+      throw err;
+    }
+  };
+
   return {
     initProgram,
     initMarket,
@@ -817,9 +979,11 @@ export default function Methods() {
 
     buyToken,
     sellToken,
-
+    // migrateToDex,
     claimCreatorTokens,
     getUserAllTokens,
     getAllTokens,
+    getBoughtTokens,
+    withdrawCreatorRoyalties,
   };
 }

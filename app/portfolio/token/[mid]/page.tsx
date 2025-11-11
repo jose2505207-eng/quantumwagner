@@ -13,6 +13,7 @@ import {
   Loader2,
   Gift,
   Rocket,
+  Crown,
 } from "lucide-react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useState } from "react";
@@ -40,10 +41,13 @@ export default function Token() {
   const mint_address = params.mid;
   const { tokens: userToken, loading: tokenLoading } = useUserTokens();
   const { publicKey } = useWallet();
-  const { claimCreatorTokens } = Methods();
+  const { claimCreatorTokens, withdrawCreatorRoyalties } = Methods();
   const [copiedAddress, setCopiedAddress] = useState<string>("");
   const [claimLoading, setClaimLoading] = useState(false);
   const [claimSuccess, setClaimSuccess] = useState(false);
+
+  const [withdrawLoading, setWithdrawLoading] = useState(false);
+  const [withdrawSuccess, setWithdrawSuccess] = useState(false);
 
   const [migrateLoading, setMigrateLoading] = useState(false);
   const [migrateSuccess, setMigrateSuccess] = useState(false);
@@ -81,6 +85,19 @@ export default function Token() {
     setTimeout(() => setCopiedAddress(""), 1200);
   };
 
+  const handleRoyaltyWithdraw = async (tokenId: number) => {
+    try {
+      setWithdrawLoading(true);
+      await withdrawCreatorRoyalties(tokenId);
+      setWithdrawSuccess(true);
+      setTimeout(() => setWithdrawSuccess(false), 2500);
+    } catch (err) {
+      console.error("Claim failed:", err);
+      alert("Failed to claim tokens. Please try again.");
+    } finally {
+      setWithdrawLoading(false);
+    }
+  };
   const handleClaim = async (tokenId: number) => {
     try {
       setClaimLoading(true);
@@ -95,20 +112,20 @@ export default function Token() {
     }
   };
 
-  const handleMigrate = async (tokenId: number) => {
-    try {
-      setMigrateLoading(true);
-      // TODO: replace with your real migrateToDex() method
-      await claimCreatorTokens(tokenId);
-      setMigrateSuccess(true);
-      setTimeout(() => setMigrateSuccess(false), 2500);
-    } catch (err) {
-      console.error("Migrate failed:", err);
-      alert("Failed to migrate. Please try again.");
-    } finally {
-      setMigrateLoading(false);
-    }
-  };
+  // const handleMigrate = async (tokenId: number) => {
+  //   try {
+  //     setMigrateLoading(true);
+  //     // TODO: replace with your real migrateToDex() method
+  //     await migrateToDex(tokenId);
+  //     setMigrateSuccess(true);
+  //     setTimeout(() => setMigrateSuccess(false), 2500);
+  //   } catch (err) {
+  //     console.error("Migrate failed:", err);
+  //     alert("Failed to migrate. Please try again.");
+  //   } finally {
+  //     setMigrateLoading(false);
+  //   }
+  // };
 
   return (
     <div className="min-h-screen bg-[#0b0d11] text-gray-200 px-6 py-10 flex justify-center mt-20">
@@ -164,6 +181,7 @@ export default function Token() {
               </div>
             )}
           </div>
+
           {isCreator && (
             <button
               onClick={() => handleClaim(Number(toDisplay(acc.launchId)))}
@@ -210,6 +228,50 @@ export default function Token() {
 
           {isCreator && (
             <button
+              onClick={() => handleRoyaltyWithdraw(Number(toDisplay(acc.launchId)))}
+              disabled={withdrawLoading || withdrawSuccess}
+              className={`relative group flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-medium text-sm 
+      overflow-hidden transition-all duration-300 
+      ${
+        withdrawLoading
+          ? "bg-[#10131d]/60 border border-gray-700 cursor-not-allowed"
+          : withdrawSuccess
+          ? "bg-gradient-to-r from-green-600/20 to-green-500/10 border border-green-500/40"
+          : "bg-gradient-to-r from-blue-600/20 to-purple-500/10 border border-blue-500/30 hover:from-blue-500/30 hover:to-purple-500/20 hover:border-blue-400/50 hover:shadow-[0_0_15px_rgba(59,130,246,0.2)]"
+      }`}
+            >
+              {!withdrawLoading && !withdrawSuccess && (
+                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700 ease-in-out rounded-xl" />
+              )}
+
+              {withdrawLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin text-blue-400" />
+              ) : withdrawSuccess ? (
+                <CheckCircle2 className="w-5 h-5 text-green-400 group-hover:scale-110 transition-transform" />
+              ) : (
+                <Crown className="w-5 h-5 text-blue-400 group-hover:rotate-12 transition-transform" />
+              )}
+
+              <span
+                className={`tracking-wide relative z-10 ${
+                  withdrawLoading
+                    ? "text-gray-400"
+                    : withdrawSuccess
+                    ? "text-green-400"
+                    : "text-blue-300 group-hover:text-blue-200"
+                }`}
+              >
+                {withdrawLoading
+                  ? "Withdraw..."
+                  : withdrawSuccess
+                  ? "Withdrawed!"
+                  : "Withdraw Creator Raylaites"}
+              </span>
+            </button>
+          )}
+
+          {/* {isCreator && (
+            <button
               onClick={() => handleMigrate(Number(toDisplay(acc.launchId)))}
               disabled={migrateLoading || migrateSuccess}
               className={`relative group flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-medium text-sm 
@@ -250,7 +312,7 @@ export default function Token() {
                   : "Migrate to DEX"}
               </span>
             </button>
-          )}
+          )} */}
         </div>
 
         {/* MINT ADDRESS */}

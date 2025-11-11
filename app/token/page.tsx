@@ -10,8 +10,8 @@ import {
   MIN_INITIAL_PRICE,
   MIN_TOKEN_SUPPLY,
 } from "@/config";
-import { useProgram } from "@/utils/useProgram";
 import Methods, { createToeknParams } from "../utils/methods";
+import { useProgram } from "../utils/useProgram";
 
 // Shorten wallet pubkey
 function short(pk?: PublicKey | string | null) {
