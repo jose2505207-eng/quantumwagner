@@ -1,32 +1,27 @@
 import CountdownTimer from "@/app/utils/hooks/CountdownTimer";
 
-const MarketCard = ( market ) => {
+const MarketCard = ({ market }) => {
   const isFeatured = market.featured;
+  console.log("market ", market);
 
-  // --- NORMALIZE numeric pools (strings => numbers) ---
-  const parsePool = (v) => {
-    if (v === null || v === undefined) return 0;
-    // handle strings and numbers
-    const n = typeof v === "string" ? parseFloat(v) : Number(v);
-    return Number.isFinite(n) ? n : 0;
-  };
+  // --- USE EXACT SAME LOGIC AS YOUR GRID EXAMPLE ---
+  const yesPool = Number(market.yes_pool || 0);
+  const noPool = Number(market.no_pool || 0);
 
-  const yes = parsePool(market.yes_pool);
-  const no = parsePool(market.no_pool);
-  const total = yes + no;
+  let yesOdds = 0;
+  let noOdds = 0;
 
-// --- PERCENTAGES (safe) ---
-const yesPct = total > 0 ? (yes / total) * 100 : 0;
-const roundedYes = Math.round(yesPct);
-const roundedNo = total > 0 ? 100 - roundedYes : 0;
+  if (yesPool === 0 && noPool === 0) {
+    yesOdds = 0;
+    noOdds = 0;
+  } else {
+    const totalPool = yesPool + noPool;
+    yesOdds = Math.round((yesPool / totalPool) * 100);
+    noOdds = 100 - yesOdds;
+  }
 
-
-  // inline styles for dynamic widths
-  const yesStyle = { width: `${yesPct}%` };
-  const noStyle = { left: `${yesPct}%`, width: `${100 - yesPct}%` };
-
-  // small helper strings for accessibility
-  const ariaLabel = `Yes ${roundedYes} percent, No ${roundedNo} percent`;
+  // for percentage bar
+  const yesPct = yesOdds;
 
   // --- CARD MARKUP ---
   if (isFeatured) {
@@ -54,29 +49,17 @@ const roundedNo = total > 0 ? 100 - roundedYes : 0;
 
         {/* percentage numbers */}
         <div className="flex justify-between items-center mb-2">
-          <div className="text-green-400 text-lg font-bold">{roundedYes}%</div>
-          <div className="text-red-400 text-lg font-bold">{roundedNo}%</div>
+          <div className="text-green-400 text-lg font-bold">{yesOdds}%</div>
+          <div className="text-red-400 text-lg font-bold">{noOdds}%</div>
         </div>
 
-        {/* two-segment bar */}
-        <div className="relative h-2 rounded-full overflow-hidden mb-4">
-          {/* YES segment */}
-          <div
-            className="absolute inset-y-0 left-0 bg-emerald-500"
-            style={{ width: `${yesPct}%` }}
-          />
-          {/* NO background (fills rest) */}
-          <div
-            className="absolute inset-y-0 right-0 bg-[#1e293b]"
-            style={{ width: `${100 - yesPct}%` }}
-          />
+        {/* EXACT SAME STYLE PROGRESS BAR */}
+        <div className="w-full h-2 bg-gray-900/50 rounded-full overflow-hidden mb-4">
+          <div className="h-2 bg-emerald-500" style={{ width: `${yesPct}%` }} />
         </div>
 
         {/* Stats */}
-        <div
-          className="flex justify-between text-xs text-gray-300 mb-3 
-            border-t border-gray-700/40 pt-2"
-        >
+        <div className="flex justify-between text-xs text-gray-300 mb-3 border-t border-gray-700/40 pt-2">
           <div>
             <span className="text-white font-medium">
               {market.total_volume}
@@ -91,20 +74,12 @@ const roundedNo = total > 0 ? 100 - roundedYes : 0;
           </div>
         </div>
 
-        {/* Action Buttons */}
+        {/* Buttons */}
         <div className="flex gap-2">
-          <button
-            className="flex-1 py-2 
-              bg-green-600 text-white text-sm font-semibold rounded-md 
-              hover:bg-green-500 transition-colors"
-          >
+          <button className="flex-1 py-2 bg-green-600 text-white text-sm font-semibold rounded-md hover:bg-green-500">
             Bet YES
           </button>
-          <button
-            className="flex-1 py-2 
-              bg-red-600 text-white text-sm font-semibold rounded-md 
-              hover:bg-red-500 transition-colors"
-          >
+          <button className="flex-1 py-2 bg-red-600 text-white text-sm font-semibold rounded-md hover:bg-red-500">
             Bet NO
           </button>
         </div>
@@ -112,7 +87,7 @@ const roundedNo = total > 0 ? 100 - roundedYes : 0;
     );
   }
 
-  // --- Normal card UI (same percentage logic) ---
+  // --- NORMAL CARD UI ---
   return (
     <div
       className="border border-gray-700/50 rounded-lg p-4 
@@ -127,29 +102,15 @@ const roundedNo = total > 0 ? 100 - roundedYes : 0;
 
       <div className="mb-3">
         <div className="flex justify-between mb-1">
-          <div className="text-green-400 text-lg font-bold">{roundedYes}%</div>
-          <div className="text-red-400 text-lg font-bold">{roundedNo}%</div>
+          <div className="text-green-400 text-lg font-bold">{yesOdds}%</div>
+          <div className="text-red-400 text-lg font-bold">{noOdds}%</div>
         </div>
 
-        <div
-          className="relative h-2 rounded-full bg-gray-900/60 overflow-hidden"
-          role="img"
-          aria-label={ariaLabel}
-          title={ariaLabel}
-        >
+        {/* SAME EXACT GRID LOGIC BAR */}
+        <div className="w-full h-2 rounded-full bg-gray-900/60 overflow-hidden mb-2">
           <div
-            className="absolute inset-y-0 left-0 rounded-l-full"
-            style={{
-              ...yesStyle,
-              background: "linear-gradient(90deg,#16a34a,#4ade80)",
-            }}
-          />
-          <div
-            className="absolute inset-y-0 rounded-r-full"
-            style={{
-              ...noStyle,
-              background: "linear-gradient(90deg,#fb7185,#ef4444)",
-            }}
+            className="h-2 rounded-full bg-emerald-500"
+            style={{ width: `${yesPct}%` }}
           />
         </div>
       </div>
@@ -164,10 +125,10 @@ const roundedNo = total > 0 ? 100 - roundedYes : 0;
       </div>
 
       <div className="flex gap-2">
-        <button className="flex-1 py-1.5 bg-green-600 text-white text-[11px] rounded hover:bg-green-700 transition">
+        <button className="flex-1 py-1.5 bg-green-600 text-white text-[11px] rounded hover:bg-green-700">
           Bet YES
         </button>
-        <button className="flex-1 py-1.5 bg-red-600 text-white text-[11px] rounded hover:bg-red-700 transition">
+        <button className="flex-1 py-1.5 bg-red-600 text-white text-[11px] rounded hover:bg-red-700">
           Bet NO
         </button>
       </div>

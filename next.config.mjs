@@ -20,6 +20,10 @@ const nextConfig = {
       },
       {
         protocol: "https",
+        hostname: "shorturl.at",
+      },
+      {
+        protocol: "https",
         hostname: "cdn.jsdelivr.net",
       },
       {
