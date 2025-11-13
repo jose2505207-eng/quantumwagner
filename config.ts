@@ -3,7 +3,8 @@
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js"
 import { BN } from "@coral-xyz/anchor";
 
-export const BACKEND_URL = "http://localhost:8000"
+// export const BACKEND_URL = "http://localhost:8000"
+export const BACKEND_URL = "https://quantum-wager.onrender.com"
 
 export const PROGRAM_ID = new PublicKey("2bspSR5RkqBNiRh7SENQ8i34zuw6BLwjzeyT83BsCrCn")
 
