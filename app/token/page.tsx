@@ -11,7 +11,6 @@ import {
   MIN_TOKEN_SUPPLY,
 } from "@/config";
 import Methods, { createToeknParams } from "../utils/methods";
-// import { useProgram } from "../utils/useProgram";
 
 function short(pk?: PublicKey | string | null) {
   if (!pk) return "";
