@@ -6,7 +6,7 @@ import { BN } from "@coral-xyz/anchor";
 // export const BACKEND_URL = "http://localhost:8000"
 export const BACKEND_URL = "https://quantum-wager.onrender.com"
 
-export const PROGRAM_ID = new PublicKey("2bspSR5RkqBNiRh7SENQ8i34zuw6BLwjzeyT83BsCrCn")
+export const PROGRAM_ID = new PublicKey("C8SAQXW3qhWTT1uGdpSegU466qTQAKQs3JB15TQ8toSc")
 
 //admin treasury
 export const treasury = new PublicKey("9Mv6tanREUmkYVS1jSgj27GrapJvK3ynkCWsRJKCMpn5")

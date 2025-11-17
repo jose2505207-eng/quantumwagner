@@ -24,12 +24,11 @@ import {
 import ProfileCard from "@/components/custom/UserRepution";
 import { useRouter } from "next/navigation";
 import { toDisplay } from "./token/[mid]/page";
-import Image from "next/image";
-import Methods from "../utils/methods";
 import { useUserTokens } from "../utils/useUserTokens";
 import { useUserBoughtTokens } from "../utils/useUserBoughtTokens";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import Methods from "../utils/methods";
 
 export const Spinner = () => (
   <div className="flex items-center justify-center h-64">
@@ -43,7 +42,7 @@ export function shortenAddress(addr: string) {
 }
 
 export default function Portfolio() {
-  const { withdrawWinnings } = Methods();
+  const { withdrawWinnings, enterBattle,getAllBattles } = Methods();
   const { positions, setPositions } = usePositionStore();
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState("active");
@@ -119,10 +118,70 @@ export default function Portfolio() {
     (p) => new Date(p.market.end_time).getTime() < Date.now()
   );
 
+  // const handleCreateBattle = async () => {
+  //   try {
+  //     const { tx, battlePDA } = await createBattle({
+  //       title: "Solana Ecosystem Clash",
+  //       description: "Whose tokens dominate?",
+  //       sideATokens: [
+  //         new PublicKey("5qBXPH1MnYHqw1WEgNFhyzuPEzvJoJBcquuDvdTMtoHA"),
+  //       ], //USDC
+  //       sideBTokens: [
+  //         new PublicKey("JCBajpXBZsDMVWQZG7CCYt22NuaZ6jpuvawGCPQ3nEpg"), //USDT
+  //       ],
+  //       sideAName: "Side A",
+  //       sideBName: "Side B",
+  //       startTime: Math.floor(Date.now() / 1000) + 300, // start in 5 mins
+  //       endTime: Math.floor(Date.now() / 1000) + 3600, // end in 1 hr
+  //       metaMarketEnabled: true,
+  //       imageUrl: "https://cryptologos.cc/logos/usd-coin-usdc-logo.png",
+  //     });
+
+  //     console.log("Battle created:", battlePDA.toBase58());
+  //     alert("Battle Created!");
+  //   } catch (err: any) {
+  //     console.error(err);
+  //     alert("Error: " + err.message);
+  //   }
+  // };
+
+  // const handleCreateBattle = async () => {
+  //   try {
+  //     const res = await getAllBattles();
+
+  //     console.log("All battles :", res);
+
+  //     alert("Battle Created!");
+  //   } catch (err: any) {
+  //     console.error(err);
+  //     alert("Error: " + err.message);
+  //   }
+  // };
+
+  const handleJoinBattle = async () => {
+    try {
+      // const res = await enterBattle({
+      //   battlePDA: new PublicKey(
+      //     "AdS5baQefWJUEU2Xi99fyW1oNpDHsrPWT8PJbZnqhcX7"
+      //   ),
+      //   side: { a: {} },
+      //   amount: 1_000_000,
+      // });
+      const res = await getAllBattles()
+
+      console.log("Battle joined:", res);
+    } catch (err: any) {
+      console.error("Join error:", err.message);
+      alert("Error: " + err.message);
+    }
+  };
+
   return (
     <div className="min-h-screen p-6 pt-24 text-white">
       <div className="max-w-6xl mx-auto space-y-10">
         {/* User Info Card */}
+
+        <button onClick={handleJoinBattle}> Join Battle</button>
 
         <div className="flex flex-wrap items-center gap-6 bg-gray-900/70 border border-gray-800 rounded-lg p-5">
           <div className="flex items-center gap-2">
@@ -241,7 +300,7 @@ export default function Portfolio() {
                           <div className="flex items-center gap-4">
                             {/* Token Image */}
                             {acc.imageUri && acc.imageUri.startsWith("http") ? (
-                              <Image
+                              <img
                                 src={acc.imageUri}
                                 alt={acc.name}
                                 width={60}
@@ -439,7 +498,7 @@ export default function Portfolio() {
                         <CardHeader className="flex flex-row items-center justify-between p-6 pb-3">
                           <div className="flex items-center gap-4">
                             {acc.imageUri && acc.imageUri.startsWith("http") ? (
-                              <Image
+                              <img
                                 src={acc.imageUri}
                                 alt={acc.name}
                                 width={58}

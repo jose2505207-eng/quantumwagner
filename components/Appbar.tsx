@@ -34,9 +34,11 @@ export function AppBar() {
 
   const navItems = [
     { label: "Markets", path: "/markets" },
+    { label: "Fastbet", path: "/fastbet" },
+    { label: "Buy Token", path: "/buytoken" },
     { label: "Arena", path: "/token/battlearena" },
-    { label: "Portfolio", path: "/portfolio" },
     { label: "leaderboard", path: "/leaderboard" },
+    { label: "Portfolio", path: "/portfolio" },
   ];
 
   // Permission check

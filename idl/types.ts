@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/prediction_market.json`.
  */
 export type PredictionMarket = {
-  "address": "2bspSR5RkqBNiRh7SENQ8i34zuw6BLwjzeyT83BsCrCn",
+  "address": "C8SAQXW3qhWTT1uGdpSegU466qTQAKQs3JB15TQ8toSc",
   "metadata": {
     "name": "predictionMarket",
     "version": "0.1.0",
@@ -268,6 +268,150 @@ export type PredictionMarket = {
       "args": []
     },
     {
+      "name": "claimBattleReward",
+      "discriminator": [
+        16,
+        249,
+        95,
+        48,
+        190,
+        83,
+        80,
+        143
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  116,
+                  102,
+                  111,
+                  114,
+                  109,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "battle",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  97,
+                  116,
+                  116,
+                  108,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "battle.battle_id",
+                "account": "battle"
+              }
+            ]
+          }
+        },
+        {
+          "name": "battlePosition",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  97,
+                  116,
+                  116,
+                  108,
+                  101,
+                  95,
+                  112,
+                  111,
+                  115,
+                  105,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "battle"
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
+            ]
+          }
+        },
+        {
+          "name": "battleVault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  97,
+                  116,
+                  116,
+                  108,
+                  101,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "battle"
+              }
+            ]
+          }
+        },
+        {
+          "name": "treasury",
+          "writable": true
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "claimCreatorTokens",
       "discriminator": [
         126,
@@ -426,6 +570,138 @@ export type PredictionMarket = {
         }
       ],
       "args": []
+    },
+    {
+      "name": "createBattle",
+      "discriminator": [
+        2,
+        249,
+        54,
+        216,
+        42,
+        99,
+        187,
+        102
+      ],
+      "accounts": [
+        {
+          "name": "creator",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  116,
+                  102,
+                  111,
+                  114,
+                  109,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "battle",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  97,
+                  116,
+                  116,
+                  108,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "config.next_battle_id",
+                "account": "platformConfig"
+              }
+            ]
+          }
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "name": "sideATokens",
+          "type": {
+            "vec": "pubkey"
+          }
+        },
+        {
+          "name": "sideBTokens",
+          "type": {
+            "vec": "pubkey"
+          }
+        },
+        {
+          "name": "sideAName",
+          "type": "string"
+        },
+        {
+          "name": "sideBName",
+          "type": "string"
+        },
+        {
+          "name": "startTime",
+          "type": "i64"
+        },
+        {
+          "name": "endTime",
+          "type": "i64"
+        },
+        {
+          "name": "winningMetric",
+          "type": {
+            "defined": {
+              "name": "battleMetric"
+            }
+          }
+        },
+        {
+          "name": "metaMarketEnabled",
+          "type": "bool"
+        },
+        {
+          "name": "imageUrl",
+          "type": {
+            "option": "string"
+          }
+        }
+      ]
     },
     {
       "name": "createTokenLaunch",
@@ -647,6 +923,306 @@ export type PredictionMarket = {
           "type": {
             "vec": "string"
           }
+        }
+      ]
+    },
+    {
+      "name": "enterBattle",
+      "discriminator": [
+        86,
+        34,
+        180,
+        134,
+        230,
+        17,
+        220,
+        121
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  116,
+                  102,
+                  111,
+                  114,
+                  109,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "battle",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  97,
+                  116,
+                  116,
+                  108,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "battle.battle_id",
+                "account": "battle"
+              }
+            ]
+          }
+        },
+        {
+          "name": "battlePosition",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  97,
+                  116,
+                  116,
+                  108,
+                  101,
+                  95,
+                  112,
+                  111,
+                  115,
+                  105,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "battle"
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
+            ]
+          }
+        },
+        {
+          "name": "battleVault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  97,
+                  116,
+                  116,
+                  108,
+                  101,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "battle"
+              }
+            ]
+          }
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "side",
+          "type": {
+            "defined": {
+              "name": "battleSide"
+            }
+          }
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "increaseBattlePosition",
+      "discriminator": [
+        173,
+        233,
+        123,
+        204,
+        189,
+        92,
+        195,
+        83
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  116,
+                  102,
+                  111,
+                  114,
+                  109,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "battle",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  97,
+                  116,
+                  116,
+                  108,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "battle.battle_id",
+                "account": "battle"
+              }
+            ]
+          }
+        },
+        {
+          "name": "battlePosition",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  97,
+                  116,
+                  116,
+                  108,
+                  101,
+                  95,
+                  112,
+                  111,
+                  115,
+                  105,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "battle"
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
+            ]
+          }
+        },
+        {
+          "name": "battleVault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  97,
+                  116,
+                  116,
+                  108,
+                  101,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "battle"
+              }
+            ]
+          }
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "additionalAmount",
+          "type": "u64"
         }
       ]
     },
@@ -1271,6 +1847,87 @@ export type PredictionMarket = {
       ]
     },
     {
+      "name": "resolveBattle",
+      "discriminator": [
+        112,
+        191,
+        142,
+        62,
+        126,
+        119,
+        170,
+        54
+      ],
+      "accounts": [
+        {
+          "name": "resolver",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  116,
+                  102,
+                  111,
+                  114,
+                  109,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "battle",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  97,
+                  116,
+                  116,
+                  108,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "battle.battle_id",
+                "account": "battle"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "winner",
+          "type": {
+            "defined": {
+              "name": "battleSide"
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "sellToken",
       "discriminator": [
         109,
@@ -1513,7 +2170,8 @@ export type PredictionMarket = {
         },
         {
           "name": "royaltyVault",
-          "writable": true
+          "writable": true,
+          "signer": true
         },
         {
           "name": "systemProgram",
@@ -1606,6 +2264,32 @@ export type PredictionMarket = {
   ],
   "accounts": [
     {
+      "name": "battle",
+      "discriminator": [
+        81,
+        148,
+        121,
+        71,
+        63,
+        166,
+        116,
+        24
+      ]
+    },
+    {
+      "name": "battlePosition",
+      "discriminator": [
+        161,
+        233,
+        239,
+        234,
+        160,
+        39,
+        179,
+        32
+      ]
+    },
+    {
       "name": "market",
       "discriminator": [
         219,
@@ -1659,6 +2343,71 @@ export type PredictionMarket = {
     }
   ],
   "events": [
+    {
+      "name": "battleCreated",
+      "discriminator": [
+        33,
+        66,
+        118,
+        96,
+        130,
+        0,
+        113,
+        218
+      ]
+    },
+    {
+      "name": "battlePositionEntered",
+      "discriminator": [
+        52,
+        208,
+        148,
+        216,
+        120,
+        129,
+        29,
+        203
+      ]
+    },
+    {
+      "name": "battlePositionIncreased",
+      "discriminator": [
+        150,
+        40,
+        74,
+        73,
+        63,
+        103,
+        163,
+        173
+      ]
+    },
+    {
+      "name": "battleResolved",
+      "discriminator": [
+        47,
+        156,
+        226,
+        94,
+        163,
+        176,
+        162,
+        241
+      ]
+    },
+    {
+      "name": "battleRewardClaimed",
+      "discriminator": [
+        8,
+        167,
+        243,
+        101,
+        154,
+        92,
+        164,
+        201
+      ]
+    },
     {
       "name": "betPlaced",
       "discriminator": [
@@ -1832,206 +2581,654 @@ export type PredictionMarket = {
   "errors": [
     {
       "code": 6000,
-      "name": "unauthorizedAdmin",
-      "msg": "Unauthorized admin access"
-    },
-    {
-      "code": 6001,
-      "name": "marketAlreadySettled",
-      "msg": "Market has already been settled"
-    },
-    {
-      "code": 6002,
-      "name": "marketAlreadyCancelled",
-      "msg": "Market has been cancelled"
-    },
-    {
-      "code": 6003,
-      "name": "marketCancelled",
-      "msg": "Market is cancelled"
-    },
-    {
-      "code": 6004,
-      "name": "marketNotExpired",
-      "msg": "Market has not expired yet"
-    },
-    {
-      "code": 6005,
-      "name": "marketNotSettled",
-      "msg": "Market is not settled"
-    },
-    {
-      "code": 6006,
-      "name": "marketNotActive",
-      "msg": "Market is not active for betting"
-    },
-    {
-      "code": 6007,
-      "name": "invalidUserPosition",
-      "msg": "Invalid user position"
-    },
-    {
-      "code": 6008,
-      "name": "alreadyClaimed",
-      "msg": "Winnings already claimed"
-    },
-    {
-      "code": 6009,
-      "name": "noWinningBet",
-      "msg": "No winning bet found"
-    },
-    {
-      "code": 6010,
-      "name": "noWinningsToWithdraw",
-      "msg": "No winnings to withdraw"
-    },
-    {
-      "code": 6011,
-      "name": "betAmountTooLow",
-      "msg": "Bet amount is below minimum"
-    },
-    {
-      "code": 6012,
-      "name": "invalidQuestionHash",
-      "msg": "Invalid question hash"
-    },
-    {
-      "code": 6013,
-      "name": "questionTooLong",
-      "msg": "Question is too long"
-    },
-    {
-      "code": 6014,
-      "name": "invalidDuration",
-      "msg": "Invalid duration"
-    },
-    {
-      "code": 6015,
-      "name": "invalidMinBetAmount",
-      "msg": "Invalid minimum bet amount"
-    },
-    {
-      "code": 6016,
       "name": "platformPaused",
       "msg": "Platform is currently paused"
     },
     {
-      "code": 6017,
-      "name": "invalidTreasury",
-      "msg": "Invalid treasury account"
+      "code": 6001,
+      "name": "unauthorizedAdmin",
+      "msg": "Unauthorized admin access"
     },
     {
-      "code": 6018,
+      "code": 6002,
+      "name": "tokenCreationDisabled",
+      "msg": "Token creation is currently disabled"
+    },
+    {
+      "code": 6003,
+      "name": "battleCreationDisabled",
+      "msg": "Battle creation is currently disabled"
+    },
+    {
+      "code": 6004,
       "name": "invalidFeePercentage",
-      "msg": "Invalid fee percentage (max 10%)"
+      "msg": "Invalid Fee Percentage"
     },
     {
-      "code": 6019,
+      "code": 6005,
+      "name": "tokenSupplyTooLow",
+      "msg": "Token supply is below minimum"
+    },
+    {
+      "code": 6006,
+      "name": "initialPriceTooLow",
+      "msg": "Initial price is too low"
+    },
+    {
+      "code": 6007,
+      "name": "invalidDuration",
+      "msg": "Invalid duration"
+    },
+    {
+      "code": 6008,
       "name": "invalidBetAmountRange",
       "msg": "Invalid bet amount range"
     },
     {
+      "code": 6009,
+      "name": "invalidThreshold",
+      "msg": "Invalid threshold configuration"
+    },
+    {
+      "code": 6010,
+      "name": "invalidBattleConfig",
+      "msg": "Invalid battle configuration"
+    },
+    {
+      "code": 6011,
+      "name": "invalidTreasury",
+      "msg": "Treasury account is invalid"
+    },
+    {
+      "code": 6012,
+      "name": "invalidNameLength",
+      "msg": "Invalid name length"
+    },
+    {
+      "code": 6013,
+      "name": "invalidSymbolLength",
+      "msg": "Invalid symbol length"
+    },
+    {
+      "code": 6014,
+      "name": "invalidDescriptionLength",
+      "msg": "Invalid description length"
+    },
+    {
+      "code": 6015,
+      "name": "invalidImageUriLength",
+      "msg": "Invalid image URI length"
+    },
+    {
+      "code": 6016,
+      "name": "tooManyTags",
+      "msg": "Too many tags"
+    },
+    {
+      "code": 6017,
+      "name": "tagTooLong",
+      "msg": "Tag is too long"
+    },
+    {
+      "code": 6018,
+      "name": "launchNotActive",
+      "msg": "Launchpad is not active"
+    },
+    {
+      "code": 6019,
+      "name": "invalidTokenAccount",
+      "msg": "Invalid token account"
+    },
+    {
       "code": 6020,
-      "name": "invalidDurationRange",
-      "msg": "Invalid duration range"
+      "name": "tradingPaused",
+      "msg": "Trading is currently paused"
     },
     {
       "code": 6021,
-      "name": "invalidQuestionLength",
-      "msg": "Invalid question length (1-500 characters)"
+      "name": "alreadyMigrated",
+      "msg": "Token launch has already been migrated"
     },
     {
       "code": 6022,
-      "name": "tooManyTags",
-      "msg": "Too many tags (max 5)"
+      "name": "invalidAmount",
+      "msg": "Invalid token amount"
     },
     {
       "code": 6023,
-      "name": "tagTooLong",
-      "msg": "Tag is too long (max 50 characters)"
+      "name": "insufficientTokens",
+      "msg": "Insufficient tokens available for purchase"
     },
     {
       "code": 6024,
-      "name": "imageUrlTooLong",
-      "msg": "Image URL is too long (max 200 characters)"
+      "name": "arithmeticOverflow",
+      "msg": "Arithmetic overflow occurred"
     },
     {
       "code": 6025,
-      "name": "marketCreationFeeRequired",
-      "msg": "Market creation fee required"
+      "name": "insufficientSol",
+      "msg": "Insufficient SOL for transaction"
     },
     {
       "code": 6026,
-      "name": "betAmountTooHigh",
-      "msg": "Bet amount exceeds maximum allowed"
+      "name": "unauthorizedCreator",
+      "msg": "Unauthorized creator access"
     },
     {
       "code": 6027,
-      "name": "marketExpired",
-      "msg": "Market has expired"
+      "name": "belowMigrationThreshold",
+      "msg": "Below migration threshold"
     },
     {
       "code": 6028,
-      "name": "arithmeticOverflow",
-      "msg": "Arithmetic overflow"
+      "name": "launchCancelled",
+      "msg": "Launch has been cancelled"
     },
     {
       "code": 6029,
-      "name": "divisionByZero",
-      "msg": "Division by zero"
+      "name": "noTokensToClaim",
+      "msg": "No tokens available to claim"
     },
     {
       "code": 6030,
-      "name": "insufficientFunds",
-      "msg": "Insufficient funds for operation"
-    },
-    {
-      "code": 6031,
-      "name": "invalidOracleConfig",
-      "msg": "Invalid oracle configuration"
-    },
-    {
-      "code": 6032,
-      "name": "stalePrice",
-      "msg": "Stale price data from oracle"
-    },
-    {
-      "code": 6033,
-      "name": "oracleResolutionFailed",
-      "msg": "Oracle resolution failed"
-    },
-    {
-      "code": 6034,
-      "name": "marketDisputed",
-      "msg": "Market dispute period active"
-    },
-    {
-      "code": 6035,
-      "name": "invalidMarketCategory",
-      "msg": "Invalid market category"
-    },
-    {
-      "code": 6036,
-      "name": "invalidPositionType",
-      "msg": "Invalid position type"
-    },
-    {
-      "code": 6037,
-      "name": "cannotBetOnResolvedMarket",
-      "msg": "Cannot bet on resolved market"
-    },
-    {
-      "code": 6038,
-      "name": "cannotCancelActiveMarket",
-      "msg": "Cannot cancel active market with bets"
-    },
-    {
-      "code": 6039,
-      "name": "emergencyPauseActive",
-      "msg": "Emergency pause activated"
+      "name": "noRoyaltiesToWithdraw",
+      "msg": "No Royalties to withdraw"
     }
   ],
   "types": [
+    {
+      "name": "battle",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "battleId",
+            "type": "u64"
+          },
+          {
+            "name": "creator",
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "sideATokens",
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "sideBTokens",
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "sideAName",
+            "type": "string"
+          },
+          {
+            "name": "sideBName",
+            "type": "string"
+          },
+          {
+            "name": "sideAPool",
+            "type": "u64"
+          },
+          {
+            "name": "sideBPool",
+            "type": "u64"
+          },
+          {
+            "name": "totalPool",
+            "type": "u64"
+          },
+          {
+            "name": "feeContributionRate",
+            "type": "u16"
+          },
+          {
+            "name": "accumulatedFromTokens",
+            "type": "u64"
+          },
+          {
+            "name": "sideAVolume",
+            "type": "u64"
+          },
+          {
+            "name": "sideBVolume",
+            "type": "u64"
+          },
+          {
+            "name": "sideAParticipants",
+            "type": "u32"
+          },
+          {
+            "name": "sideBParticipants",
+            "type": "u32"
+          },
+          {
+            "name": "uniqueParticipants",
+            "type": "u32"
+          },
+          {
+            "name": "createdAt",
+            "type": "i64"
+          },
+          {
+            "name": "startTime",
+            "type": "i64"
+          },
+          {
+            "name": "endTime",
+            "type": "i64"
+          },
+          {
+            "name": "resolutionTime",
+            "type": {
+              "option": "i64"
+            }
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "battleStatus"
+              }
+            }
+          },
+          {
+            "name": "winner",
+            "type": {
+              "option": {
+                "defined": {
+                  "name": "battleSide"
+                }
+              }
+            }
+          },
+          {
+            "name": "winningMetric",
+            "type": {
+              "defined": {
+                "name": "battleMetric"
+              }
+            }
+          },
+          {
+            "name": "metaMarketEnabled",
+            "type": "bool"
+          },
+          {
+            "name": "metaMarketId",
+            "type": {
+              "option": "u64"
+            }
+          },
+          {
+            "name": "imageUrl",
+            "type": {
+              "option": "string"
+            }
+          },
+          {
+            "name": "featured",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "battleCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "battleId",
+            "type": "u64"
+          },
+          {
+            "name": "creator",
+            "type": "pubkey"
+          },
+          {
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "name": "sideAName",
+            "type": "string"
+          },
+          {
+            "name": "sideBName",
+            "type": "string"
+          },
+          {
+            "name": "startTime",
+            "type": "i64"
+          },
+          {
+            "name": "endTime",
+            "type": "i64"
+          },
+          {
+            "name": "createdAt",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "battleMetric",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "totalVolume"
+          },
+          {
+            "name": "priceGain"
+          },
+          {
+            "name": "holderGrowth"
+          },
+          {
+            "name": "socialEngagement"
+          }
+        ]
+      }
+    },
+    {
+      "name": "battlePosition",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "battle",
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "side",
+            "type": {
+              "defined": {
+                "name": "battleSide"
+              }
+            }
+          },
+          {
+            "name": "entryAmount",
+            "type": "u64"
+          },
+          {
+            "name": "sharesOwned",
+            "type": "u64"
+          },
+          {
+            "name": "entryPrice",
+            "type": "u64"
+          },
+          {
+            "name": "specificTokens",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "tokenStake"
+                }
+              }
+            }
+          },
+          {
+            "name": "settled",
+            "type": "bool"
+          },
+          {
+            "name": "payoutAmount",
+            "type": "u64"
+          },
+          {
+            "name": "profitLoss",
+            "type": "i64"
+          },
+          {
+            "name": "createdAt",
+            "type": "i64"
+          },
+          {
+            "name": "lastIncreasedAt",
+            "type": "i64"
+          },
+          {
+            "name": "settledAt",
+            "type": {
+              "option": "i64"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "battlePositionEntered",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "battleId",
+            "type": "u64"
+          },
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "side",
+            "type": {
+              "defined": {
+                "name": "battleSide"
+              }
+            }
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "totalPool",
+            "type": "u64"
+          },
+          {
+            "name": "sidePool",
+            "type": "u64"
+          },
+          {
+            "name": "participantCount",
+            "type": "u32"
+          },
+          {
+            "name": "enteredAt",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "battlePositionIncreased",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "battleId",
+            "type": "u64"
+          },
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "side",
+            "type": {
+              "defined": {
+                "name": "battleSide"
+              }
+            }
+          },
+          {
+            "name": "additionalAmount",
+            "type": "u64"
+          },
+          {
+            "name": "newTotalAmount",
+            "type": "u64"
+          },
+          {
+            "name": "totalPool",
+            "type": "u64"
+          },
+          {
+            "name": "sidePool",
+            "type": "u64"
+          },
+          {
+            "name": "increasedAt",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "battleResolved",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "battleId",
+            "type": "u64"
+          },
+          {
+            "name": "winner",
+            "type": {
+              "defined": {
+                "name": "battleSide"
+              }
+            }
+          },
+          {
+            "name": "winningPool",
+            "type": "u64"
+          },
+          {
+            "name": "losingPool",
+            "type": "u64"
+          },
+          {
+            "name": "totalPool",
+            "type": "u64"
+          },
+          {
+            "name": "resolvedBy",
+            "type": "pubkey"
+          },
+          {
+            "name": "resolvedAt",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "battleRewardClaimed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "battleId",
+            "type": "u64"
+          },
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "side",
+            "type": {
+              "defined": {
+                "name": "battleSide"
+              }
+            }
+          },
+          {
+            "name": "entryAmount",
+            "type": "u64"
+          },
+          {
+            "name": "payoutAmount",
+            "type": "u64"
+          },
+          {
+            "name": "profitLoss",
+            "type": "i64"
+          },
+          {
+            "name": "claimedAt",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "battleSide",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "sideA"
+          },
+          {
+            "name": "sideB"
+          }
+        ]
+      }
+    },
+    {
+      "name": "battleStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "upcoming"
+          },
+          {
+            "name": "active"
+          },
+          {
+            "name": "resolving"
+          },
+          {
+            "name": "resolved"
+          },
+          {
+            "name": "cancelled"
+          }
+        ]
+      }
+    },
     {
       "name": "betPlaced",
       "type": {
@@ -2866,6 +4063,16 @@ export type PredictionMarket = {
             "type": "u64"
           },
           {
+            "name": "activeBattleId",
+            "type": {
+              "option": "u64"
+            }
+          },
+          {
+            "name": "battleVolumeSnapshot",
+            "type": "u64"
+          },
+          {
             "name": "totalVolume",
             "type": "u64"
           },
@@ -3107,6 +4314,22 @@ export type PredictionMarket = {
           },
           {
             "name": "circulatingSupply",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "tokenStake",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "tokenMint",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
             "type": "u64"
           }
         ]

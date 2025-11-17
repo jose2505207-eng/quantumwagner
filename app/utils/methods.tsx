@@ -1,6 +1,6 @@
 "use client";
 
-import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js";
+import { PublicKey, SystemProgram } from "@solana/web3.js";
 import { useProgram } from "@/app/utils/useProgram";
 import * as anchor from "@coral-xyz/anchor";
 import {
@@ -45,10 +45,8 @@ import {
   getAccount,
   getAssociatedTokenAddress,
   getAssociatedTokenAddressSync,
-  getOrCreateAssociatedTokenAccount,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import { ASSOCIATED_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/utils/token";
 import { useConnection } from "@solana/wallet-adapter-react";
 
 export interface createToeknParams {
@@ -72,6 +70,32 @@ type BoughtToken = {
   balance: number;
   ata: string;
   tokenData: any; // You can make this more specific later with your TokenLaunch type
+};
+
+type BattleMetric =
+  | { totalVolume: {} }
+  | { priceGain: {} }
+  | { holderGrowth: {} }
+  | { socialEngagement: {} };
+
+export type CreateBattleArgs = {
+  title: string;
+  description: string;
+  sideATokens: PublicKey[];
+  sideBTokens: PublicKey[];
+  sideAName: string;
+  sideBName: string;
+  startTime: number;
+  endTime: number;
+  winningMetric?: BattleMetric;
+  metaMarketEnabled: boolean;
+  imageUrl?: string | null;
+};
+
+export type EnterBattleArgs = {
+  battlePDA: PublicKey;
+  side: { a: {} } | { b: {} };
+  amount: number; // u64
 };
 
 export default function Methods() {
@@ -831,6 +855,8 @@ export default function Methods() {
       },
     ]);
 
+    console.log("All user MArkets :", accounts);
+
     return accounts;
   };
   const getAllTokens = async () => {
@@ -840,6 +866,8 @@ export default function Methods() {
 
     const accounts = await program.account.tokenLaunch.all();
     console.log(accounts);
+
+    console.log("accounts -> ", accounts);
 
     return accounts;
   };
@@ -967,6 +995,166 @@ export default function Methods() {
     }
   };
 
+  const createBattle = async (args: CreateBattleArgs) => {
+    const {
+      title,
+      description,
+      sideATokens,
+      sideBTokens,
+      sideAName,
+      sideBName,
+      startTime,
+      endTime,
+      winningMetric = { priceGain: {} },
+      metaMarketEnabled,
+      imageUrl,
+    } = args;
+
+    if (!program) throw new Error("Program not ready");
+
+    const creator = program.provider.publicKey;
+    if (!creator) throw new Error("Wallet not connected");
+
+    const [configPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from("platform_config")],
+      program.programId
+    );
+
+    // config  next_battle_id
+    const config = await program.account.platformConfig.fetch(configPDA);
+    const nextBattleId = new anchor.BN(config.nextBattleId);
+
+    const [battlePDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from("battle"), nextBattleId.toArrayLike(Buffer, "le", 8)],
+      program.programId
+    );
+
+    const tx = await program.methods
+      .createBattle(
+        title,
+        description,
+        sideATokens,
+        sideBTokens,
+        sideAName,
+        sideBName,
+        new anchor.BN(startTime),
+        new anchor.BN(endTime),
+        winningMetric,
+        metaMarketEnabled,
+        imageUrl ? imageUrl : null
+      )
+      .accounts({
+        creator,
+        config: configPDA,
+        battle: battlePDA,
+        systemProgram: SystemProgram.programId,
+      })
+      .rpc();
+
+    console.log("Battle Created TX:", tx);
+    console.log("Battle PDA:", battlePDA.toBase58());
+    toast.success("Battle Created successfully!");
+
+    return {
+      tx,
+      battlePDA,
+    };
+  };
+
+  const getAllBattles = async () => {
+    if (!program) throw new Error("Program not ready");
+
+    const [configPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from("platform_config")],
+      program.programId
+    );
+
+    const config = await program.account.platformConfig.fetch(configPDA);
+    const nextBattleId = Number(config.nextBattleId); // total battles created
+
+    const battles: Array<{
+      id: number;
+      pda: PublicKey;
+      data: any;
+    }> = [];
+
+    for (let id = 0; id < nextBattleId; id++) {
+      const battleIdBN = new anchor.BN(id);
+
+      const [battlePDA] = PublicKey.findProgramAddressSync(
+        [Buffer.from("battle"), battleIdBN.toArrayLike(Buffer, "le", 8)],
+        program.programId
+      );
+
+      try {
+        const battleData = await program.account.battle.fetch(battlePDA);
+
+        battles.push({
+          id,
+          pda: battlePDA,
+          data: battleData,
+        });
+      } catch (err: any) {
+        console.warn(`Skipping battle ${id}:`, err.message);
+      }
+    }
+
+    return battles;
+  };
+
+  const enterBattle = async (args: EnterBattleArgs) => {
+    const { battlePDA, side, amount } = args;
+
+    if (!program) throw new Error("Program not ready");
+
+    const user = program.provider.publicKey;
+    if (!user) throw new Error("Wallet not connected");
+
+
+    const battleData = await program.account.battle.fetch(battlePDA);
+
+  
+    const [configPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from("platform_config")],
+      program.programId
+    );
+
+  
+    const [battlePositionPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from("battle_position"), battlePDA.toBuffer(), user.toBuffer()],
+      program.programId
+    );
+
+  
+    const [battleVaultPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from("battle_vault"), battlePDA.toBuffer()],
+      program.programId
+    );
+
+    const tx = await program.methods
+      .enterBattle(side, new anchor.BN(amount))
+      .accounts({
+        user,
+        config: configPDA,
+        battle: battlePDA,
+        battlePosition: battlePositionPDA,
+        battleVault: battleVaultPDA,
+        systemProgram: SystemProgram.programId,
+      })
+      .rpc();
+
+    console.log("Enter Battle TX:", tx);
+    toast.success("Joined battle successfully!");
+
+    return {
+      tx,
+      battlePDA,
+      battlePositionPDA,
+      battleVaultPDA,
+      battleData,
+    };
+  };
+
   return {
     initProgram,
     initMarket,
@@ -985,5 +1173,9 @@ export default function Methods() {
     getAllTokens,
     getBoughtTokens,
     withdrawCreatorRoyalties,
+
+    createBattle,
+    getAllBattles,
+    enterBattle,
   };
 }
