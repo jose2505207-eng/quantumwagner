@@ -1,6 +1,5 @@
 "use client";
 import { useParams } from "next/navigation";
-import Image from "next/image";
 import {
   Globe,
   Send,
@@ -77,7 +76,7 @@ export default function TokenBuyPage() {
         {/* Token Header */}
         <div className="flex flex-col sm:flex-row items-center gap-6 mb-10 border-b border-gray-800 pb-6">
           {acc.imageUri && acc.imageUri.startsWith("http") ? (
-            <Image
+            <img
               src={acc.imageUri}
               alt={acc.name}
               width={100}

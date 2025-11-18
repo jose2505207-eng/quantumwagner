@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useAllTokens } from "@/app/utils/useAllTokens";
 import { toDisplay } from "@/app/portfolio/token/[mid]/page";
 import { Spinner } from "@/app/portfolio/page";
-import Image from "next/image";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import {
@@ -16,9 +15,16 @@ import {
 } from "@/components/ui/select";
 import { motion } from "framer-motion";
 import BattleArenaHeroSection from "@/components/BattleArenaHeroSection";
+import { useAllBattles } from "@/app/utils/useAllBattles";
 
 export default function TokenBattlesSection() {
   const { tokens: allTokens, loading: tokenLoading } = useAllTokens();
+  const {
+    battles: allBattles,
+    loading: allBattleLaoding,
+    error: allBattleError,
+  } = useAllBattles();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -119,7 +125,7 @@ export default function TokenBattlesSection() {
                     <div className="relative flex flex-col items-center text-center z-[2] space-y-3">
                       {/* Token Image */}
                       {acc.imageUri && acc.imageUri.startsWith("http") ? (
-                        <Image
+                        <img
                           src={acc.imageUri}
                           alt={acc.name}
                           width={80}

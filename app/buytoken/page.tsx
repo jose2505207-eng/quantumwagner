@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useAllTokens } from "@/app/utils/useAllTokens";
 import { toDisplay } from "@/app/portfolio/token/[mid]/page";
 import { Spinner } from "@/app/portfolio/page";
-import Image from "next/image";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
@@ -134,7 +133,7 @@ export default function BuyToken() {
 
                     <div className="relative flex flex-col items-center text-center z-[2] space-y-3">
                       {acc.imageUri && acc.imageUri.startsWith("http") ? (
-                        <Image
+                        <img
                           src={acc.imageUri}
                           alt={acc.name}
                           width={80}

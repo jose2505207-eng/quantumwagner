@@ -135,7 +135,7 @@ export default function Token() {
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-8 border-b border-gray-800 pb-6">
           <div className="flex-shrink-0">
             {acc.imageUri && acc.imageUri.startsWith("http") ? (
-              <Image
+              <img
                 src={
                   acc.imageUri ||
                   "https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg"

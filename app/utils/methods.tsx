@@ -61,7 +61,6 @@ export interface createToeknParams {
   };
   initialPrice: number;
   totalSupply: number;
-  CurveTypes: "linear" | "exponential" | "logarithmic";
   tags: string[];
 }
 
@@ -121,10 +120,7 @@ export default function Methods() {
       const configAccount = await program.account.platformConfig.fetch(
         configPDA
       );
-      console.log("Config account exists:", configAccount);
-    } catch (err) {
-      console.log("Config account not found, safe to initialize.");
-    }
+    } catch (err) {}
 
     try {
       const tx = await program.methods
@@ -147,7 +143,6 @@ export default function Methods() {
         .rpc({ skipPreflight: false, preflightCommitment: "confirmed" });
 
       toast.success(`Platform initialized! Transaction :  ${tx}`);
-      console.log(`Platform initialized! Transaction : `, tx);
       return tx;
     } catch (err) {
       console.error(" Error initializing platform:", err);
@@ -180,8 +175,6 @@ export default function Methods() {
       return;
     }
 
-    // 🧩 Derive config PDA
-
     const [configPDA] = PublicKey.findProgramAddressSync(
       [Buffer.from("config")],
       PROGRAM_ID
@@ -190,7 +183,6 @@ export default function Methods() {
     const configAccount = await program.account.platformConfig.fetch(configPDA);
     const nextMarketId = configAccount.nextMarketId.toNumber();
 
-    // 🧩 Derive market PDA using nextMarketId
     const [marketPDA] = PublicKey.findProgramAddressSync(
       [
         Buffer.from("market"),
@@ -199,7 +191,6 @@ export default function Methods() {
       program.programId
     );
 
-    console.log("🧠 Creating market...");
     console.table({
       creator: creator.toBase58(),
       config: configPDA.toBase58(),
@@ -226,17 +217,9 @@ export default function Methods() {
         })
         .rpc({ skipPreflight: false, preflightCommitment: "confirmed" });
 
-      console.log(
-        "✅ Market initialized! Tx:",
-        tx,
-        "Market PDA:",
-        marketPDA.toBase58()
-      );
-
       toast.success("Market created succssfully!");
       return marketPDA.toBase58();
     } catch (err: any) {
-      console.error("❌ Error initializing market:", err);
       if (err instanceof anchor.AnchorError)
         toast.error(`AnchorError: ${err.error.errorMessage}`);
       else toast.error("Market creation failed");
@@ -259,12 +242,9 @@ export default function Methods() {
       PROGRAM_ID
     );
 
-    //  Fetch config to get treasury address
-
     const configAccount = await program.account.platformConfig.fetch(configPDA);
     const treasury = configAccount.treasury;
 
-    // Derive UserPosition PDA
     const [userPositionPDA] = anchor.web3.PublicKey.findProgramAddressSync(
       [Buffer.from("position"), marketPDA.toBuffer(), user.toBuffer()],
       program.programId
@@ -284,14 +264,9 @@ export default function Methods() {
         .rpc({ skipPreflight: false, preflightCommitment: "confirmed" });
 
       toast.success("Bet placed successfully");
-      console.log("✅ Bet placed TX:", tx);
       return tx;
     } catch (err: any) {
-      console.error("Error placing bet:", err);
-      const msg =
-        err.message ||
-        (err.logs ? err.logs.join("\n") : "Unknown error placing bet");
-      toast.error(`Error placing bet: ${msg}`);
+      const msg = err.message || toast.error(`Error placing bet: ${msg}`);
       throw err;
     }
   };
@@ -307,9 +282,8 @@ export default function Methods() {
           market: marketPDA,
         })
         .rpc({ skipPreflight: false, preflightCommitment: "confirmed" });
-      console.log("✅ Market cancelled! Tx:", tx);
     } catch (err) {
-      console.error("❌ Error cancelling market:", err);
+      throw err;
     }
   };
 
@@ -331,10 +305,8 @@ export default function Methods() {
         })
         .rpc({ skipPreflight: false, preflightCommitment: "confirmed" });
 
-      console.log("✅ Market settled. Tx:", tx);
       return tx;
     } catch (err) {
-      console.error("❌ Error settling market:", err);
       throw err;
     }
   };
@@ -350,11 +322,9 @@ export default function Methods() {
       program.programId
     );
 
-    // Fetch config to get treasury
     const configAccount = await program.account.platformConfig.fetch(configPDA);
     const treasury = configAccount.treasury;
 
-    // Derive UserPosition PDA
     const [userPositionPDA] = PublicKey.findProgramAddressSync(
       [Buffer.from("position"), marketPDA.toBuffer(), user.toBuffer()],
       program.programId
@@ -373,10 +343,8 @@ export default function Methods() {
         })
         .rpc({ skipPreflight: false, preflightCommitment: "confirmed" });
 
-      console.log("✅ Winnings withdrawn. Tx:", tx);
       return tx;
     } catch (err) {
-      console.error("❌ Error withdrawing winnings:", err);
       throw err;
     }
   };
@@ -435,10 +403,8 @@ export default function Methods() {
         .rpc({ skipPreflight: false, preflightCommitment: "confirmed" });
 
       toast.success("Launchpad initialized successfully ");
-      console.log("Transaction Signature:", tx);
       return tx;
     } catch (e) {
-      console.error("Launchpad initialization failed:", e);
       toast.error("Launchpad failed to initialize ");
     }
   };
@@ -454,7 +420,6 @@ export default function Methods() {
       program.programId
     );
 
-    // Fetch config to get treasury
     const configAccount = await program.account.platformConfig.fetch(configPDA);
     const treasury = configAccount.treasury;
 
@@ -514,7 +479,6 @@ export default function Methods() {
         })
         .rpc();
 
-      console.log("Token Launch Created:", tx);
       toast.success("Token launched successfully!");
       return {
         tx,
@@ -523,7 +487,6 @@ export default function Methods() {
         solVault: solVaultPda.toBase58(),
       };
     } catch (e) {
-      console.error(e);
       toast.error("Token failed to create");
     }
   };
@@ -589,10 +552,8 @@ export default function Methods() {
         })
         .rpc();
 
-      console.log("✅ Buy Token TX:", tx);
       toast.success("Token purchase successful!");
     } catch (e) {
-      console.error("❌ Buy token failed:", e);
       toast.error("Token purchase failed");
     }
   };
@@ -628,21 +589,18 @@ export default function Methods() {
     const tokenMint: PublicKey = tokenLaunch.tokenMint;
     const tokenVault: PublicKey = tokenLaunch.tokenVault;
 
-    // 3) Seller’s ATA for this mint (must exist and have tokens)
     const sellerTokenAccount = getAssociatedTokenAddressSync(
       tokenMint,
       seller,
       false
     );
 
-    // (optional) quick client-side sanity check
     const bal = await program.provider.connection
       .getTokenAccountBalance(sellerTokenAccount)
       .catch(() => null);
     if (!bal || Number(bal.value.amount) < tokenAmount)
       throw new Error("Not enough tokens in seller ATA");
 
-    // 4) Build + send tx
     const tx = await program.methods
       .sellToken(new anchor.BN(tokenAmount))
       .accounts({
@@ -660,7 +618,6 @@ export default function Methods() {
       })
       .rpc();
 
-    console.log("✅ Sell Token TX:", tx);
     return tx;
   };
 
@@ -673,7 +630,6 @@ export default function Methods() {
 
   //     toast.loading("Migrating token to DEX...");
 
-  //     // === Derive PDAs ===
   //     const [configPDA] = PublicKey.findProgramAddressSync(
   //       [Buffer.from("platform_config")],
   //       program.programId
@@ -692,7 +648,6 @@ export default function Methods() {
   //       program.programId
   //     );
 
-  //     // === Fetch Accounts ===
   //     const configAccount = await program.account.platformConfig.fetch(
   //       configPDA
   //     );
@@ -700,7 +655,6 @@ export default function Methods() {
   //       tokenLaunchPDA
   //     );
 
-  //     // === Pool-related PDAs (mock Raydium) ===
   //     const [poolAccount] = PublicKey.findProgramAddressSync(
   //       [Buffer.from("pool_account"), tokenLaunchPDA.toBuffer()],
   //       program.programId
@@ -722,7 +676,6 @@ export default function Methods() {
   //       program.programId
   //     );
 
-  //     // === Creator LP Account (must exist before call) ===
   //     const creatorLpAccount = await getOrCreateAssociatedTokenAccount(
   //       provider.connection,
   //       provider.wallet.payer,
@@ -731,7 +684,6 @@ export default function Methods() {
   //       true // allow owner off-curve
   //     );
 
-  //     // === Execute Transaction ===
   //     const tx = await program.methods
   //       .migrateToDex()
   //       .accounts({
@@ -756,11 +708,9 @@ export default function Methods() {
 
   //     toast.dismiss();
   //     toast.success("Token migrated to DEX successfully!");
-  //     console.log("Transaction Signature:", tx);
   //     return tx;
   //   } catch (err: any) {
   //     toast.dismiss();
-  //     console.error("Migration error:", err);
   //     toast.error(err.message || "Migration failed!");
   //     throw err;
   //   }
@@ -797,8 +747,6 @@ export default function Methods() {
     );
 
     try {
-      console.log("Claiming creator token...");
-
       const tx = await program.methods
         .claimCreatorTokens()
         .accounts({
@@ -814,7 +762,6 @@ export default function Methods() {
         .rpc();
 
       toast.success("Token claimed successfully!");
-      console.log("Token claimed successfully :", tx);
     } catch (e: any) {
       const message = e?.error?.message || e?.message || String(e);
       if (message.includes("No tokens available to claim")) {
@@ -855,8 +802,6 @@ export default function Methods() {
       },
     ]);
 
-    console.log("All user MArkets :", accounts);
-
     return accounts;
   };
   const getAllTokens = async () => {
@@ -865,9 +810,7 @@ export default function Methods() {
     }
 
     const accounts = await program.account.tokenLaunch.all();
-    console.log(accounts);
-
-    console.log("accounts -> ", accounts);
+    console.log("all TOkens :", accounts);
 
     return accounts;
   };
@@ -881,7 +824,6 @@ export default function Methods() {
 
       const allTokens = await program.account.tokenLaunch.all();
       if (!allTokens || allTokens.length === 0) {
-        console.log("No token launches found.");
         return [];
       }
 
@@ -919,11 +861,8 @@ export default function Methods() {
           }
         }
       }
-
-      console.log("Bought Tokens:", boughtTokens);
       return boughtTokens;
     } catch (err) {
-      console.error("Error fetching bought tokens:", err);
       toast.error("Failed to fetch bought tokens");
       return [];
     }
@@ -938,7 +877,6 @@ export default function Methods() {
 
       toast.loading("Withdrawing royalties...");
 
-      // === Derive PDAs ===
       const [configPDA] = PublicKey.findProgramAddressSync(
         [Buffer.from("platform_config")],
         program.programId
@@ -952,7 +890,6 @@ export default function Methods() {
         program.programId
       );
 
-      // === Fetch program data ===
       const configAccount = await program.account.platformConfig.fetch(
         configPDA
       );
@@ -960,10 +897,8 @@ export default function Methods() {
         tokenLaunchPDA
       );
 
-      // Royalty vault (comes from config)
       const royaltyVault = configAccount.royaltyVault as PublicKey;
 
-      // === Execute transaction ===
       const tx = await program.methods
         .withdrawCreatorRoyalties()
         .accounts({
@@ -976,8 +911,7 @@ export default function Methods() {
         .rpc();
 
       toast.dismiss();
-      toast.success("💰 Royalties withdrawn successfully!");
-      console.log("Transaction Signature:", tx);
+      toast.success("Royalties withdrawn successfully!");
       return tx;
     } catch (err: any) {
       const errMsg = err?.message || err?.toString() || "";
@@ -1020,7 +954,6 @@ export default function Methods() {
       program.programId
     );
 
-    // config  next_battle_id
     const config = await program.account.platformConfig.fetch(configPDA);
     const nextBattleId = new anchor.BN(config.nextBattleId);
 
@@ -1050,9 +983,6 @@ export default function Methods() {
         systemProgram: SystemProgram.programId,
       })
       .rpc();
-
-    console.log("Battle Created TX:", tx);
-    console.log("Battle PDA:", battlePDA.toBase58());
     toast.success("Battle Created successfully!");
 
     return {
@@ -1144,6 +1074,8 @@ export default function Methods() {
         console.warn(`Skipping battle ${id}:`, err.message);
       }
     }
+
+    console.log("user BAttles:", battles);
 
     return battles;
   };
