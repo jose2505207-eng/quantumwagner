@@ -29,6 +29,7 @@ import { useUserBoughtTokens } from "../utils/useUserBoughtTokens";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Methods from "../utils/methods";
+import { BN } from "@coral-xyz/anchor";
 
 export const Spinner = () => (
   <div className="flex items-center justify-center h-64">
@@ -42,7 +43,15 @@ export function shortenAddress(addr: string) {
 }
 
 export default function Portfolio() {
-  const { withdrawWinnings, enterBattle,getAllBattles } = Methods();
+  const {
+    withdrawWinnings,
+    enterBattle,
+    getAllBattles,
+    createBattle,
+    increaseBattlePosition,
+    resolveBattle,
+    getUserBattles,
+  } = Methods();
   const { positions, setPositions } = usePositionStore();
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState("active");
@@ -120,6 +129,10 @@ export default function Portfolio() {
 
   // const handleCreateBattle = async () => {
   //   try {
+  //     const currentTime = Math.floor(Date.now() / 1000);
+  //     const startTime = new BN(currentTime + 60); // Start in 5 seconds
+  //     const endTime = new BN(currentTime + 60 * 6); // End in 5 min
+
   //     const { tx, battlePDA } = await createBattle({
   //       title: "Solana Ecosystem Clash",
   //       description: "Whose tokens dominate?",
@@ -131,8 +144,8 @@ export default function Portfolio() {
   //       ],
   //       sideAName: "Side A",
   //       sideBName: "Side B",
-  //       startTime: Math.floor(Date.now() / 1000) + 300, // start in 5 mins
-  //       endTime: Math.floor(Date.now() / 1000) + 3600, // end in 1 hr
+  //       startTime,
+  //       endTime,
   //       metaMarketEnabled: true,
   //       imageUrl: "https://cryptologos.cc/logos/usd-coin-usdc-logo.png",
   //     });
@@ -147,7 +160,12 @@ export default function Portfolio() {
 
   // const handleCreateBattle = async () => {
   //   try {
-  //     const res = await getAllBattles();
+  //     const res = await increaseBattlePosition({
+  //       battlePda: new PublicKey(
+  //         "BfZiZmv6BQ646WMBnRYTmm7e9u2nZbVUcBFTCuivNC76"
+  //       ),
+  //       additionalAmount: 1000000,
+  //     });
 
   //     console.log("All battles :", res);
 
@@ -161,15 +179,25 @@ export default function Portfolio() {
   const handleJoinBattle = async () => {
     try {
       // const res = await enterBattle({
-      //   battlePDA: new PublicKey(
-      //     "AdS5baQefWJUEU2Xi99fyW1oNpDHsrPWT8PJbZnqhcX7"
+      //   battlePda: new PublicKey(
+      //     "BfZiZmv6BQ646WMBnRYTmm7e9u2nZbVUcBFTCuivNC76"
       //   ),
-      //   side: { a: {} },
-      //   amount: 1_000_000,
+      //   side: { sideA: {} },
+      //   amount: 1_000_000_000,
       // });
-      const res = await getAllBattles()
+      // const res = await resolveBattle({
+      //   battlePda: new PublicKey(
+      //     "BfZiZmv6BQ646WMBnRYTmm7e9u2nZbVUcBFTCuivNC76"
+      //   ),
+      //   winner: { sideA: {} },
+      // });
 
-      console.log("Battle joined:", res);
+      const res1 = await getUserBattles();
+
+      const res = await getAllBattles();
+
+      console.log("user only battle:", res1);
+      console.log("All battle:", res);
     } catch (err: any) {
       console.error("Join error:", err.message);
       alert("Error: " + err.message);
@@ -237,7 +265,7 @@ export default function Portfolio() {
           battels_won={userInfo?.user.win_rate || "error"}
         />
 
-        {/* === Token Tabs Section === */}
+        {/*Token Tabs Section*/}
         <div className="mt-12">
           <Tabs defaultValue="created" className="w-full">
             {/* Header + Tabs */}

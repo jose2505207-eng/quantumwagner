@@ -920,7 +920,6 @@
         }
       ]
     },
-
     {
       "name": "enter_battle",
       "discriminator": [
@@ -1075,7 +1074,6 @@
         }
       ]
     },
-
     {
       "name": "increase_battle_position",
       "discriminator": [
@@ -1222,7 +1220,6 @@
         }
       ]
     },
-
     {
       "name": "initialize_launchpad",
       "discriminator": [

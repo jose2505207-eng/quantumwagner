@@ -95,7 +95,7 @@ export type CreateBattleArgs = {
 export type EnterBattleArgs = {
   battlePDA: PublicKey;
   side: { a: {} } | { b: {} };
-  amount: number; // u64
+  amount: number;
 };
 
 export default function Methods() {
@@ -1102,30 +1102,73 @@ export default function Methods() {
     return battles;
   };
 
-  const enterBattle = async (args: EnterBattleArgs) => {
-    const { battlePDA, side, amount } = args;
-
+  const getUserBattles = async () => {
     if (!program) throw new Error("Program not ready");
 
     const user = program.provider.publicKey;
     if (!user) throw new Error("Wallet not connected");
 
-
-    const battleData = await program.account.battle.fetch(battlePDA);
-
-  
     const [configPDA] = PublicKey.findProgramAddressSync(
       [Buffer.from("platform_config")],
       program.programId
     );
 
-  
+    const config = await program.account.platformConfig.fetch(configPDA);
+    const nextBattleId = Number(config.nextBattleId); // total created
+
+    const battles: Array<{
+      id: number;
+      pda: PublicKey;
+      data: any;
+    }> = [];
+
+    for (let id = 0; id < nextBattleId; id++) {
+      const battleIdBN = new anchor.BN(id);
+
+      const [battlePDA] = PublicKey.findProgramAddressSync(
+        [Buffer.from("battle"), battleIdBN.toArrayLike(Buffer, "le", 8)],
+        program.programId
+      );
+
+      try {
+        const battleData = await program.account.battle.fetch(battlePDA);
+
+        if (battleData.creator.toBase58() === user.toBase58()) {
+          battles.push({
+            id,
+            pda: battlePDA,
+            data: battleData,
+          });
+        }
+      } catch (err: any) {
+        console.warn(`Skipping battle ${id}:`, err.message);
+      }
+    }
+
+    return battles;
+  };
+
+  const enterBattle = async ({ battlePda, side, amount }) => {
+    if (!program) throw new Error("Program not ready");
+
+    const user = program.provider.publicKey;
+    if (!user) throw new Error("Wallet not connected");
+
+    const battleAccount = await program.account.battle.fetch(battlePda);
+    const battleId = battleAccount.battleId;
+
+    const [configPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from("platform_config")],
+      program.programId
+    );
+
+    const battlePDA = battlePda;
+
     const [battlePositionPDA] = PublicKey.findProgramAddressSync(
       [Buffer.from("battle_position"), battlePDA.toBuffer(), user.toBuffer()],
       program.programId
     );
 
-  
     const [battleVaultPDA] = PublicKey.findProgramAddressSync(
       [Buffer.from("battle_vault"), battlePDA.toBuffer()],
       program.programId
@@ -1143,16 +1186,77 @@ export default function Methods() {
       })
       .rpc();
 
-    console.log("Enter Battle TX:", tx);
-    toast.success("Joined battle successfully!");
+    return { tx, battlePositionPDA };
+  };
 
-    return {
-      tx,
-      battlePDA,
-      battlePositionPDA,
-      battleVaultPDA,
-      battleData,
-    };
+  const increaseBattlePosition = async ({ battlePda, additionalAmount }) => {
+    if (!program) throw new Error("Program not ready");
+
+    const user = program.provider.publicKey;
+    if (!user) throw new Error("Wallet not connected");
+
+    const battleAccount = await program.account.battle.fetch(battlePda);
+    const battleId = battleAccount.battleId;
+
+    const [configPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from("platform_config")],
+      program.programId
+    );
+
+    const battlePDA = battlePda;
+
+    const [battlePositionPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from("battle_position"), battlePDA.toBuffer(), user.toBuffer()],
+      program.programId
+    );
+
+    const [battleVaultPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from("battle_vault"), battlePDA.toBuffer()],
+      program.programId
+    );
+
+    const tx = await program.methods
+      .increaseBattlePosition(new anchor.BN(additionalAmount))
+      .accounts({
+        user,
+        config: configPDA,
+        battle: battlePDA,
+        battlePosition: battlePositionPDA,
+        battleVault: battleVaultPDA,
+        systemProgram: SystemProgram.programId,
+      })
+      .rpc();
+
+    return { tx };
+  };
+
+  const resolveBattle = async ({ battlePda, winner }) => {
+    if (!program) throw new Error("Program not ready");
+
+    const resolver = program.provider.publicKey;
+    if (!resolver) throw new Error("Wallet not connected");
+
+    const battleAccount = await program.account.battle.fetch(battlePda);
+    const battleId = battleAccount.battleId;
+
+    // Config PDA
+    const [configPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from("platform_config")],
+      program.programId
+    );
+
+    const battlePDA = battlePda;
+
+    const tx = await program.methods
+      .resolveBattle(winner) // { sideA: {} } or { sideB: {} }
+      .accounts({
+        resolver,
+        config: configPDA,
+        battle: battlePDA,
+      })
+      .rpc();
+
+    return { tx };
   };
 
   return {
@@ -1164,7 +1268,6 @@ export default function Methods() {
     withdrawWinnings,
     initializeLaunchpad,
     createTokenLaunch,
-
     buyToken,
     sellToken,
     // migrateToDex,
@@ -1173,9 +1276,11 @@ export default function Methods() {
     getAllTokens,
     getBoughtTokens,
     withdrawCreatorRoyalties,
-
     createBattle,
     getAllBattles,
+    getUserBattles,
     enterBattle,
+    increaseBattlePosition,
+    resolveBattle,
   };
 }
