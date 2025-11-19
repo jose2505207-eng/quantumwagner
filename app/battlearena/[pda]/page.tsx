@@ -20,6 +20,7 @@ import { toDisplay } from "@/app/portfolio/token/[mid]/page";
 import { format, formatDistanceToNowStrict, isPast } from "date-fns";
 import { MIN_BATTLE_POOL } from "@/config";
 import { BN } from "@coral-xyz/anchor";
+import { useAllBattles } from "@/app/utils/useAllBattles";
 
 const getKey = (obj) => {
   if (!obj) return "—";
@@ -81,15 +82,15 @@ export const formatTimeline = (type, unix) => {
 
 export default function BattlePage() {
   const params = useParams();
-  const battleMint = String(params.pda);
+  const battleMint = params.pda;
 
   const { enterBattle } = Methods();
   const [entering, setEntering] = useState(false);
 
   const [selectedSide, setSelectedSide] = useState<"A" | "B" | null>(null);
-  const [amount, setAmount] = useState(""); // SOL string
+  const [amount, setAmount] = useState(""); 
 
-  const { battles: userBattles, loading: battleLoading } = useUserBattles();
+  const { battles: allBattles, loading: battleLoading } = useAllBattles();
   const { tokens: allToken, loading: tokenLoading } = useAllTokens();
 
   if (battleLoading || tokenLoading)
@@ -99,7 +100,7 @@ export default function BattlePage() {
       </div>
     );
 
-  const battle = userBattles?.find((b) => b.pda.toString() === battleMint);
+  const battle = allBattles?.find((b) => b.pda.toString() === battleMint);
 
   if (!battle)
     return (
