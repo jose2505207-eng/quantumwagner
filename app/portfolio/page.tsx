@@ -10,25 +10,17 @@ import PositionCard from "@/components/positions/PositionCard";
 import { PublicKey } from "@solana/web3.js";
 import { useUserStore } from "@/store/userInfo";
 import {
-  ArrowDownRight,
   BadgeCheck,
   BarChart3,
   CheckCircle2,
   Coins,
-  Copy,
-  Crosshair,
-  Crown,
-  ExternalLink,
   Swords,
   Users,
   XCircle,
 } from "lucide-react";
 import ProfileCard from "@/components/custom/UserRepution";
 import { useRouter } from "next/navigation";
-import { useUserTokens } from "../utils/useUserTokens";
-import { useUserBoughtTokens } from "../utils/useUserBoughtTokens";
 import Methods from "../utils/methods";
-import { BN } from "@coral-xyz/anchor";
 import Tokens from "@/components/portfolio/token/useToken";
 import UserBattlesList from "@/components/portfolio/battle/userBattleList";
 
@@ -140,28 +132,6 @@ export default function Portfolio() {
   //     alert("Error: " + err.message);
   //   }
   // };
-
-  const handleJoinBattle = async () => {
-    try {
-      // const res = await enterBattle({
-      //   battlePda: new PublicKey(
-      //     "BfZiZmv6BQ646WMBnRYTmm7e9u2nZbVUcBFTCuivNC76"
-      //   ),
-      //   side: { sideA: {} },
-      //   amount: 1_000_000_000,
-      // });
-
-      const res1 = await getUserBattles();
-
-      const res = await getAllBattles();
-
-      console.log("user only battle:", res1);
-      console.log("All battle:", res);
-    } catch (err: any) {
-      console.error("Join error:", err.message);
-      alert("Error: " + err.message);
-    }
-  };
 
   return (
     <div className="min-h-screen p-6 pt-24 text-white">

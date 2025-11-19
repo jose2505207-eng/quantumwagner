@@ -12,8 +12,8 @@ import { useAllTokens } from "@/app/utils/useAllTokens";
 
 import {
   Popover,
-  PopoverContent,
   PopoverTrigger,
+  PopoverContent,
 } from "@/components/ui/popover";
 
 import {
@@ -24,6 +24,62 @@ import {
   CommandInput,
   CommandItem,
 } from "@/components/ui/command";
+
+/* -------------------------------------------------------
+   TOKEN SELECTOR (INLINE)
+------------------------------------------------------- */
+function TokenSelector({ label, selected, setSelected, allToken, loading }) {
+  return (
+    <div>
+      <label className="text-sm text-neutral-300">{label}</label>
+
+      <Popover>
+        <PopoverTrigger
+          className={`mt-1 w-full flex items-center justify-between rounded-md 
+            bg-black/30 border px-3 py-2 
+            ${selected ? "border-green-500" : "border-white/10"}`}
+        >
+          {selected
+            ? allToken?.find((t) => t.account.tokenMint === selected)?.account
+                ?.name
+            : "Select Token"}
+        </PopoverTrigger>
+
+        <PopoverContent className="w-[270px] p-0 bg-black/70 border border-white/10 rounded-lg">
+          <Command>
+            <CommandInput placeholder="Search token..." />
+            <CommandEmpty>No tokens found.</CommandEmpty>
+
+            <CommandList>
+              <CommandGroup>
+                {!loading &&
+                  allToken?.map((t) => (
+                    <CommandItem
+                      key={t.publicKey}
+                      onSelect={() => setSelected(t.account.tokenMint)}
+                      className="flex items-center gap-3 py-2 cursor-pointer hover:bg-white/10"
+                    >
+                      <img
+                        src={t.account.imageUri}
+                        className="w-6 h-6 rounded-full"
+                      />
+                      <span>
+                        {t.account.name} ({t.account.symbol})
+                      </span>
+                    </CommandItem>
+                  ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------
+   MAIN PAGE
+------------------------------------------------------- */
 
 export default function CreateBattlePage() {
   const { createBattle } = Methods();
@@ -43,23 +99,43 @@ export default function CreateBattlePage() {
 
   const { tokens: allToken, loading: tokenLoading } = useAllTokens();
 
-  const inputClass = (value) =>
-    `mt-1 bg-black border-neutral-700 focus:border-green-500 ${
-      value ? "border-green-500" : ""
-    }`;
+  const minDateTime = new Date().toISOString().slice(0, 16); // disable past
+
+  const inputClass = (val) =>
+    `mt-1 bg-[#0d0d0d] border-white/10 rounded-lg 
+     px-4 py-2 text-gray-200 outline-none
+     focus:border-green-500 transition
+     [color-scheme:dark]
+     ${val ? "border-green-500" : "border-gray-700"}`;
 
   const handleSubmit = async () => {
     try {
       setLoading(true);
 
-      // const finalStart = new BN(
-      //   Math.floor(new Date(startTime).getTime() / 1000)
-      // );
-      // const finalEnd = new BN(Math.floor(new Date(endTime).getTime() / 1000));
+      const now = Math.floor(Date.now() / 1000);
 
-      const currentTime = Math.floor(Date.now() / 1000);
-      const startTime = new BN(currentTime + 60); // Start in 5 seconds
-      const endTime = new BN(currentTime + 60 * 6); // End in 5 min
+      const startUnix = Math.floor(new Date(startTime).getTime() / 1000);
+      const endUnix = Math.floor(new Date(endTime).getTime() / 1000);
+
+      // VALIDATIONS
+      if (!startTime || !endTime) {
+        alert("Please choose start and end time");
+        return;
+      }
+
+      if (startUnix <= now + 30) {
+        alert("Start time must be at least 30 seconds from now.");
+        return;
+      }
+
+      if (endUnix <= startUnix) {
+        alert("End time must be AFTER start time.");
+        return;
+      }
+
+      // Convert to BN
+      const finalStart = new BN(startUnix);
+      const finalEnd = new BN(endUnix);
 
       const { battlePDA } = await createBattle({
         title,
@@ -68,16 +144,14 @@ export default function CreateBattlePage() {
         sideBTokens: [new PublicKey(sideBToken)],
         sideAName,
         sideBName,
-        // startTime: finalStart,
-        // endTime: finalEnd,
-        startTime,
-        endTime,
+        startTime: finalStart,
+        endTime: finalEnd,
         metaMarketEnabled: true,
         imageUrl,
       });
 
       alert("Battle Created: " + battlePDA.toBase58());
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       alert("Error: " + err.message);
     } finally {
@@ -86,14 +160,12 @@ export default function CreateBattlePage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-black/40  items-center justify-center p-5 text-white mt-20">
-      <Card className="w-full max-w-3xl  bg-black/ p-8">
+    <div className="min-h-screen flex bg-black/40 items-center justify-center p-5 text-white mt-20">
+      <Card className="w-full max-w-3xl bg-black/20 p-8 border border-white/10 rounded-xl">
         <CardHeader className="space-y-2 pb-6">
           <div className="flex items-center gap-3">
-            <Swords className="h-8 w-8 text-green-500 drop-shadow-[0_0_10px_rgba(0,255,128,0.7)]" />
-            <h2 className="text-3xl font-semibold tracking-wide">
-              Create Battle
-            </h2>
+            <Swords className="h-8 w-8 text-green-500" />
+            <h2 className="text-3xl font-semibold">Create Battle</h2>
           </div>
           <p className="text-neutral-400 text-sm">
             Configure your prediction battle
@@ -105,11 +177,8 @@ export default function CreateBattlePage() {
           <div>
             <label className="text-sm text-neutral-300">Battle Title</label>
             <Input
-              className={
-                inputClass(title) +
-                " bg-black/30 border-white/10 focus:border-green-500"
-              }
-              placeholder="e.g. Solana Ecosystem Clash"
+              className={inputClass(title)}
+              placeholder="Solana Ecosystem Clash"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
@@ -119,11 +188,8 @@ export default function CreateBattlePage() {
           <div>
             <label className="text-sm text-neutral-300">Description</label>
             <Input
-              className={
-                inputClass(description) +
-                " bg-black/30 border-white/10 focus:border-green-500"
-              }
-              placeholder="Describe battle purpose…"
+              className={inputClass(description)}
+              placeholder="Describe the battle..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
@@ -134,10 +200,8 @@ export default function CreateBattlePage() {
             <div>
               <label className="text-sm text-neutral-300">Side A Name</label>
               <Input
-                className={
-                  inputClass(sideAName) + " bg-black/30 border-white/10"
-                }
-                placeholder="e.g. Bulls"
+                className={inputClass(sideAName)}
+                placeholder="Bulls"
                 value={sideAName}
                 onChange={(e) => setSideAName(e.target.value)}
               />
@@ -146,140 +210,54 @@ export default function CreateBattlePage() {
             <div>
               <label className="text-sm text-neutral-300">Side B Name</label>
               <Input
-                className={
-                  inputClass(sideBName) + " bg-black/30 border-white/10"
-                }
-                placeholder="e.g. Bears"
+                className={inputClass(sideBName)}
+                placeholder="Bears"
                 value={sideBName}
                 onChange={(e) => setSideBName(e.target.value)}
               />
             </div>
           </div>
 
-          {/* Token Selectors */}
+          {/* Tokens */}
           <div className="grid grid-cols-2 gap-6">
-            {/* Side A Token */}
-            <div>
-              <label className="text-sm text-neutral-300">Side A Token</label>
-              <Popover>
-                <PopoverTrigger
-                  className={`mt-1 w-full flex items-center justify-between rounded-md 
-                            bg-black/30 border border-white/10 px-3 py-2 text-white
-                            ${sideAToken ? "border-green-500" : ""}`}
-                >
-                  {sideAToken
-                    ? allToken?.find((t) => t.account.tokenMint === sideAToken)
-                        ?.account?.name
-                    : "Select Token"}
-                </PopoverTrigger>
+            <TokenSelector
+              label="Side A Token"
+              selected={sideAToken}
+              setSelected={setSideAToken}
+              allToken={allToken}
+              loading={tokenLoading}
+            />
 
-                <PopoverContent
-                  className="w-[270px] p-0 bg-black/70 backdrop-blur-xl 
-                                         border border-white/10 text-white rounded-lg shadow-xl"
-                >
-                  <Command>
-                    <CommandInput placeholder="Search token…" />
-                    <CommandEmpty>No tokens found.</CommandEmpty>
-
-                    <CommandList>
-                      <CommandGroup>
-                        {!tokenLoading &&
-                          allToken?.map((t) => (
-                            <CommandItem
-                              key={t.publicKey}
-                              onSelect={() =>
-                                setSideAToken(t.account.tokenMint)
-                              }
-                              className="flex items-center gap-3 py-2 cursor-pointer hover:bg-white/10"
-                            >
-                              <img
-                                src={t.account.imageUri}
-                                className="w-6 h-6 rounded-full"
-                                alt={t.account.symbol}
-                              />
-                              <span>
-                                {t.account.name} ({t.account.symbol})
-                              </span>
-                            </CommandItem>
-                          ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            {/* Side B Token */}
-            <div>
-              <label className="text-sm text-neutral-300">Side B Token</label>
-              <Popover>
-                <PopoverTrigger
-                  className={`mt-1 w-full flex items-center justify-between rounded-md 
-                            bg-black/30 border border-white/10 px-3 py-2 text-white
-                            ${sideBToken ? "border-green-500" : ""}`}
-                >
-                  {sideBToken
-                    ? allToken?.find((t) => t.account.tokenMint === sideBToken)
-                        ?.account?.name
-                    : "Select Token"}
-                </PopoverTrigger>
-
-                <PopoverContent
-                  className="w-[270px] p-0 bg-black/70 backdrop-blur-xl 
-                                         border border-white/10 text-white rounded-lg shadow-xl"
-                >
-                  <Command>
-                    <CommandInput placeholder="Search token…" />
-                    <CommandEmpty>No tokens found.</CommandEmpty>
-
-                    <CommandList>
-                      <CommandGroup>
-                        {!tokenLoading &&
-                          allToken?.map((t) => (
-                            <CommandItem
-                              key={t.publicKey}
-                              onSelect={() =>
-                                setSideBToken(t.account.tokenMint)
-                              }
-                              className="flex items-center gap-3 py-2 cursor-pointer hover:bg-white/10"
-                            >
-                              <img
-                                src={t.account.imageUri}
-                                className="w-6 h-6 rounded-full"
-                                alt={t.account.symbol}
-                              />
-                              <span>
-                                {t.account.name} ({t.account.symbol})
-                              </span>
-                            </CommandItem>
-                          ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-            </div>
+            <TokenSelector
+              label="Side B Token"
+              selected={sideBToken}
+              setSelected={setSideBToken}
+              allToken={allToken}
+              loading={tokenLoading}
+            />
           </div>
 
           {/* Start Time */}
           <div>
             <label className="text-sm text-neutral-300">Start Time</label>
-            <Input
+            <input
               type="datetime-local"
-              className={inputClass(startTime) + " bg-black/30 border-white/10"}
+              min={minDateTime}
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
+              className={inputClass(startTime)}
             />
           </div>
 
           {/* End Time */}
           <div>
             <label className="text-sm text-neutral-300">End Time</label>
-            <Input
+            <input
               type="datetime-local"
-              className={inputClass(endTime) + " bg-black/30 border-white/10"}
+              min={startTime || minDateTime}
               value={endTime}
               onChange={(e) => setEndTime(e.target.value)}
+              className={inputClass(endTime)}
             />
           </div>
 
@@ -287,7 +265,7 @@ export default function CreateBattlePage() {
           <div>
             <label className="text-sm text-neutral-300">Battle Image URL</label>
             <Input
-              className={inputClass(imageUrl) + " bg-black/30 border-white/10"}
+              className={inputClass(imageUrl)}
               placeholder="https://example.com/image.png"
               value={imageUrl}
               onChange={(e) => setImageUrl(e.target.value)}
@@ -299,14 +277,11 @@ export default function CreateBattlePage() {
             onClick={handleSubmit}
             disabled={loading}
             className="
-    w-full py-3 text-md font-medium rounded-xl
-    bg-[linear-gradient(90deg,#7F00FF_0%,#E100FF_50%,#FF007A_100%)]
-    text-white
-    shadow-[0_0_25px_rgba(225,0,255,0.35)]
-    hover:opacity-90
-    transition-all duration-300
-    flex items-center justify-center gap-2
-  "
+              w-full py-3 text-md font-medium rounded-xl
+              bg-[linear-gradient(90deg,#7F00FF_0%,#E100FF_50%,#FF007A_100%)]
+              text-white shadow-[0_0_25px_rgba(225,0,255,0.35)]
+              hover:opacity-90 transition-all
+            "
           >
             {loading ? "Creating..." : "Create Battle"}
           </Button>

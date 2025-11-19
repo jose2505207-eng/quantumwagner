@@ -10,7 +10,6 @@ export default function UserBattlesList() {
   const { tokens: allToken, loading: tokenLoading } = useAllTokens();
   const router = useRouter();
   if (battleLoading || tokenLoading) return <Spinner />;
-  console.log(userBattles);
 
   const getToken = (mint: string | PublicKey) => {
     const mintStr = typeof mint === "string" ? mint : mint.toString();

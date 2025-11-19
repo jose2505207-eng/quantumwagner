@@ -38,12 +38,11 @@ export default function TokenBattlesSection() {
                   bg-[#0f1115] border border-gray-800
                   rounded-xl p-5 shadow-md 
                   hover:shadow-[0_0_20px_rgba(0,0,0,0.35)]
-                  transition
+                  transition hover:cursor-pointer
                 "
                 onClick={() => {
                   router.push(`/battlearena/${battle.pda}`);
                 }}
-
               >
                 <img
                   src={d.imageUrl}

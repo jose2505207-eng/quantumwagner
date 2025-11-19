@@ -4,7 +4,7 @@ import { Spinner } from "@/app/portfolio/page";
 import { useAllTokens } from "@/app/utils/useAllTokens";
 import { useUserBattles } from "@/app/utils/useUserBattles";
 import { useParams } from "next/navigation";
-import { PublicKey } from "@solana/web3.js";
+import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { toDisplay } from "../../token/[mid]/page";
 import Methods from "@/app/utils/methods";
 import { useState } from "react";
@@ -18,6 +18,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Hammer } from "lucide-react";
 import toast from "react-hot-toast";
+import { BN } from "@coral-xyz/anchor";
+import { formatTimeline } from "@/app/battlearena/[pda]/page";
 
 const getKey = (obj) => {
   if (!obj) return "—";
@@ -111,6 +113,40 @@ export default function BattlePage() {
       setResolving(false);
     }
   };
+
+  const formatPool = (value) => {
+    if (!value) {
+      return { text: "0 SOL", color: "text-blue-400", full: "0 lamports" };
+    }
+
+    let bn: BN;
+    if (BN.isBN(value)) {
+      bn = value;
+    } else if (typeof value === "string") {
+      const clean = value.replace(/^0x/, "").padStart(16, "0");
+      bn = new BN(clean, 16, "le");
+    } else if (typeof value === "number") {
+      bn = new BN(value);
+    } else if (typeof value === "object") {
+      try {
+        bn = new BN(value);
+      } catch {
+        return { text: "0 SOL", color: "text-blue-400", full: "0 lamports" };
+      }
+    } else {
+      return { text: "0 SOL", color: "text-blue-400", full: "0 lamports" };
+    }
+
+    const lamports = bn.toNumber();
+    const sol = lamports / LAMPORTS_PER_SOL;
+
+    return {
+      text: `${sol} SOL`,
+      color: "text-blue-400",
+      full: `${lamports.toLocaleString()} lamports`,
+    };
+  };
+  console.log("d :", d);
 
   return (
     <div className="min-h-screen bg-[#0b0d11] text-gray-200 px-6 py-10 flex justify-center mt-20">
@@ -272,9 +308,9 @@ export default function BattlePage() {
         </Section>
 
         <Section title="Pool Info">
-          <InfoRow label="Side A Pool" value={toDisplay(d.sideAPool)} />
-          <InfoRow label="Side B Pool" value={toDisplay(d.sideBPool)} />
-          <InfoRow label="Total Pool" value={toDisplay(d.totalPool)} />
+          <InfoRow label="Side A Pool" value={formatPool(d.sideAPool)} />
+          <InfoRow label="Side B Pool" value={formatPool(d.sideBPool)} />
+          <InfoRow label="Total Pool" value={formatPool(d.totalPool)} />
         </Section>
 
         <Section title="Participants">
@@ -293,10 +329,19 @@ export default function BattlePage() {
         </Section>
 
         <Section title="Timeline">
-          <InfoRow label="Created At" value={toDisplayDate(d.createdAt)} />
-          <InfoRow label="Start" value={toDisplayDate(d.startTime)} />
-          <InfoRow label="End" value={toDisplayDate(d.endTime)} />
-          <InfoRow label="Resolved" value={toDisplayDate(d.resolutionTime)} />
+          <InfoRow
+            label="Created At"
+            value={formatTimeline("created", d.createdAt)}
+          />
+          <InfoRow
+            label="Start"
+            value={formatTimeline("started", d.startTime)}
+          />
+          <InfoRow label="End" value={formatTimeline("ended", d.endTime)} />
+          <InfoRow
+            label="Resolved"
+            value={formatTimeline("resolved", d.resolutionTime)}
+          />
         </Section>
 
         <Section title="Battle Metrics">
@@ -323,13 +368,22 @@ const Section = ({ title, children }) => (
 );
 
 const InfoRow = ({ label, value }) => {
-  const safe = toDisplay(value);
+  if (typeof value === "object" && value !== null) {
+    return (
+      <div className="px-4 py-2 text-sm hover:bg-gray-800/40 transition-colors flex flex-col">
+        <div className="flex justify-between">
+          <span className="text-gray-400">{label}</span>
+          <span className={`font-mono ${value.color}`}>{value.text}</span>
+        </div>
+        <span className="text-gray-500 text-xs mt-1">{value.full}</span>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-800/40 transition-colors">
+    <div className="px-4 py-2 text-sm hover:bg-gray-800/40 transition-colors flex justify-between">
       <span className="text-gray-400">{label}</span>
-      <span className="font-mono text-gray-200 break-all max-w-[60%] text-right">
-        {safe}
-      </span>
+      <span className="font-mono text-gray-200">{String(value)}</span>
     </div>
   );
 };

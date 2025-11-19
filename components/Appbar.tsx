@@ -34,7 +34,7 @@ export function AppBar() {
 
   const navItems = [
     { label: "Markets", path: "/markets" },
-    { label: "Fastbet", path: "/fastbet" },
+    // { label: "Fastbet", path: "/fastbet" },
     { label: "BuyToken", path: "/buytoken" },
     { label: "Arena", path: "/battlearena" },
     { label: "leaderboard", path: "/leaderboard" },
