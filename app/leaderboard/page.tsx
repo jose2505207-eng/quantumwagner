@@ -13,7 +13,7 @@ const LeaderboardPage = () => {
 
       <LeaderboardHero />
       <LeaderboardTabs />
-      <div className="flex flex-col lg:flex-row gap-8 px-4 lg:px-8 max-w-7xl mx-auto w-full">
+      <div className="flex flex-col-reverse lg:flex-row gap-8 px-4 lg:px-8 max-w-7xl mx-auto w-full">
         <div className="flex-1">
           <TopPredictors />
         </div>

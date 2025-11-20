@@ -196,13 +196,13 @@ const TopPredictors = () => {
         {topPredictors.map((trader, index) => (
           <div
             key={trader.rank}
-            className="bg-[#0A0A0A] border border-border rounded-xl p-6"
+            className="bg-[#0A0A0A] border border-border rounded-xl p-4 md:p-6"
           >
             <div className="flex items-center justify-between">
               {/* Left side - Rank and Trader Info */}
-              <div className="flex items-center gap-6">
+              <div className="flex items-center gap-3 md:gap-6">
                 {/* Rank */}
-                <div className="flex items-center gap-2 min-w-[80px]">
+                <div className="flex items-center gap-2 min-w-[40px] md:min-w-[80px]">
                   {getRankIcon(trader.rank)}
                   {trader.change === "up" && (
                     <TrendingUp className="w-4 h-4 text-green-400" />
@@ -213,16 +213,16 @@ const TopPredictors = () => {
                 </div>
 
                 {/* Avatar and Name */}
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl overflow-hidden bg-[#1A1A1A] border border-border">
+                <div className="flex items-center gap-3 md:gap-4">
+                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl overflow-hidden bg-[#1A1A1A] border border-border shrink-0">
                     {getAvatarSvg(trader.avatar)}
                   </div>
                   <div>
-                    <div className="font-semibold text-white text-lg">
+                    <div className="font-semibold text-white text-base md:text-lg truncate max-w-[100px] sm:max-w-none">
                       {trader.username}
                     </div>
                     <div
-                      className={`px-3 py-1 rounded-lg text-xs font-medium border w-fit ${getTierColor(
+                      className={`px-2 py-0.5 md:px-3 md:py-1 rounded-lg text-[10px] md:text-xs font-medium border w-fit ${getTierColor(
                         trader.tier
                       )}`}
                     >
@@ -233,17 +233,17 @@ const TopPredictors = () => {
               </div>
 
               {/* Right side - Stats and Action */}
-              <div className="flex items-center gap-8">
+              <div className="flex items-center gap-4 md:gap-8">
                 {/* Stats */}
-                <div className="flex items-center gap-6">
+                <div className="flex items-center gap-4 md:gap-6">
                   <div className="text-center">
-                    <div className="text-lg font-bold text-green-400">
+                    <div className="text-sm md:text-lg font-bold text-green-400">
                       ${trader.totalProfit.toLocaleString()}
                     </div>
-                    <div className="text-xs text-muted-foreground">Profit</div>
+                    <div className="text-[10px] md:text-xs text-muted-foreground">Profit</div>
                   </div>
 
-                  <div className="text-center">
+                  <div className="text-center hidden md:block">
                     <div className="text-lg font-bold text-white">
                       {trader.winRate}%
                     </div>
@@ -252,14 +252,14 @@ const TopPredictors = () => {
                     </div>
                   </div>
 
-                  <div className="text-center">
+                  <div className="text-center hidden lg:block">
                     <div className="text-lg font-bold text-blue-400">
                       {trader.marketsTraded}
                     </div>
                     <div className="text-xs text-muted-foreground">Markets</div>
                   </div>
 
-                  <div className="text-center">
+                  <div className="text-center hidden xl:block">
                     <div className="text-lg font-bold text-purple-400">
                       {trader.accuracy}%
                     </div>
@@ -270,7 +270,7 @@ const TopPredictors = () => {
                 </div>
 
                 {/* Follow Button */}
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="hidden sm:flex">
                   <UserPlus className="w-4 h-4 mr-2" />
                   Follow
                 </Button>

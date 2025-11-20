@@ -55,9 +55,9 @@ const MarketCard = ({ market }: MarketCardProps) => {
   };
 
   return (
-    <div className="flex flex-col p-4 lg:p-6 border border-border/60 rounded-lg lg:rounded-xl hover:border-primary/60 transition-all duration-300 ease-out group bg-[#0A0A0A]/50 backdrop-blur-sm hover:bg-[#0A0A0A]/80 hover:shadow-lg hover:shadow-primary/5 relative overflow-hidden h-full">
+    <div className="flex flex-col p-4 lg:p-6 border border-border/60 rounded-lg lg:rounded-xl hover:border-primary/60 transition-all duration-300 ease-out group bg-[#0A0A0A]/50 backdrop-blur-sm hover:bg-[#0A0A0A]/80 shadow-[0_0_20px_rgba(168,85,247,0.1)] hover:shadow-lg hover:shadow-primary/10 relative overflow-hidden h-full">
       {/* Subtle gradient overlay on hover */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-20 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
 
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1 pr-4">

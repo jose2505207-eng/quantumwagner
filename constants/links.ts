@@ -8,7 +8,11 @@ export const NAV_LINKS = [
     link: "/buytoken",
   },
   {
-    name: "Arena",
+    name: "Launchpad",
+    link: "/token",
+  },
+  {
+    name: "Meme Battle",
     link: "/battlearena",
   },
   {

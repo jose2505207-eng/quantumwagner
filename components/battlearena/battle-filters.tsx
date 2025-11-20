@@ -1,9 +1,12 @@
 "use client";
 
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 export function BattleFilters() {
+  const router = useRouter();
+
   return (
     <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-8">
       {/* Search */}
@@ -36,6 +39,16 @@ export function BattleFilters() {
         </Button>
         <Button variant="ghost" className="rounded-xl text-muted-foreground hover:text-white hover:bg-white/5">
           My Battles
+        </Button>
+        
+        <div className="h-6 w-px bg-white/10 mx-2" />
+        
+        <Button 
+          onClick={() => router.push('/battlearena/new')}
+          className="rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white border-0"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Create Battle
         </Button>
       </div>
     </div>

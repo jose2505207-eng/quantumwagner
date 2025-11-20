@@ -13,6 +13,8 @@ import {
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
+  NavigationMenuTrigger,
+  NavigationMenuContent,
 } from "@/components/ui/navigation-menu";
 import {
   Sheet,
@@ -24,6 +26,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useUserStore } from "@/store/userInfo";
 import Image from "next/image";
+import { NAV_LINKS } from "@/constants/links";
 
 export function AppBar() {
   const { connected } = useWallet();
@@ -32,15 +35,10 @@ export function AppBar() {
   const [open, setOpen] = useState(false);
   const { userInfo } = useUserStore();
 
-  const navItems = [
-    { label: "Markets", path: "/markets" },
-    // { label: "Fastbet", path: "/fastbet" },
-    { label: "BuyToken", path: "/buytoken" },
-    { label: "Launchpad", path: "/token" },
-    { label: "Arena", path: "/battlearena" },
-    { label: "leaderboard", path: "/leaderboard" },
-    { label: "Portfolio", path: "/portfolio" },
-  ];
+  const navItems = NAV_LINKS.map((item) => ({
+    label: item.name,
+    path: item.link,
+  }));
 
   // Permission check
 
@@ -78,6 +76,34 @@ export function AppBar() {
           <NavigationMenu>
             <NavigationMenuList className="flex items-center gap-8">
               {navItems.map((item) => {
+                if (item.label === "Meme Battle") {
+                  return (
+                    <NavigationMenuItem key={item.label}>
+                      <NavigationMenuTrigger className="bg-transparent text-gray-300 hover:text-white hover:bg-transparent focus:bg-transparent data-[state=open]:bg-transparent data-[state=open]:text-white font-medium text-base p-0 h-auto hover:bg-gradient-to-r hover:from-[#a855f7] hover:to-[#9333ea] hover:bg-clip-text hover:text-transparent data-[state=open]:from-[#a855f7] data-[state=open]:to-[#9333ea] data-[state=open]:bg-clip-text data-[state=open]:text-transparent">
+                        Battle
+                      </NavigationMenuTrigger>
+                      <NavigationMenuContent>
+                        <div className="w-[220px] p-2 bg-[#0a0a0f] border border-white/10 rounded-xl backdrop-blur-xl shadow-2xl">
+                          <NavigationMenuLink
+                            onClick={() => router.push("/battlearena")}
+                            className="block px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors cursor-pointer group"
+                          >
+                            <div className="font-bold mb-0.5 group-hover:text-purple-400 transition-colors">Battle Arena</div>
+                            <div className="text-xs text-gray-500">PvP Meme Battles</div>
+                          </NavigationMenuLink>
+                          <NavigationMenuLink
+                            onClick={() => router.push("/fastbet")}
+                            className="block px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors cursor-pointer group"
+                          >
+                            <div className="font-bold mb-0.5 group-hover:text-green-400 transition-colors">Fast Bets</div>
+                            <div className="text-xs text-gray-500">High Speed Markets</div>
+                          </NavigationMenuLink>
+                        </div>
+                      </NavigationMenuContent>
+                    </NavigationMenuItem>
+                  );
+                }
+
                 const isActive = pathname === item.path;
                 return (
                   <NavigationMenuItem key={item.label}>

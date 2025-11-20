@@ -36,17 +36,17 @@ const LeaderboardTabs = () => {
       <Container>
         <div className="flex flex-col lg:flex-row items-center justify-center gap-6">
           {/* Timeframe */}
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground font-medium">
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+            <span className="text-sm text-muted-foreground font-medium whitespace-nowrap">
               Period:
             </span>
-            <div className="flex gap-1 bg-[#0A0A0A] border border-border rounded-lg p-1">
+            <div className="flex gap-1 bg-[#0A0A0A] border border-border rounded-lg p-1 overflow-x-auto max-w-full scrollbar-hide">
               {timeframes.map((timeframe) => (
                 <button
                   key={timeframe.id}
                   onClick={() => setActiveTimeframe(timeframe.id)}
                   className={cn(
-                    "px-3 py-1.5 text-xs font-medium rounded transition-all duration-200",
+                    "px-3 py-1.5 text-xs font-medium rounded transition-all duration-200 whitespace-nowrap",
                     activeTimeframe === timeframe.id
                       ? "bg-white text-black"
                       : "text-muted-foreground hover:text-white"
@@ -59,17 +59,17 @@ const LeaderboardTabs = () => {
           </div>
 
           {/* Ranking Metric */}
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground font-medium">
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+            <span className="text-sm text-muted-foreground font-medium whitespace-nowrap">
               Rank by:
             </span>
-            <div className="flex gap-1 bg-[#0A0A0A] border border-border rounded-lg p-1">
+            <div className="flex gap-1 bg-[#0A0A0A] border border-border rounded-lg p-1 overflow-x-auto max-w-full scrollbar-hide">
               {metrics.map((metric) => (
                 <button
                   key={metric.id}
                   onClick={() => setActiveMetric(metric.id)}
                   className={cn(
-                    "px-3 py-1.5 text-xs font-medium rounded transition-all duration-200",
+                    "px-3 py-1.5 text-xs font-medium rounded transition-all duration-200 whitespace-nowrap",
                     activeMetric === metric.id
                       ? "bg-white text-black"
                       : "text-muted-foreground hover:text-white"
@@ -82,17 +82,17 @@ const LeaderboardTabs = () => {
           </div>
 
           {/* Category */}
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground font-medium">
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+            <span className="text-sm text-muted-foreground font-medium whitespace-nowrap">
               Category:
             </span>
-            <div className="flex gap-1 bg-[#0A0A0A] border border-border rounded-lg p-1">
+            <div className="flex gap-1 bg-[#0A0A0A] border border-border rounded-lg p-1 overflow-x-auto max-w-full scrollbar-hide">
               {categories.map((category) => (
                 <button
                   key={category.id}
                   onClick={() => setActiveCategory(category.id)}
                   className={cn(
-                    "px-3 py-1.5 text-xs font-medium rounded transition-all duration-200",
+                    "px-3 py-1.5 text-xs font-medium rounded transition-all duration-200 whitespace-nowrap",
                     activeCategory === category.id
                       ? "bg-white text-black"
                       : "text-muted-foreground hover:text-white"

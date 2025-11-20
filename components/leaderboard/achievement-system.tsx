@@ -106,20 +106,20 @@ const AchievementSystem = () => {
     <div className="mt-8">
       <div className="bg-[#0A0A0A] border border-border rounded-xl p-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-yellow-500 to-orange-600 border-2 border-yellow-400/30 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-yellow-500 to-orange-600 border-2 border-yellow-400/30 flex items-center justify-center shrink-0">
               <Award className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h3 className="text-2xl font-bold">Achievement System</h3>
-              <p className="text-muted-foreground">
+              <h3 className="text-xl md:text-2xl font-bold">Achievement System</h3>
+              <p className="text-sm md:text-base text-muted-foreground">
                 {earnedCount}/{totalCount} unlocked •{" "}
                 {Math.round((earnedCount / totalCount) * 100)}% complete
               </p>
             </div>
           </div>
-          <Button variant="outline">
+          <Button variant="outline" className="w-full md:w-auto">
             <Star className="w-4 h-4 mr-2" />
             Share Achievements
           </Button>
