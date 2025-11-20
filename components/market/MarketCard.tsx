@@ -1,10 +1,17 @@
 import CountdownTimer from "@/app/utils/hooks/CountdownTimer";
+import Link from "next/link";
+import BettingButton from "../ui/betting-button";
+import {
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Clock,
+  Users,
+  DollarSign,
+} from "lucide-react";
+import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 
 const MarketCard = ({ market }) => {
-  const isFeatured = market.featured;
-  console.log("market ", market);
-
-  // --- USE EXACT SAME LOGIC AS YOUR GRID EXAMPLE ---
   const yesPool = Number(market.yes_pool || 0);
   const noPool = Number(market.no_pool || 0);
 
@@ -20,119 +27,110 @@ const MarketCard = ({ market }) => {
     noOdds = 100 - yesOdds;
   }
 
-  // for percentage bar
-  const yesPct = yesOdds;
+  // Mock trend for now as it's not in the backend data
+  const trend = "stable"; 
+  const getTrendIcon = () => {
+    switch (trend) {
+      case "up":
+        return <TrendingUp className="w-4 h-4 text-[#10B981]" />;
+      case "down":
+        return <TrendingDown className="w-4 h-4 text-[#EF4444]" />;
+      default:
+        return <Minus className="w-4 h-4 text-neutral-400" />;
+    }
+  };
 
-  // --- CARD MARKUP ---
-  if (isFeatured) {
-    return (
-      <div
-        className="relative rounded-xl p-5 
-          bg-gradient-to-br from-purple-900/30 via-black/40 to-purple-800/20 
-          border border-purple-400/30 hover:border-purple-400/60
-          shadow-lg hover:shadow-purple-500/20
-          transform hover:-translate-y-1 hover:scale-[1.02]
-          transition-all duration-300 ease-out"
-      >
-        <span
-          className="absolute top-2 right-2 
-            bg-gradient-to-r from-purple-600 to-purple-500 
-            text-white text-[10px] px-2 py-0.5 rounded-full 
-            uppercase font-medium tracking-wide shadow-sm"
-        >
-          Featured
-        </span>
+  const volume = (Number(market.total_volume) / LAMPORTS_PER_SOL).toFixed(2) + " SOL";
+  // Mock traders count for now
+  const traders = Math.floor(Math.random() * 1000) + 100; 
 
-        <h3 className="text-base font-semibold text-white mb-4 leading-snug">
-          {market.question}
-        </h3>
-
-        {/* percentage numbers */}
-        <div className="flex justify-between items-center mb-2">
-          <div className="text-green-400 text-lg font-bold">{yesOdds}%</div>
-          <div className="text-red-400 text-lg font-bold">{noOdds}%</div>
-        </div>
-
-        {/* EXACT SAME STYLE PROGRESS BAR */}
-        <div className="w-full h-2 bg-gray-900/50 rounded-full overflow-hidden mb-4">
-          <div className="h-2 bg-emerald-500" style={{ width: `${yesPct}%` }} />
-        </div>
-
-        {/* Stats */}
-        <div className="flex justify-between text-xs text-gray-300 mb-3 border-t border-gray-700/40 pt-2">
-          <div>
-            <span className="text-white font-medium">
-              {market.total_volume}
-            </span>{" "}
-            Vol
-          </div>
-          <div>
-            Ends in{" "}
-            <span className="text-white font-medium">
-              <CountdownTimer endTime={market.end_time} />
-            </span>
-          </div>
-        </div>
-
-        {/* Buttons */}
-        <div className="flex gap-2">
-          <button className="flex-1 py-2 bg-green-600 text-white text-sm font-semibold rounded-md hover:bg-green-500">
-            Bet YES
-          </button>
-          <button className="flex-1 py-2 bg-red-600 text-white text-sm font-semibold rounded-md hover:bg-red-500">
-            Bet NO
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // --- NORMAL CARD UI ---
   return (
-    <div
-      className="border border-gray-700/50 rounded-lg p-4 
-        bg-black/30 backdrop-blur-sm 
-        hover:border-gray-500/70 hover:bg-black/40 
-        transform hover:-translate-y-0.5 hover:scale-[1.01]
-        transition-all duration-200"
-    >
-      <h4 className="text-white font-medium mb-3 text-sm leading-snug">
-        {market.question}
-      </h4>
+    <Link href={`/markets/${market.id}`}>
+      <div className="flex flex-col p-6 border border-border/60 rounded-xl hover:border-primary/60 transition-all duration-300 ease-out group bg-[#0A0A0A]/50 backdrop-blur-sm hover:bg-[#0A0A0A]/80 hover:shadow-lg hover:shadow-primary/5 relative overflow-hidden cursor-pointer h-full">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
 
-      <div className="mb-3">
-        <div className="flex justify-between mb-1">
-          <div className="text-green-400 text-lg font-bold">{yesOdds}%</div>
-          <div className="text-red-400 text-lg font-bold">{noOdds}%</div>
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex-1">
+            <div className="text-xs text-primary/80 font-medium mb-2 uppercase tracking-wide">
+              {market.category}
+            </div>
+            <h3 className="font-semibold text-base leading-tight group-hover:text-primary/90 transition-colors duration-300 line-clamp-2 min-h-[2.5rem]">
+              {market.question}
+            </h3>
+          </div>
+          <div className="flex items-center justify-center p-2 rounded-full bg-foreground/5 group-hover:bg-foreground/10 transition-colors duration-300 ml-2">
+            {getTrendIcon()}
+          </div>
         </div>
 
-        {/* SAME EXACT GRID LOGIC BAR */}
-        <div className="w-full h-2 rounded-full bg-gray-900/60 overflow-hidden mb-2">
-          <div
-            className="h-2 rounded-full bg-emerald-500"
-            style={{ width: `${yesPct}%` }}
-          />
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-center relative">
+              <div className="text-2xl font-bold text-[#10B981] group-hover:scale-105 transition-transform duration-300">
+                {yesOdds}%
+              </div>
+              <div className="text-xs text-muted-foreground mt-1 tracking-wide">
+                YES
+              </div>
+            </div>
+            <div className="text-center relative">
+              <div className="text-2xl font-bold text-[#EF4444] group-hover:scale-105 transition-transform duration-300">
+                {noOdds}%
+              </div>
+              <div className="text-xs text-muted-foreground mt-1 tracking-wide">
+                NO
+              </div>
+            </div>
+          </div>
+
+          <div className="relative h-2 rounded-full overflow-hidden bg-neutral-900/60">
+            <div
+              className="h-full bg-gradient-to-r from-[#10B981] to-[#10B981]/80 rounded-full transition-all duration-700 ease-out"
+              style={{ width: `${yesOdds}%` }}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2 mb-6">
+          <div className="flex flex-col items-center justify-center p-2 rounded-lg group-hover:bg-foreground/5 transition-colors duration-300">
+            <div className="flex items-center gap-1 mb-1">
+              <DollarSign className="w-3 h-3 text-muted-foreground" />
+              <div className="text-xs text-muted-foreground">Volume</div>
+            </div>
+            <div className="text-sm font-semibold group-hover:text-primary transition-colors duration-300">
+              {volume}
+            </div>
+          </div>
+          <div className="flex flex-col items-center justify-center p-2 rounded-lg group-hover:bg-foreground/5 transition-colors duration-300">
+            <div className="flex items-center gap-1 mb-1">
+              <Users className="w-3 h-3 text-muted-foreground" />
+              <div className="text-xs text-muted-foreground">Traders</div>
+            </div>
+            <div className="text-sm font-semibold group-hover:text-primary transition-colors duration-300">
+              {traders}
+            </div>
+          </div>
+          <div className="flex flex-col items-center justify-center p-2 rounded-lg group-hover:bg-foreground/5 transition-colors duration-300">
+            <div className="flex items-center gap-1 mb-1">
+              <Clock className="w-3 h-3 text-muted-foreground" />
+              <div className="text-xs text-muted-foreground">Left</div>
+            </div>
+            <div className="text-sm font-semibold group-hover:text-primary transition-colors duration-300">
+              <CountdownTimer endTime={market.end_time} />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-3 mt-auto">
+          <BettingButton variant="yes" size="sm" className="flex-1">
+            Bet YES
+          </BettingButton>
+          <BettingButton variant="no" size="sm" className="flex-1">
+            Bet NO
+          </BettingButton>
         </div>
       </div>
-
-      <div className="flex justify-between text-[11px] text-gray-400 mb-3">
-        <div>
-          <span className="text-white">{market.total_volume}</span> Vol
-        </div>
-        <div>
-          <CountdownTimer endTime={market.end_time} />
-        </div>
-      </div>
-
-      <div className="flex gap-2">
-        <button className="flex-1 py-1.5 bg-green-600 text-white text-[11px] rounded hover:bg-green-700">
-          Bet YES
-        </button>
-        <button className="flex-1 py-1.5 bg-red-600 text-white text-[11px] rounded hover:bg-red-700">
-          Bet NO
-        </button>
-      </div>
-    </div>
+    </Link>
   );
 };
 

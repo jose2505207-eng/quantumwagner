@@ -91,65 +91,42 @@ export default function ProfileCard(p: Props) {
   };
 
   return (
-    <Card
-      className="
-        relative flex flex-col md:flex-row 
-        justify-between items-center md:items-start
-        bg-gradient-to-b from-[#0d0d10]/90 to-[#0a0a14]/80
-        border border-gray-800 rounded-2xl shadow-md
-        p-6 sm:p-8 w-full 
-        max-w-6xl mx-auto
-        backdrop-blur-xl
-        gap-6 md:gap-0
-      "
-    >
-      {/* Border Overlay */}
-      <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-purple-600/20 via-transparent to-blue-500/20 border border-white/10 pointer-events-none"></div>
+    <div className="w-full h-full flex flex-col items-center justify-between gap-6">
+      {/* BADGE - Centered and prominent */}
+      <div className="relative z-10 w-full flex justify-center">
+        {renderBadge()}
+      </div>
 
-      {/* Background Glow */}
-      <div className="absolute top-0 right-0 w-32 sm:w-48 h-32 sm:h-48 bg-gradient-to-tr from-purple-600 to-blue-500 rounded-full blur-3xl opacity-40"></div>
-
-      {/* STATS GRID */}
-      <div
-        className="
-          grid grid-cols-2 gap-3 sm:gap-4 
-          w-full max-w-full md:max-w-[600px] 
-          relative z-10
-        "
-      >
-        <div className="p-4 rounded-xl border border-green-700/30 bg-green-900/10 backdrop-blur-sm text-center md:text-left">
-          <p className="text-[10px] sm:text-xs text-gray-400">TOTAL WAGERED</p>
-          <p className="text-base sm:text-lg font-semibold">
+      {/* STATS GRID - Compact below badge */}
+      <div className="grid grid-cols-2 gap-3 w-full">
+        <div className="p-3 rounded-xl border border-white/5 bg-white/[0.02] backdrop-blur-sm text-center hover:bg-white/5 transition-colors group">
+          <p className="text-[10px] text-gray-500 uppercase tracking-wider font-medium mb-1 group-hover:text-gray-400">Wagered</p>
+          <p className="text-sm font-bold text-white truncate">
             ${p.total_wagged?.toLocaleString() ?? 0}
           </p>
         </div>
 
-        <div className="p-4 rounded-xl border border-blue-700/30 bg-blue-900/10 backdrop-blur-sm text-center md:text-left">
-          <p className="text-[10px] sm:text-xs text-gray-400">WIN RATE</p>
-          <p className="text-base sm:text-lg font-semibold">
+        <div className="p-3 rounded-xl border border-white/5 bg-white/[0.02] backdrop-blur-sm text-center hover:bg-white/5 transition-colors group">
+          <p className="text-[10px] text-gray-500 uppercase tracking-wider font-medium mb-1 group-hover:text-gray-400">Win Rate</p>
+          <p className="text-sm font-bold text-green-400">
             {p.win_rate ?? 0}%
           </p>
         </div>
 
-        <div className="p-4 rounded-xl border border-orange-700/30 bg-orange-900/10 backdrop-blur-sm text-center md:text-left">
-          <p className="text-[10px] sm:text-xs text-gray-400">CURRENT STREAK</p>
-          <p className="text-base sm:text-lg font-semibold">
+        <div className="p-3 rounded-xl border border-white/5 bg-white/[0.02] backdrop-blur-sm text-center hover:bg-white/5 transition-colors group">
+          <p className="text-[10px] text-gray-500 uppercase tracking-wider font-medium mb-1 group-hover:text-gray-400">Streak</p>
+          <p className="text-sm font-bold text-orange-400">
             {p.current_strak ?? 0}
           </p>
         </div>
 
-        <div className="p-4 rounded-xl border border-yellow-700/30 bg-yellow-900/10 backdrop-blur-sm text-center md:text-left">
-          <p className="text-[10px] sm:text-xs text-gray-400">BATTLES WON</p>
-          <p className="text-base sm:text-lg font-semibold">
+        <div className="p-3 rounded-xl border border-white/5 bg-white/[0.02] backdrop-blur-sm text-center hover:bg-white/5 transition-colors group">
+          <p className="text-[10px] text-gray-500 uppercase tracking-wider font-medium mb-1 group-hover:text-gray-400">Wins</p>
+          <p className="text-sm font-bold text-yellow-400">
             {p.battels_won ?? 0}
           </p>
         </div>
       </div>
-
-      {/* BADGE — moves under stats on mobile, right on desktop */}
-      <div className="relative z-10 w-full flex justify-center md:w-auto md:ml-auto">
-        {renderBadge()}
-      </div>
-    </Card>
+    </div>
   );
 }

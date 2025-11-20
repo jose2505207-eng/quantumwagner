@@ -1,10 +1,14 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 import axios from "axios";
 import { BACKEND_URL } from "@/config";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
@@ -12,6 +16,238 @@ import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import toast from "react-hot-toast";
 import Methods from "@/app/utils/methods";
 import { cn } from "@/app/utils/utils";
+import { Background } from "@/components/background";
+import { motion } from "framer-motion";
+import { 
+  ArrowLeft, 
+  Calendar, 
+  Info, 
+  TrendingUp, 
+  Wallet, 
+  CheckCircle2, 
+  XCircle, 
+  AlertCircle,
+  Clock,
+  Share2,
+  ExternalLink,
+  Activity
+} from "lucide-react";
+import Link from "next/link";
+import { PriceHistoryGraph } from "@/components/market/PriceHistoryGraph";
+
+// Mock data for demo purposes
+const MOCK_MARKETS = [
+  {
+    id: "mock-1",
+    question: "Will Bitcoin hit $100k by end of 2024?",
+    yes_pool: "65000000000000", // in lamports
+    no_pool: "35000000000000",
+    total_volume: "1200000000000",
+    end_time: new Date(Date.now() + 1000 * 60 * 60 * 24 * 45).toISOString(),
+    category: "CRYPTO",
+    status: "ACTIVE",
+    created_at: new Date().toISOString(),
+    outcome: "PENDING",
+    _count: { positions: 120, transactions: 450 },
+    market_type: "BINARY",
+    fee_percentage: "0.03",
+    tags: ["Bitcoin", "Price"],
+    featured: true,
+    image_url: "",
+    pda: "mock-pda-1",
+    resolution_criteria: "Price > 100k on CoinGecko",
+    oracle_config: "mock-oracle",
+    oracle_source: "mock-source",
+    description: "This market resolves to YES if Bitcoin trades above $100,000 USD on CoinGecko before the end of 2024. Otherwise it resolves to NO.",
+    creator: {
+      id: "mock-creator",
+      username: "Satoshi",
+      wallet_address: "11111111111111111111111111111111",
+      is_verified: true,
+      reputation_score: 100
+    }
+  },
+  {
+    id: "mock-2",
+    question: "Will Ethereum flip Bitcoin in market cap in 2025?",
+    yes_pool: "25000000000000",
+    no_pool: "75000000000000",
+    total_volume: "850000000000",
+    end_time: new Date(Date.now() + 1000 * 60 * 60 * 24 * 120).toISOString(),
+    category: "CRYPTO",
+    status: "ACTIVE",
+    created_at: new Date().toISOString(),
+    outcome: "PENDING",
+    _count: { positions: 80, transactions: 200 },
+    market_type: "BINARY",
+    fee_percentage: "0.03",
+    tags: ["ETH", "BTC", "Flippening"],
+    featured: false,
+    image_url: "",
+    pda: "mock-pda-2",
+    resolution_criteria: "ETH Market Cap > BTC Market Cap",
+    oracle_config: "mock-oracle",
+    oracle_source: "mock-source",
+    description: "This market resolves to YES if Ethereum's market capitalization exceeds Bitcoin's at any point in 2025.",
+    creator: {
+      id: "mock-creator-2",
+      username: "Vitalik",
+      wallet_address: "22222222222222222222222222222222",
+      is_verified: true,
+      reputation_score: 95
+    }
+  },
+  {
+    id: "mock-3",
+    question: "Will Solana reach $500 before June?",
+    yes_pool: "42000000000000",
+    no_pool: "58000000000000",
+    total_volume: "2100000000000",
+    end_time: new Date(Date.now() + 1000 * 60 * 60 * 24 * 15).toISOString(),
+    category: "CRYPTO",
+    status: "ACTIVE",
+    created_at: new Date().toISOString(),
+    outcome: "PENDING",
+    _count: { positions: 300, transactions: 800 },
+    market_type: "BINARY",
+    fee_percentage: "0.03",
+    tags: ["SOL", "Price"],
+    featured: true,
+    image_url: "",
+    pda: "mock-pda-3",
+    resolution_criteria: "SOL Price > $500",
+    oracle_config: "mock-oracle",
+    oracle_source: "mock-source",
+    description: "Resolves YES if SOL hits $500 USD.",
+    creator: {
+      id: "mock-creator-3",
+      username: "Toly",
+      wallet_address: "33333333333333333333333333333333",
+      is_verified: true,
+      reputation_score: 90
+    }
+  },
+  {
+    id: "mock-4",
+    question: "Will the US Fed cut rates in the next meeting?",
+    yes_pool: "80000000000000",
+    no_pool: "20000000000000",
+    total_volume: "5400000000000",
+    end_time: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5).toISOString(),
+    category: "FINANCE",
+    status: "ACTIVE",
+    created_at: new Date().toISOString(),
+    outcome: "PENDING",
+    _count: { positions: 500, transactions: 1200 },
+    market_type: "BINARY",
+    fee_percentage: "0.03",
+    tags: ["Fed", "Rates"],
+    featured: true,
+    image_url: "",
+    pda: "mock-pda-4",
+    resolution_criteria: "Rate cut announced",
+    oracle_config: "mock-oracle",
+    oracle_source: "mock-source",
+    description: "Resolves YES if the Federal Reserve announces a rate cut.",
+    creator: {
+      id: "mock-creator-4",
+      username: "JPOW",
+      wallet_address: "44444444444444444444444444444444",
+      is_verified: false,
+      reputation_score: 50
+    }
+  },
+  {
+    id: "mock-5",
+    question: "Will GTA 6 be released in 2025?",
+    yes_pool: "90000000000000",
+    no_pool: "10000000000000",
+    total_volume: "3200000000000",
+    end_time: new Date(Date.now() + 1000 * 60 * 60 * 24 * 200).toISOString(),
+    category: "GAMING",
+    status: "ACTIVE",
+    created_at: new Date().toISOString(),
+    outcome: "PENDING",
+    _count: { positions: 450, transactions: 900 },
+    market_type: "BINARY",
+    fee_percentage: "0.03",
+    tags: ["GTA6", "Gaming"],
+    featured: true,
+    image_url: "",
+    pda: "mock-pda-5",
+    resolution_criteria: "Official release",
+    oracle_config: "mock-oracle",
+    oracle_source: "mock-source",
+    description: "Resolves YES if Rockstar Games releases GTA 6 in 2025.",
+    creator: {
+      id: "mock-creator-5",
+      username: "Gamer123",
+      wallet_address: "55555555555555555555555555555555",
+      is_verified: false,
+      reputation_score: 60
+    }
+  },
+  {
+    id: "mock-6",
+    question: "Will SpaceX land on Mars before 2030?",
+    yes_pool: "30000000000000",
+    no_pool: "70000000000000",
+    total_volume: "900000000000",
+    end_time: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365 * 4).toISOString(),
+    category: "TECH",
+    status: "ACTIVE",
+    created_at: new Date().toISOString(),
+    outcome: "PENDING",
+    _count: { positions: 150, transactions: 300 },
+    market_type: "BINARY",
+    fee_percentage: "0.03",
+    tags: ["SpaceX", "Mars"],
+    featured: false,
+    image_url: "",
+    pda: "mock-pda-6",
+    resolution_criteria: "Human landing",
+    oracle_config: "mock-oracle",
+    oracle_source: "mock-source",
+    description: "Resolves YES if SpaceX lands humans on Mars before Jan 1, 2030.",
+    creator: {
+      id: "mock-creator-6",
+      username: "ElonFan",
+      wallet_address: "66666666666666666666666666666666",
+      is_verified: true,
+      reputation_score: 80
+    }
+  },
+  {
+    id: "mock-7",
+    question: "Will Apple launch a foldable iPhone this year?",
+    yes_pool: "15000000000000",
+    no_pool: "85000000000000",
+    total_volume: "1500000000000",
+    end_time: new Date(Date.now() + 1000 * 60 * 60 * 24 * 180).toISOString(),
+    category: "TECH",
+    status: "ACTIVE",
+    created_at: new Date().toISOString(),
+    outcome: "PENDING",
+    _count: { positions: 200, transactions: 400 },
+    market_type: "BINARY",
+    fee_percentage: "0.03",
+    tags: ["Apple", "iPhone"],
+    featured: false,
+    image_url: "",
+    pda: "mock-pda-7",
+    resolution_criteria: "Product launch",
+    oracle_config: "mock-oracle",
+    oracle_source: "mock-source",
+    description: "Resolves YES if Apple officially launches a foldable iPhone in 2025.",
+    creator: {
+      id: "mock-creator-7",
+      username: "TechInsider",
+      wallet_address: "77777777777777777777777777777777",
+      is_verified: true,
+      reputation_score: 75
+    }
+  }
+];
 
 export interface MarketResponse {
   success: boolean;
@@ -71,6 +307,7 @@ export interface Summary {
 
 export default function MarketDetailPage() {
   const { id } = useParams();
+  const router = useRouter();
   const [market, setMarket] = useState<Market | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,10 +316,15 @@ export default function MarketDetailPage() {
   const [solBal, setSolBal] = useState<number>(0);
   const { publicKey } = useWallet();
   const { connection } = useConnection();
-  const [selected, setSelected] = useState<"yes" | "no" | null>(null);
+  const [selected, setSelected] = useState<"yes" | "no">("yes");
   const [amount, setAmount] = useState("");
   const [betResult, setBetResult] = useState<any | null>(null);
   const { placeBet } = Methods();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleBet = async () => {
     if (betting) return;
@@ -97,7 +339,16 @@ export default function MarketDetailPage() {
       const userLamports = Math.floor(Number(amount) * LAMPORTS_PER_SOL);
 
       if (userLamports > solBal * LAMPORTS_PER_SOL) {
-        toast.error("Sol balnce is low");
+        toast.error("Sol balance is low");
+        return;
+      }
+
+      if (market.id.startsWith("mock")) {
+        // Mock bet
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        toast.success("Mock bet placed successfully!");
+        setHasBet(true);
+        setAmount("");
         return;
       }
 
@@ -136,7 +387,6 @@ export default function MarketDetailPage() {
       console.log("Position added:", res.data);
       setBetResult(res.data.data);
       setHasBet(true);
-      setSelected(null);
       setAmount("");
     } catch (err) {
       toast.error(`${err}`);
@@ -158,6 +408,27 @@ export default function MarketDetailPage() {
   useEffect(() => {
     async function getMarket() {
       try {
+        if (typeof id === 'string' && id.startsWith('mock')) {
+          const mockMarket = MOCK_MARKETS.find(m => m.id === id);
+          if (mockMarket) {
+            setMarket(mockMarket as unknown as Market);
+            // Calculate mock summary
+            const yes = Number(mockMarket.yes_pool);
+            const no = Number(mockMarket.no_pool);
+            const total = yes + no;
+            setSummary({
+              total_positions: mockMarket._count.positions,
+              total_transactions: mockMarket._count.transactions,
+              total_volume: Number(mockMarket.total_volume),
+              yes_percentage: (yes / total) * 100,
+              no_percentage: (no / total) * 100,
+              days_remaining: Math.floor((new Date(mockMarket.end_time).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+            });
+            setLoading(false);
+            return;
+          }
+        }
+
         const res = await axios.get<MarketResponse>(
           `${BACKEND_URL}/api/markets/${id}`
         );
@@ -175,16 +446,24 @@ export default function MarketDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center  text-white">
-        <p>Loading market...</p>
+      <div className="min-h-screen flex items-center justify-center bg-black text-white">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-muted-foreground animate-pulse">Loading market data...</p>
+        </div>
       </div>
     );
   }
 
   if (!market) {
     return (
-      <div className="min-h-screen flex items-center justify-center  text-white">
-        <p>Market not found</p>
+      <div className="min-h-screen flex items-center justify-center bg-black text-white">
+        <div className="text-center space-y-4">
+          <h2 className="text-2xl font-bold">Market not found</h2>
+          <Button onClick={() => router.push('/markets')} variant="outline">
+            Return to Markets
+          </Button>
+        </div>
       </div>
     );
   }
@@ -192,263 +471,323 @@ export default function MarketDetailPage() {
   function lamportsToSol(val) {
     return val ? Number(val) / LAMPORTS_PER_SOL : 0;
   }
+  
   // calculate odds
   const yesPool = lamportsToSol(market?.yes_pool);
   const noPool = lamportsToSol(market?.no_pool);
 
   let yesPct = 0;
   let noPct = 0;
-  let noBets = false;
 
   if (yesPool === 0 && noPool === 0) {
-    noBets = true;
+    // Default to 50/50 if empty
+    yesPct = 50;
+    noPct = 50;
   } else {
     const totalPool = yesPool + noPool;
     yesPct = (yesPool / totalPool) * 100;
     noPct = 100 - yesPct;
   }
 
+  const isMock = market.id.startsWith("mock");
+
   return (
-    <div className="min-h-screen relative overflow-hidden bg-black text-white px-6 py-10 pt-24">
-      {/* background gradient blobs */}
-      <div className="absolute top-0 right-0 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] rounded-full bg-purple-700/30 blur-[120px]" />
-      <div className="absolute bottom-0 left-0 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] rounded-full bg-fuchsia-600/20 blur-[140px]" />
+    <div className="min-h-screen relative overflow-hidden bg-black text-white">
+      <Background />
+      
+      <div className="relative z-10 container mx-auto px-4 py-8 pt-24 max-w-7xl">
+        {/* Breadcrumb / Back */}
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-8"
+        >
+          <Button 
+            variant="ghost" 
+            className="pl-0 hover:bg-transparent hover:text-primary text-muted-foreground transition-colors group"
+            onClick={() => router.back()}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+            Back to Markets
+          </Button>
+        </motion.div>
 
-      <div className="relative max-w-7xl mx-auto space-y-10">
-        {/* Header */}
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-center gap-3 text-sm text-gray-400">
-            <span className="px-2 py-1 rounded-full bg-purple-900/40 text-purple-300">
-              {market.category}
-            </span>
-            <span>
-              {new Date(market.end_time).toLocaleDateString()} deadline
-            </span>
-          </div>
-
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight">
-            {market.question}
-          </h1>
-          {/* todo get current price of solan show that on ui  */}
-          <div className="flex flex-wrap items-center gap-6 text-gray-300">
-            <span className="text-green-400 text-lg font-semibold">
-              Sol {Number(market.total_volume) / LAMPORTS_PER_SOL} Volume
-            </span>
-            <span className="text-blue-400 text-lg font-semibold">
-              {summary?.total_positions ?? 0} Traders
-            </span>
-          </div>
-
-          <div className="flex flex-wrap gap-3">
-            <Button
-              onClick={() => {
-                const url = window.location.href;
-                navigator.clipboard
-                  .writeText(url)
-                  .then(() => toast.success(`Market copied to clipboard!`))
-                  .catch(() => toast.error(`Failed to copy URL`));
-              }}
-              variant="outline"
-              className="bg-gray-900/50 border-gray-700 hover:bg-gray-800 "
-            >
-              Share Market
-            </Button>
-
-            <Button
-              asChild
-              variant="outline"
-              className="bg-gray-900/50 border-gray-700 hover:bg-gray-800"
-            >
-              <a
-                href={`https://explorer.solana.com/address/${market.pda}?cluster=devnet`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                View on Explorer
-              </a>
-            </Button>
-          </div>
-        </div>
-
-        {/* Middle Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Current Odds */}
-          <Card className="bg-gray-900/50 border-gray-800 col-span-1 md:col-span-2">
-            <CardHeader>
-              <CardTitle className="text-xl">Current Odds</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div
-                  onClick={() => setSelected("yes")}
-                  className={cn(
-                    "cursor-pointer rounded-lg p-6 text-center transition",
-                    selected === "yes"
-                      ? "bg-green-700/30 border border-green-500"
-                      : "bg-gray-800/60 hover:bg-gray-800"
-                  )}
-                >
-                  <p className="text-3xl font-bold text-green-400">
-                    {yesPct.toFixed(2)}%
-                  </p>
-                  <p className="text-green-200">YES</p>
-                </div>
-                <div
-                  onClick={() => setSelected("no")}
-                  className={cn(
-                    "cursor-pointer rounded-lg p-6 text-center transition",
-                    selected === "no"
-                      ? "bg-red-700/30 border border-red-500"
-                      : "bg-gray-800/60 hover:bg-gray-800"
-                  )}
-                >
-                  <p className="text-3xl font-bold text-red-400">
-                    {noPct.toFixed(2)}%
-                  </p>
-                  <p className="text-red-200">NO</p>
-                </div>
-              </div>
-
-              {/* Progress bar */}
-
-              <div className="mt-6">
-                <div className="w-full bg-gray-800 rounded-full h-3 flex overflow-hidden">
-                  {/* YES bar */}
-                  <div
-                    className="bg-green-500 h-3 transition-all duration-700 ease-in-out"
-                    style={{ width: `${yesPct.toFixed(2)}%` }}
-                  />
-                  {/* NO bar */}
-                  <div
-                    className="bg-red-500 h-3 transition-all duration-700 ease-in-out"
-                    style={{ width: `${noPct.toFixed(2)}%` }}
-                  />
-                </div>
-
-                <div className="flex justify-between mt-2 text-sm">
-                  <span className="text-green-400 font-medium">
-                    YES {yesPct.toFixed(2)}%
-                  </span>
-                  <span className="text-red-400 font-medium">
-                    NO {noPct.toFixed(2)}%
-                  </span>
-                </div>
-
-                <p className="mt-2 text-gray-400 text-xs">
-                  Trending toward{" "}
-                  <span className="font-semibold text-white">
-                    {yesPct >= 50 ? "YES" : "NO"}
-                  </span>
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Place Bet */}
-          <Card className="bg-gray-900/50 border-gray-800">
-            <CardHeader>
-              <CardTitle className="text-xl">Place Bet</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button
-                  className={cn(
-                    "flex-1",
-                    selected === "yes"
-                      ? "bg-green-600 hover:bg-green-700 text-green-200"
-                      : "bg-gray-800 hover:bg-gray-700"
-                  )}
-                  onClick={() => setSelected("yes")}
-                >
-                  YES {yesPct.toFixed(2)}%
-                </Button>
-                <Button
-                  className={cn(
-                    "flex-1",
-                    selected === "no"
-                      ? "bg-red-600 hover:bg-red-700 text-red-300"
-                      : "bg-gray-800 hover:bg-gray-700"
-                  )}
-                  onClick={() => setSelected("no")}
-                >
-                  NO {noPct.toFixed(2)}%
-                </Button>
-              </div>
-
-              {/* Input */}
-              <Input
-                type="number"
-                placeholder="0.00 SOL"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="bg-gray-800 border-gray-700 text-white w-full 
-                 [appearance:textfield] 
-                 [&::-webkit-outer-spin-button]:appearance-none 
-                 [&::-webkit-inner-spin-button]:appearance-none"
-              />
-
-              <div>
-                {publicKey ? (
-                  <p className="text-green-400">
-                    Balance: {solBal !== null ? `${solBal} SOL` : "Loading..."}
-                  </p>
-                ) : (
-                  <p className="text-yellow-300">
-                    Connect your wallet to see balance
-                  </p>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+          {/* Left Column: Market Info */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="lg:col-span-8 space-y-8"
+          >
+            
+            {/* Header Section */}
+            <div className="space-y-6">
+              <div className="flex flex-wrap items-center gap-3">
+                {isMock && (
+                  <Badge variant="outline" className="border-yellow-500/50 text-yellow-500 bg-yellow-500/10 backdrop-blur-sm">
+                    Demo Market
+                  </Badge>
                 )}
+                <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20 border-primary/20 backdrop-blur-sm">
+                  {market.category}
+                </Badge>
+                <div className="flex items-center text-sm text-muted-foreground bg-secondary/30 border border-white/5 px-3 py-1 rounded-full backdrop-blur-sm">
+                  <Clock className="w-3 h-3 mr-2" />
+                  Ends {new Date(market.end_time).toLocaleDateString()}
+                </div>
               </div>
 
-              {/* Quick amounts */}
-              <div className="flex flex-wrap gap-3">
-                {[0.1, 0.25, , 0.5, 0.75, 1].map((val) => (
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-white/50">
+                {market.question}
+              </h1>
+
+              <div className="flex flex-wrap items-center gap-6 pt-2">
+                <div className="flex items-center gap-3 bg-white/5 rounded-full pr-4 pl-1 py-1 border border-white/5 hover:bg-white/10 transition-colors cursor-pointer">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center border border-white/10">
+                    <img 
+                      src={`https://api.dicebear.com/7.x/identicon/svg?seed=${market.creator.username}`} 
+                      alt="Creator" 
+                      className="w-5 h-5 opacity-80"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Created by</span>
+                    <span className="text-xs font-bold text-white">
+                      {market.creator.username || "Anonymous"}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="h-8 w-[1px] bg-white/10 hidden sm:block" />
+                
+                <div className="flex flex-col">
+                  <span className="text-xs text-muted-foreground uppercase tracking-wider">Volume</span>
+                  <span className="text-lg font-bold text-green-400 flex items-center gap-1">
+                    {Number(market.total_volume) / LAMPORTS_PER_SOL} <span className="text-xs font-normal text-green-400/70">SOL</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Probability Bar / Price History */}
+            <PriceHistoryGraph 
+              currentProbability={yesPct} 
+              color={yesPct >= 50 ? "#10B981" : "#EF4444"} 
+            />
+
+            {/* Market Details Tabs */}
+            <Tabs defaultValue="info" className="w-full">
+              <TabsList className="bg-black/40 border border-white/10 p-1 w-full sm:w-auto backdrop-blur-md rounded-lg">
+                <TabsTrigger value="info" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-muted-foreground flex-1 sm:flex-none">
+                  Market Info
+                </TabsTrigger>
+                <TabsTrigger value="activity" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-muted-foreground flex-1 sm:flex-none">
+                  Activity
+                </TabsTrigger>
+                <TabsTrigger value="comments" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-muted-foreground flex-1 sm:flex-none">
+                  Comments
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="info" className="mt-6 space-y-6">
+                <Card className="bg-black/20 border-white/5 backdrop-blur-sm">
+                  <CardContent className="p-6 space-y-6">
+                    <div className="space-y-3">
+                      <h3 className="text-lg font-semibold flex items-center gap-2 text-white/90">
+                        <Info className="w-4 h-4 text-primary" />
+                        Description
+                      </h3>
+                      <p className="text-gray-400 leading-relaxed">
+                        {market.description || "No description provided."}
+                      </p>
+                    </div>
+
+                    <Separator className="bg-white/5" />
+
+                    <div className="space-y-3">
+                      <h3 className="text-lg font-semibold flex items-center gap-2 text-white/90">
+                        <CheckCircle2 className="w-4 h-4 text-primary" />
+                        Resolution Criteria
+                      </h3>
+                      <div className="bg-white/5 border border-white/5 rounded-lg p-4">
+                        <p className="text-gray-300 text-sm">
+                          {market.resolution_criteria}
+                        </p>
+                        <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+                          <AlertCircle className="w-3 h-3" />
+                          <span>Resolves via <span className="text-white font-medium">{market.oracle_source}</span> oracle</span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="activity">
+                <Card className="bg-black/20 border-white/5 backdrop-blur-sm min-h-[200px] flex items-center justify-center">
+                  <div className="flex flex-col items-center text-muted-foreground">
+                    <Activity className="w-10 h-10 mb-3 opacity-20" />
+                    <p>No recent activity to show</p>
+                  </div>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="comments">
+                <Card className="bg-black/20 border-white/5 backdrop-blur-sm min-h-[200px] flex items-center justify-center">
+                  <div className="flex flex-col items-center text-muted-foreground">
+                    <p>Comments are disabled for this market.</p>
+                  </div>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </motion.div>
+
+          {/* Right Column: Betting Interface */}
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="lg:col-span-4"
+          >
+            <div className="sticky top-24 space-y-6">
+              <Card className="bg-[#0A0A0A]/80 border-white/10 shadow-2xl shadow-primary/5 overflow-hidden backdrop-blur-xl ring-1 ring-white/5 p-0 gap-0">
+                <CardHeader className="bg-white/5 border-b border-white/5 pb-4 pt-4">
+                  <CardTitle className="flex items-center justify-between">
+                    <span className="text-lg">Place Order</span>
+                    <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground bg-black/40 px-3 py-1.5 rounded-full border border-white/5">
+                      <Wallet className="w-3 h-3" />
+                      {mounted && publicKey ? <span className="text-white">{solBal.toFixed(4)} SOL</span> : "Not Connected"}
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                
+                <CardContent className="p-6 space-y-6">
+                  {/* Buy Yes/No Toggle */}
+                  <div className="grid grid-cols-2 gap-3 p-1 bg-black/40 rounded-xl border border-white/5">
+                    <button
+                      onClick={() => setSelected("yes")}
+                      className={cn(
+                        "py-4 rounded-lg font-bold text-sm transition-all duration-300 flex flex-col items-center gap-1 relative overflow-hidden group",
+                        selected === "yes"
+                          ? "bg-green-500/10 text-green-400 ring-1 ring-green-500/50"
+                          : "text-muted-foreground hover:text-white hover:bg-white/5"
+                      )}
+                    >
+                      {selected === "yes" && (
+                        <motion.span 
+                          layoutId="active-tab"
+                          className="absolute inset-0 bg-green-500/10" 
+                        />
+                      )}
+                      <span className="relative z-10">Buy YES</span>
+                      <span className="relative z-10 text-xs opacity-80 font-normal">Price: {yesPct.toFixed(0)}¢</span>
+                    </button>
+                    <button
+                      onClick={() => setSelected("no")}
+                      className={cn(
+                        "py-4 rounded-lg font-bold text-sm transition-all duration-300 flex flex-col items-center gap-1 relative overflow-hidden group",
+                        selected === "no"
+                          ? "bg-red-500/10 text-red-400 ring-1 ring-red-500/50"
+                          : "text-muted-foreground hover:text-white hover:bg-white/5"
+                      )}
+                    >
+                      {selected === "no" && (
+                        <motion.span 
+                          layoutId="active-tab"
+                          className="absolute inset-0 bg-red-500/10" 
+                        />
+                      )}
+                      <span className="relative z-10">Buy NO</span>
+                      <span className="relative z-10 text-xs opacity-80 font-normal">Price: {noPct.toFixed(0)}¢</span>
+                    </button>
+                  </div>
+
+                  {/* Amount Input */}
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-xs uppercase tracking-wider font-medium">
+                      <span className="text-muted-foreground">Amount (SOL)</span>
+                      <span className="text-muted-foreground">
+                        Est. Return: <span className="text-white font-bold">
+                          {amount ? (Number(amount) * (100 / (selected === 'yes' ? yesPct : noPct))).toFixed(3) : "0.00"} SOL
+                        </span>
+                      </span>
+                    </div>
+                    <div className="relative group">
+                      <Input
+                        type="number"
+                        placeholder="0.00"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        className="bg-black/40 border-white/10 text-lg h-14 pl-4 pr-16 focus:ring-primary/50 focus:border-primary/50 transition-all group-hover:border-white/20"
+                      />
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground bg-white/5 px-2 py-1 rounded">
+                        SOL
+                      </div>
+                    </div>
+                    
+                    {/* Quick Select */}
+                    <div className="grid grid-cols-4 gap-2">
+                      {[0.1, 0.5, 1, 2].map((val) => (
+                        <button
+                          key={val}
+                          onClick={() => setAmount(val.toString())}
+                          className="px-2 py-2 text-xs font-medium rounded-md bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-white transition-colors border border-white/5"
+                        >
+                          {val}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Action Button */}
                   <Button
-                    key={val}
-                    variant="outline"
-                    className="flex-1 bg-gray-800 border-gray-700 hover:bg-gray-700"
-                    onClick={() => setAmount(String(val))}
+                    className={cn(
+                      "w-full h-14 text-lg font-bold shadow-lg transition-all duration-300 relative overflow-hidden",
+                      selected === "yes" 
+                        ? "bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 shadow-green-500/20" 
+                        : "bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 shadow-red-500/20"
+                    )}
+                    onClick={handleBet}
+                    disabled={!selected || !amount || Number(amount) <= 0 || betting}
                   >
-                    {val} SOL
+                    {betting ? (
+                      <span className="flex items-center gap-2">
+                        <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Processing...
+                      </span>
+                    ) : hasBet ? (
+                      "Order Placed!"
+                    ) : (
+                      `Place ${selected.toUpperCase()} Order`
+                    )}
                   </Button>
-                ))}
+
+                  <p className="text-[10px] text-center text-muted-foreground/60">
+                    By trading, you agree to the Terms of Service.
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Share / External Links */}
+              <div className="grid grid-cols-2 gap-4">
+                <Button variant="outline" className="w-full border-white/10 hover:bg-white/5 hover:border-white/20 transition-all h-12" onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                  toast.success("Link copied!");
+                }}>
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Share
+                </Button>
+                <Button variant="outline" className="w-full border-white/10 hover:bg-white/5 hover:border-white/20 transition-all h-12" asChild>
+                  <a href={`https://explorer.solana.com/address/${market.pda}?cluster=devnet`} target="_blank" rel="noreferrer">
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Explorer
+                  </a>
+                </Button>
               </div>
-
-              <Button
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-                onClick={handleBet}
-                disabled={
-                  !selected || !amount || Number(amount) <= 0 || betting
-                }
-              >
-                {betting
-                  ? "Placing Bet..."
-                  : hasBet
-                  ? "Bet Placed"
-                  : "Place Bet"}
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Stats and Positions */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-          <Card className="bg-gray-900/50 border-gray-800">
-            <CardContent className="pt-6 text-center">
-              <p className="text-gray-400">Total Volume</p>
-              <p className="text-2xl font-bold text-blue-400">
-                {Number(market.total_volume) / LAMPORTS_PER_SOL} Sol
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gray-900/50 border-gray-800">
-            <CardContent className="pt-6 text-center">
-              <p className="text-gray-400">Total Traders</p>
-              <p className="text-2xl font-bold text-purple-400">
-                {summary?.total_positions ?? 0}
-              </p>
-            </CardContent>
-          </Card>
+            </div>
+          </motion.div>
         </div>
       </div>
     </div>

@@ -7,7 +7,7 @@ import { BACKEND_URL } from "@/config";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import toast from "react-hot-toast";
 import PositionCard from "@/components/positions/PositionCard";
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { useUserStore } from "@/store/userInfo";
 import {
   BadgeCheck,
@@ -17,16 +17,132 @@ import {
   Swords,
   Users,
   XCircle,
+  Wallet,
+  ArrowUpRight,
+  Trophy,
+  Zap,
+  ShieldCheck
 } from "lucide-react";
 import ProfileCard from "@/components/custom/UserRepution";
 import { useRouter } from "next/navigation";
 import Methods from "../utils/methods";
 import Tokens from "@/components/portfolio/token/useToken";
 import UserBattlesList from "@/components/portfolio/battle/userBattleList";
+import { PortfolioChart } from "@/components/portfolio/PortfolioChart";
+import { Background } from "@/components/background";
+import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
+import { Card, CardContent } from "@/components/ui/card";
+import { Position } from "@/store/types/user/postionType";
+
+const mockPositions: Position[] = [
+  {
+    id: "pos_1",
+    user_id: "user_1",
+    market_id: "market_1",
+    position_type: "YES",
+    amount_staked: "1000000000", // 1 SOL
+    settled: false,
+    stake_tx_hash: "tx_1",
+    created_at: new Date().toISOString(),
+    market: {
+      id: "market_1",
+      question: "Will Bitcoin hit $100k in 2024?",
+      category: "Crypto",
+      status: "OPEN",
+      end_time: new Date(Date.now() + 86400000 * 5).toISOString(), // 5 days from now
+      outcome: null,
+      pda: "pda_1",
+      total_volume: "5000000000",
+      yes_pool: "3000000000",
+      no_pool: "2000000000",
+    },
+    user: {
+      id: "user_1",
+      username: "CryptoKing",
+      wallet_address: "WalletAddr123",
+      is_verified: true,
+    },
+    shares_owned: "1000",
+    average_price: "0.5",
+    payout_amount: "0",
+    profit_loss: "0",
+    settled_at: null,
+    payout_tx_hash: null,
+  },
+  {
+    id: "pos_2",
+    user_id: "user_1",
+    market_id: "market_2",
+    position_type: "NO",
+    amount_staked: "500000000", // 0.5 SOL
+    settled: false,
+    stake_tx_hash: "tx_2",
+    created_at: new Date().toISOString(),
+    market: {
+      id: "market_2",
+      question: "Will Solana flip Ethereum in 2025?",
+      category: "Crypto",
+      status: "OPEN",
+      end_time: new Date(Date.now() + 86400000 * 10).toISOString(),
+      outcome: null,
+      pda: "pda_2",
+      total_volume: "2000000000",
+      yes_pool: "1000000000",
+      no_pool: "1000000000",
+    },
+    user: {
+      id: "user_1",
+      username: "CryptoKing",
+      wallet_address: "WalletAddr123",
+      is_verified: true,
+    },
+    shares_owned: "500",
+    average_price: "0.4",
+    payout_amount: "0",
+    profit_loss: "0",
+    settled_at: null,
+    payout_tx_hash: null,
+  },
+  {
+    id: "pos_3",
+    user_id: "user_1",
+    market_id: "market_3",
+    position_type: "YES",
+    amount_staked: "2000000000", // 2 SOL
+    settled: true,
+    stake_tx_hash: "tx_3",
+    created_at: new Date(Date.now() - 86400000 * 10).toISOString(),
+    market: {
+      id: "market_3",
+      question: "Will SpaceX launch Starship in March?",
+      category: "Tech",
+      status: "RESOLVED",
+      end_time: new Date(Date.now() - 86400000 * 2).toISOString(), // Ended 2 days ago
+      outcome: "YES",
+      pda: "pda_3",
+      total_volume: "10000000000",
+      yes_pool: "6000000000",
+      no_pool: "4000000000",
+    },
+    user: {
+      id: "user_1",
+      username: "CryptoKing",
+      wallet_address: "WalletAddr123",
+      is_verified: true,
+    },
+    shares_owned: "2000",
+    average_price: "0.6",
+    payout_amount: "3333333333",
+    profit_loss: "1333333333",
+    settled_at: new Date().toISOString(),
+    payout_tx_hash: "tx_payout_3",
+  }
+];
 
 export const Spinner = () => (
   <div className="flex items-center justify-center h-64">
-    <div className="w-10 h-10 border-4 border-gray-500 border-t-purple-500 rounded-full animate-spin"></div>
+    <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
   </div>
 );
 
@@ -61,16 +177,22 @@ export default function Portfolio() {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      if (!token) return toast.error("Not authorized!");
+      if (!token) {
+        // Fallback to mock data if no token
+        setPositions(mockPositions);
+        return;
+      }
 
       const res = await axios.get(`${BACKEND_URL}/api/positions`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setPositions(res.data.data.positions || []);
+      setPositions(res.data.data.positions && res.data.data.positions.length > 0 ? res.data.data.positions : mockPositions);
     } catch (err) {
       console.error("Failed to fetch positions:", err);
-      toast.error("Failed to load positions");
+      // Fallback to mock data on error
+      setPositions(mockPositions);
+      toast.error("Failed to load positions, showing mock data");
     } finally {
       setLoading(false);
     }
@@ -115,175 +237,213 @@ export default function Portfolio() {
     (p) => new Date(p.market.end_time).getTime() < Date.now()
   );
 
-  // const handleCreateBattle = async () => {
-  //   try {
-  //     const res = await increaseBattlePosition({
-  //       battlePda: new PublicKey(
-  //         "BfZiZmv6BQ646WMBnRYTmm7e9u2nZbVUcBFTCuivNC76"
-  //       ),
-  //       additionalAmount: 1000000,
-  //     });
-
-  //     console.log("All battles :", res);
-
-  //     alert("Battle Created!");
-  //   } catch (err: any) {
-  //     console.error(err);
-  //     alert("Error: " + err.message);
-  //   }
-  // };
-
   return (
-    <div className="min-h-screen p-6 pt-24 text-white">
-      <div className="max-w-6xl mx-auto space-y-10">
-        {/* User Info Card */}
-        <div className="flex flex-wrap items-center gap-6 bg-gray-900/70 border border-gray-800 rounded-lg p-5">
-          <div className="flex items-center gap-2">
-            <BadgeCheck className="w-5 h-5 text-purple-400" />
-            <span className="text-sm text-gray-300">
-              KYC: {userInfo?.user.kyc_level || "N/A"}
-            </span>
+    <div className="min-h-screen relative bg-black text-white overflow-hidden">
+      <Background />
+      
+      <div className="relative z-10 container mx-auto px-4 py-8 pt-24 max-w-7xl space-y-8">
+        
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
+              Portfolio
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Track your performance, reputation, and assets.
+            </p>
           </div>
-
-          <div className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-yellow-400" />
-            <span className="text-sm text-gray-300">
-              Rep: {userInfo?.user.reputation_score ?? 0}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-blue-400" />
-            <span className="text-sm text-gray-300">
-              Predictions: {userInfo?.user.total_predictions ?? 0}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {userInfo?.user.is_verified ? (
-              <>
-                <CheckCircle2 className="w-5 h-5 text-green-500" />
-                <span className="text-sm text-green-500">Verified</span>
-              </>
-            ) : (
-              <>
-                <XCircle className="w-5 h-5 text-red-500" />
-                <span className="text-sm text-red-500">Not Verified</span>
-              </>
-            )}
-          </div>
-
-          <div
-            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-blue-500/30 hover:border-blue-400/50 hover:bg-blue-500/10 transition-all cursor-pointer"
-            onClick={() => router.push("/token")}
-          >
-            <Coins className="w-5 h-5 text-blue-400" />
-            <span className="text-sm text-blue-300 font-medium">
-              Launch Token
-            </span>
-          </div>
-          <div
-            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-blue-500/30 hover:border-blue-400/50 hover:bg-blue-500/10 transition-all cursor-pointer"
-            onClick={() => router.push("/battlearena/new")}
-          >
-            <Swords className="w-5 h-5 text-blue-400" />
-            <span className="text-sm text-blue-300 font-medium">
-              Create Battle
-            </span>
+          
+          <div className="flex gap-4">
+            <Button 
+              onClick={() => router.push("/token")}
+              className="relative overflow-hidden bg-gradient-to-r from-yellow-500/20 to-orange-500/20 hover:from-yellow-500/30 hover:to-orange-500/30 border border-yellow-500/50 text-yellow-200 shadow-[0_0_15px_rgba(234,179,8,0.2)] group transition-all duration-300"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:animate-[shine_1s_ease-in-out_infinite]" />
+              <Coins className="w-4 h-4 mr-2 text-yellow-400 group-hover:scale-110 transition-transform" />
+              <span className="font-semibold tracking-wide">Launch Token</span>
+            </Button>
+            
+            <Button 
+              onClick={() => router.push("/battlearena/new")}
+              className="relative overflow-hidden bg-gradient-to-r from-primary/20 to-purple-600/20 hover:from-primary/30 hover:to-purple-600/30 border border-primary/50 text-primary-foreground shadow-[0_0_15px_rgba(168,85,247,0.2)] group transition-all duration-300"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:animate-[shine_1s_ease-in-out_infinite]" />
+              <Swords className="w-4 h-4 mr-2 text-primary group-hover:rotate-12 transition-transform" />
+              <span className="font-semibold tracking-wide text-primary">Create Battle</span>
+            </Button>
           </div>
         </div>
 
-        {/* Reputation Card */}
-        <ProfileCard
-          reputation_score={userInfo?.user.reputation_score || 0}
-          win_rate={userInfo?.user.win_rate || "error"}
-          battels_won={userInfo?.user.win_rate || "error"}
-        />
+        {/* Top Grid: Chart & Reputation */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Chart Section - Spans 2 columns */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="lg:col-span-2 h-[400px]"
+          >
+            <PortfolioChart />
+          </motion.div>
 
-        <UserBattlesList />
-        <Tokens />
+          {/* Reputation Section - Spans 1 column */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="lg:col-span-1 h-[400px]"
+          >
+            <Card className="h-full bg-[#0A0A0A] border-white/10 flex flex-col overflow-hidden relative group">
+                {/* Decorative Gradients */}
+                <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-[200px] h-[200px] bg-purple-500/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none" />
 
-        {/* Positions Section */}
-        <Tabs defaultValue="active" onValueChange={setTab} className="w-full">
-          <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-6 mb-10">
-            <h3 className="text-xl sm:text-2xl font-semibold bg-gradient-to-r from-[#a855f7] to-[#9333ea] bg-clip-text text-transparent">
-              Positions
-            </h3>
+                {/* Header */}
+                <div className="p-6 border-b border-white/5 bg-white/[0.02]">
+                    <div className="flex items-center gap-4">
+                        <div className="relative">
+                            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-neutral-800 to-neutral-900 border border-white/10 flex items-center justify-center text-xl font-bold text-white shadow-[0_0_15px_rgba(0,0,0,0.5)] ring-1 ring-white/5">
+                                {userInfo?.user.username?.charAt(0).toUpperCase() || "U"}
+                            </div>
+                            {userInfo?.user.is_verified && (
+                                <div className="absolute -bottom-0.5 -right-0.5 bg-blue-500 text-white rounded-full p-[3px] border-[3px] border-[#0A0A0A] shadow-sm" title="Verified User">
+                                    <BadgeCheck className="w-3.5 h-3.5 fill-white text-blue-500" />
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                                <h3 className="font-bold text-lg text-white truncate">{userInfo?.user.username || "User"}</h3>
+                                <span className="text-[10px] font-medium text-muted-foreground bg-white/5 px-1.5 py-0.5 rounded border border-white/5">
+                                    #{userInfo?.user.id?.toString().slice(0,4) || "0000"}
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-2 mt-1.5">
+                                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                                    <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">
+                                        KYC Level {userInfo?.user.kyc_level || 0}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-            <TabsList className="bg-gray-900/70 border border-gray-800 rounded-lg flex justify-center sm:justify-start">
-              <TabsTrigger
-                value="active"
-                className="px-6 py-2 text-sm sm:text-base rounded-md font-medium
-                data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#a855f7] data-[state=active]:to-[#9333ea]
-                data-[state=active]:text-white 
-                data-[state=inactive]:text-gray-400 data-[state=inactive]:hover:text-white 
-                transition"
-              >
-                Active
-              </TabsTrigger>
-              <TabsTrigger
-                value="expired"
-                className="px-6 py-2 text-sm sm:text-base rounded-md font-medium
-                data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#a855f7] data-[state=active]:to-[#9333ea]
-                data-[state=active]:text-white 
-                data-[state=inactive]:text-gray-400 data-[state=inactive]:hover:text-white 
-                transition"
-              >
-                Expired
-              </TabsTrigger>
-            </TabsList>
-          </div>
+                {/* Main Content - Centered Badge & Stats */}
+                <div className="flex-1 flex flex-col justify-between p-6 relative z-10">
+                    <div className="flex-1 flex items-center justify-center py-2">
+                        <div className="w-full">
+                             {/* We pass the hardcoded score for mock as requested */}
+                            <ProfileCard
+                                reputation_score={42500}
+                                win_rate={userInfo?.user.win_rate || "0"}
+                                battels_won={userInfo?.user.correct_predictions?.toString() || "0"}
+                                total_wagged={userInfo?.user.total_volume ? Number(userInfo.user.total_volume) / LAMPORTS_PER_SOL : 0}
+                                current_strak={0}
+                            />
+                        </div>
+                    </div>
+                </div>
+            </Card>
+          </motion.div>
+        </div>
 
-          {/* Active Tab */}
-          <TabsContent value="active">
-            {loading ? (
-              <Spinner />
-            ) : activePositions.length === 0 ? (
-              <p className="text-center text-gray-400">No active positions.</p>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                {activePositions.map((p) => (
-                  <PositionCard
-                    key={p.id}
-                    position={p}
-                    withdrawing={!!withdrawingMap[p.market.pda]}
-                    handleWithdraw={handleWithdraw}
-                  />
-                ))}
-              </div>
-            )}
-          </TabsContent>
+        {/* Main Content Tabs */}
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+        >
+            <Tabs defaultValue="positions" className="w-full space-y-6">
+                <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                    <TabsList className="bg-transparent p-0 gap-6">
+                        <TabsTrigger 
+                            value="positions" 
+                            className="bg-transparent p-0 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-muted-foreground data-[state=active]:text-primary text-lg rounded-none border-b-2 border-transparent data-[state=active]:border-primary transition-all"
+                        >
+                            My Positions
+                        </TabsTrigger>
+                        <TabsTrigger 
+                            value="battles" 
+                            className="bg-transparent p-0 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-muted-foreground data-[state=active]:text-primary text-lg rounded-none border-b-2 border-transparent data-[state=active]:border-primary transition-all"
+                        >
+                            Battles
+                        </TabsTrigger>
+                        <TabsTrigger 
+                            value="tokens" 
+                            className="bg-transparent p-0 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-muted-foreground data-[state=active]:text-primary text-lg rounded-none border-b-2 border-transparent data-[state=active]:border-primary transition-all"
+                        >
+                            My Tokens
+                        </TabsTrigger>
+                    </TabsList>
+                </div>
 
-          {/* Expired Tab */}
-          <TabsContent value="expired">
-            {loading ? (
-              <Spinner />
-            ) : expiredPositions.length === 0 ? (
-              <p className="text-center text-gray-400">No expired positions.</p>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                {expiredPositions.filter((p) => !p.settled).length === 0 ? (
-                  <p className="text-gray-400 text-center">
-                    No unsettled positions
-                  </p>
-                ) : (
-                  expiredPositions
-                    .filter(
-                      (p) => !p.settled && p.position_type !== p.market.outcome
-                    )
-                    .map((p) => (
-                      <PositionCard
-                        key={p.id}
-                        position={p}
-                        withdrawing={!!withdrawingMap[p.market.pda]}
-                        handleWithdraw={handleWithdraw}
-                      />
-                    ))
-                )}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+                <TabsContent value="positions" className="space-y-6">
+                    {/* Sub-tabs for Active/Expired */}
+                    <Tabs defaultValue="active" onValueChange={setTab} className="w-full">
+                        <div className="flex items-center gap-4 mb-6">
+                            <TabsList className="bg-white/5 border border-white/10">
+                                <TabsTrigger value="active">Active Positions</TabsTrigger>
+                                <TabsTrigger value="expired">History</TabsTrigger>
+                            </TabsList>
+                        </div>
+
+                        <TabsContent value="active" className="mt-0">
+                            {loading ? (
+                                <Spinner />
+                            ) : activePositions.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-20 border border-dashed border-white/10 rounded-xl bg-white/5">
+                                    <Wallet className="w-12 h-12 text-muted-foreground mb-4 opacity-50" />
+                                    <h3 className="text-lg font-medium">No active positions</h3>
+                                    <p className="text-muted-foreground mb-6">Start trading to build your portfolio</p>
+                                    <Button onClick={() => router.push('/markets')}>Explore Markets</Button>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                                    {activePositions.map((p) => (
+                                        <PositionCard
+                                            key={p.id}
+                                            position={p}
+                                            withdrawing={!!withdrawingMap[p.market.pda]}
+                                            handleWithdraw={handleWithdraw}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </TabsContent>
+
+                        <TabsContent value="expired" className="mt-0">
+                            {loading ? (
+                                <Spinner />
+                            ) : expiredPositions.length === 0 ? (
+                                <div className="text-center py-20 text-muted-foreground">No history available</div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                                    {expiredPositions.map((p) => (
+                                        <PositionCard
+                                            key={p.id}
+                                            position={p}
+                                            withdrawing={!!withdrawingMap[p.market.pda]}
+                                            handleWithdraw={handleWithdraw}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </TabsContent>
+                    </Tabs>
+                </TabsContent>
+
+                <TabsContent value="battles">
+                    <UserBattlesList />
+                </TabsContent>
+
+                <TabsContent value="tokens">
+                    <Tokens />
+                </TabsContent>
+            </Tabs>
+        </motion.div>
       </div>
     </div>
   );

@@ -12,398 +12,435 @@ import { Copy, ExternalLink } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
-export default function Tokens() {
-  const { tokens: userToken, loading: tokenLoading } = useUserTokens();
-  const { tokens: userBoughtToken, loading: boughtTokenLoading } =
-    useUserBoughtTokens();
-  const router = useRouter();
-  return (
-    <>
-      {/*Token Tabs Section*/}
-      <div className="mt-12">
-        <Tabs defaultValue="created" className="w-full">
-          {/* Header + Tabs */}
-          <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-6 mb-10">
-            <h3 className="text-xl sm:text-2xl font-semibold bg-gradient-to-r from-[#a855f7] to-[#9333ea] bg-clip-text text-transparent">
-              Your Tokens
-            </h3>
+const mockUserTokens = [
+	{
+		account: {
+			tokenMint: "mint_created_1",
+			name: "Buzz Token",
+			symbol: "BUZZ",
+			imageUri: "https://cryptologos.cc/logos/solana-sol-logo.png", // Placeholder
+			launchId: "launch_1",
+			currentPrice: 1500000000, // 1.5 SOL
+			totalSupply: "1000000",
+		},
+	},
+	{
+		account: {
+			tokenMint: "mint_created_2",
+			name: "Moon Rocket",
+			symbol: "MOON",
+			imageUri: null, // Test fallback
+			launchId: "launch_2",
+			currentPrice: 500000000, // 0.5 SOL
+			totalSupply: "1000000000",
+		},
+	},
+];
 
-            <TabsList className="bg-gray-900/70 border border-gray-800 rounded-lg flex justify-center sm:justify-start">
-              <TabsTrigger
-                value="created"
-                className="px-6 py-2 text-sm sm:text-base rounded-md font-medium
+const mockBoughtTokens = [
+	{
+		mint: "mint_bought_1",
+		balance: "500",
+		tokenData: {
+			name: "Pepe Coin",
+			symbol: "PEPE",
+			imageUri: "https://cryptologos.cc/logos/pepe-pepe-logo.png",
+			currentPrice: 100000, // 0.0001 SOL
+			totalSupply: "420690000000",
+		},
+	},
+	{
+		mint: "mint_bought_2",
+		balance: "10",
+		tokenData: {
+			name: "Bonk",
+			symbol: "BONK",
+			imageUri: "https://cryptologos.cc/logos/bonk1-bonk-logo.png",
+			currentPrice: 200000, // 0.0002 SOL
+			totalSupply: "99999999999",
+		},
+	},
+];
+
+export default function Tokens() {
+	const { tokens: userToken, loading: tokenLoading } = useUserTokens();
+	const { tokens: userBoughtToken, loading: boughtTokenLoading } =
+		useUserBoughtTokens();
+	const router = useRouter();
+
+	// Use mock data if real data is empty
+	const displayUserTokens =
+		userToken && userToken.length > 0 ? userToken : mockUserTokens;
+	const displayBoughtTokens =
+		userBoughtToken && userBoughtToken.length > 0 ? userBoughtToken : mockBoughtTokens;
+
+	return (
+		<>
+			{/*Token Tabs Section*/}
+			<div className="mt-12">
+				<Tabs defaultValue="created" className="w-full">
+					{/* Header + Tabs */}
+					<div className="flex flex-col sm:flex-row items-center sm:justify-between gap-6 mb-10">
+						<h3 className="text-xl sm:text-2xl font-semibold bg-gradient-to-r from-[#a855f7] to-[#9333ea] bg-clip-text text-transparent">
+							Your Tokens
+						</h3>
+
+						<TabsList className="bg-gray-900/70 border border-gray-800 rounded-lg flex justify-center sm:justify-start">
+							<TabsTrigger
+								value="created"
+								className="px-6 py-2 text-sm sm:text-base rounded-md font-medium
             data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#a855f7] data-[state=active]:to-[#9333ea]
             data-[state=active]:text-white 
             data-[state=inactive]:text-gray-400 data-[state=inactive]:hover:text-white 
             transition"
-              >
-                Created
-              </TabsTrigger>
+							>
+								Created
+							</TabsTrigger>
 
-              <TabsTrigger
-                value="bought"
-                className="px-6 py-2 text-sm sm:text-base rounded-md font-medium
+							<TabsTrigger
+								value="bought"
+								className="px-6 py-2 text-sm sm:text-base rounded-md font-medium
             data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#60a5fa] data-[state=active]:to-[#3b82f6]
             data-[state=active]:text-white 
             data-[state=inactive]:text-gray-400 data-[state=inactive]:hover:text-white 
             transition"
-              >
-                Bought
-              </TabsTrigger>
-            </TabsList>
-          </div>
+							>
+								Bought
+							</TabsTrigger>
+						</TabsList>
+					</div>
 
-          {/*  Created Tokens  */}
-          <TabsContent value="created">
-            {tokenLoading ? (
-              <Spinner />
-            ) : userToken.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center max-w-7xl mx-auto">
-                {userToken.map((token, i: number) => {
-                  const acc = token.account;
-                  const mint = acc.tokenMint?.toBase58?.() ?? acc.tokenMint;
+					{/*  Created Tokens  */}
+					<TabsContent value="created">
+						{tokenLoading ? (
+							<Spinner />
+						) : displayUserTokens.length > 0 ? (
+							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center max-w-7xl mx-auto">
+								{displayUserTokens.map((token, i: number) => {
+									const acc = token.account;
+									const mint = acc.tokenMint?.toBase58?.() ?? acc.tokenMint;
 
-                  return (
-                    <Card
-                      key={i}
-                      onClick={() => router.push(`portfolio/token/${mint}`)}
-                      className="
-    w-full max-w-[500px] cursor-pointer rounded-3xl 
-    bg-[rgba(18,7,32,0.35)] backdrop-blur-md 
-    border border-[rgba(168,85,247,0.25)]
-    shadow-[0_0_20px_rgba(168,85,247,0.12)]
-    hover:shadow-[0_0_30px_rgba(168,85,247,0.22)]
-    hover:border-[rgba(168,85,247,0.45)]
-    transition-all duration-300 p-8
-  "
-                    >
-                      {/* HEADER */}
-                      <CardHeader className="flex flex-row items-center justify-between p-0">
-                        <div className="flex items-center gap-4">
-                          {/* Token Image */}
-                          {acc.imageUri && acc.imageUri.startsWith("http") ? (
-                            <img
-                              src={acc.imageUri}
-                              alt={acc.name}
-                              width={60}
-                              height={60}
-                              className="
-            rounded-2xl border border-[rgba(59,7,100,0.25)] 
-            shadow-[0_0_10px_rgba(255,255,255,0.05)]
-          "
-                            />
-                          ) : (
-                            <div
-                              className="
-            w-[60px] h-[60px] flex items-center justify-center 
-            rounded-2xl bg-[rgba(168,85,247,0.25)]
-            text-white text-xl font-bold 
-            shadow-[0_0_10px_rgba(168,85,247,0.25)]
-        "
-                            >
-                              {acc.symbol?.[0] || "?"}
-                            </div>
-                          )}
+									return (
+										<Card
+											key={i}
+											onClick={() => router.push(`portfolio/token/${mint}`)}
+											className="
+                        w-full max-w-[500px] cursor-pointer rounded-xl 
+                        bg-[#0A0A0A] border border-white/10
+                        hover:border-white/20 transition-all duration-300 p-6 group relative overflow-hidden
+                      "
+										>
+											{/* Decorative gradient */}
+											<div className="absolute top-0 right-0 w-[150px] h-[150px] bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
-                          {/* Token Name + Symbol */}
-                          <div>
-                            <h2 className="text-xl font-semibold text-white leading-tight">
-                              {acc.name}
-                            </h2>
-                            <p className="text-sm text-gray-400">
-                              {acc.symbol} Token
-                            </p>
-                          </div>
-                        </div>
+											{/* HEADER */}
+											<CardHeader className="flex flex-row items-center justify-between p-0 relative z-10">
+												<div className="flex items-center gap-4">
+													{/* Token Image */}
+													{acc.imageUri && acc.imageUri.startsWith("http") ? (
+														<img
+															src={acc.imageUri}
+															alt={acc.name}
+															width={56}
+															height={56}
+															className="
+                                rounded-xl border border-white/10 bg-white/5
+                              "
+														/>
+													) : (
+														<div
+															className="
+                                w-14 h-14 flex items-center justify-center 
+                                rounded-xl bg-primary/10 border border-primary/20
+                                text-primary text-xl font-bold 
+                            "
+														>
+															{acc.symbol?.[0] || "?"}
+														</div>
+													)}
 
-                        {/* ICON BUTTONS */}
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigator.clipboard.writeText(mint);
-                              toast.success("Copied!");
-                            }}
-                            className="
-          h-10 w-10 rounded-xl 
-          bg-[rgba(26,15,39,0.35)] 
-          border border-[rgba(59,7,100,0.25)]
-          hover:bg-[rgba(42,15,59,0.45)]
-          text-gray-300
-        "
-                          >
-                            <Copy size={18} />
-                          </Button>
+													{/* Token Name + Symbol */}
+													<div>
+														<h2 className="text-lg font-semibold text-white leading-tight group-hover:text-primary transition-colors">
+															{acc.name}
+														</h2>
+														<p className="text-sm text-muted-foreground">
+															{acc.symbol} Token
+														</p>
+													</div>
+												</div>
 
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            asChild
-                            className="
-          h-10 w-10 rounded-xl 
-          bg-[rgba(26,15,39,0.35)]
-          border border-[rgba(59,7,100,0.25)]
-          hover:bg-[rgba(42,15,59,0.45)]
-          text-gray-300
-        "
-                          >
-                            <a
-                              href={`https://solscan.io/account/${mint}?cluster=devnet`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <ExternalLink size={18} />
-                            </a>
-                          </Button>
-                        </div>
-                      </CardHeader>
+												{/* ICON BUTTONS */}
+												<div className="flex items-center gap-2">
+													<Button
+														size="icon"
+														variant="ghost"
+														onClick={(e) => {
+															e.stopPropagation();
+															navigator.clipboard.writeText(mint);
+															toast.success("Copied!");
+														}}
+														className="h-8 w-8 rounded-lg hover:bg-white/10 text-muted-foreground hover:text-white"
+													>
+														<Copy size={16} />
+													</Button>
 
-                      {/* CONTENT */}
-                      <CardContent className="mt-8 p-0">
-                        {/* STATS GRID */}
-                        <div className="grid grid-cols-2 gap-4">
-                          {/* Balance */}
-                          <div
-                            className="
-          bg-[rgba(27,12,43,0.35)] 
-          border border-[rgba(168,85,247,0.15)]
-          rounded-2xl p-4
-        "
-                          >
-                            <p className="text-sm text-gray-400">Launch ID</p>
-                            <p className="text-xl font-semibold text-[#e9d5ff] mt-1">
-                              {toDisplay(acc.launchId)}
-                            </p>
-                          </div>
+													<Button
+														size="icon"
+														variant="ghost"
+														asChild
+														className="h-8 w-8 rounded-lg hover:bg-white/10 text-muted-foreground hover:text-white"
+													>
+														<a
+															href={`https://solscan.io/account/${mint}?cluster=devnet`}
+															target="_blank"
+															rel="noopener noreferrer"
+															onClick={(e) => e.stopPropagation()}
+														>
+															<ExternalLink size={16} />
+														</a>
+													</Button>
+												</div>
+											</CardHeader>
 
-                          {/* Current Price */}
-                          <div
-                            className="
-          bg-[rgba(27,12,43,0.35)] 
-          border border-[rgba(168,85,247,0.15)]
-          rounded-2xl p-4
-        "
-                          >
-                            <p className="text-sm text-gray-400">
-                              Current Price
-                            </p>
-                            <p className="text-xl font-semibold text-[#d8b4fe] mt-1">
-                              {toDisplay(acc.currentPrice / LAMPORTS_PER_SOL)}{" "}
-                              SOL
-                            </p>
-                          </div>
+											{/* CONTENT */}
+											<CardContent className="mt-6 p-0 relative z-10">
+												{/* STATS GRID */}
+												<div className="grid grid-cols-2 gap-3">
+													{/* Balance */}
+													<div
+														className="
+                              bg-white/5 border border-white/5
+                              rounded-lg p-3
+                            "
+													>
+														<p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Launch ID</p>
+														<p className="text-sm font-mono font-medium text-white truncate">
+															{toDisplay(acc.launchId)}
+														</p>
+													</div>
 
-                          {/* Total Supply */}
-                          <div
-                            className="
-          col-span-2 
-          bg-[rgba(27,12,43,0.35)] 
-          border border-[rgba(168,85,247,0.15)]
-          rounded-2xl p-4
-        "
-                          >
-                            <p className="text-sm text-gray-400">
-                              Total Supply
-                            </p>
-                            <p className="text-xl font-semibold text-white mt-1">
-                              {toDisplay(acc.totalSupply)}
-                            </p>
-                          </div>
-                        </div>
+													{/* Current Price */}
+													<div
+														className="
+                              bg-white/5 border border-white/5
+                              rounded-lg p-3
+                            "
+													>
+														<p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+															Current Price
+														</p>
+														<p className="text-sm font-mono font-medium text-white">
+															{toDisplay(acc.currentPrice / LAMPORTS_PER_SOL)}{" "}
+															SOL
+														</p>
+													</div>
 
-                        {/* FOOTER - MINT */}
-                        <div
-                          className="
-        mt-6 
-        bg-[rgba(20,10,34,0.30)] 
-        border border-[rgba(168,85,247,0.18)] 
-        rounded-2xl p-4
-      "
-                        >
-                          <p className="text-xs text-gray-500 font-mono flex justify-between items-center">
-                            <span>{shortenAddress(mint)}</span>
+													{/* Total Supply */}
+													<div
+														className="
+                              col-span-2 
+                              bg-white/5 border border-white/5
+                              rounded-lg p-3
+                            "
+													>
+														<p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+															Total Supply
+														</p>
+														<p className="text-sm font-mono font-medium text-white">
+															{toDisplay(acc.totalSupply)}
+														</p>
+													</div>
+												</div>
 
-                            <a
-                              href={`https://solscan.io/account/${mint}?cluster=devnet`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="text-[#c084fc] hover:text-[#e9d5ff] underline text-[11px]"
-                            >
-                              View ↗
-                            </a>
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-gray-400 text-center text-sm sm:text-base">
-                You haven’t created any tokens yet.
-              </p>
-            )}
-          </TabsContent>
+												{/* FOOTER - MINT */}
+												<div
+													className="
+                            mt-4 
+                            bg-white/[0.02] border border-white/5
+                            rounded-lg p-3
+                          "
+												>
+													<p className="text-xs text-muted-foreground font-mono flex justify-between items-center">
+														<span>{shortenAddress(mint)}</span>
 
-          {/*Bought Tokens  */}
-          <TabsContent value="bought">
-            {boughtTokenLoading ? (
-              <div className="flex justify-center items-center h-40">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
-              </div>
-            ) : userBoughtToken && userBoughtToken.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center max-w-7xl mx-auto">
-                {userBoughtToken.map((token, i: number) => {
-                  const acc = token.tokenData;
-                  const mint = token.mint;
-                  const balance = token.balance;
+														<a
+															href={`https://solscan.io/account/${mint}?cluster=devnet`}
+															target="_blank"
+															rel="noopener noreferrer"
+															onClick={(e) => e.stopPropagation()}
+															className="text-primary hover:text-primary/80 underline text-[10px]"
+														>
+															View ↗
+														</a>
+													</p>
+												</div>
+											</CardContent>
+										</Card>
+									);
+								})}
+							</div>
+						) : (
+							<p className="text-gray-400 text-center text-sm sm:text-base">
+								You haven’t created any tokens yet.
+							</p>
+						)}
+					</TabsContent>
 
-                  return (
-                    <Card
-                      key={i}
-                      onClick={() =>
-                        router.push(`portfolio/token/bought/${mint}`)
-                      }
-                      className="
-    w-full max-w-[420px] cursor-pointer rounded-3xl 
-    bg-[#0a0f1c] border border-[#1e293b] 
-    shadow-[0_0_20px_rgba(0,0,0,0.4)]
-    hover:border-[#3b82f6] hover:shadow-[0_0_30px_rgba(59,130,246,0.25)]
-    transition-all duration-300
-  "
-                    >
-                      {/* Header */}
-                      <CardHeader className="flex flex-row items-center justify-between p-6 pb-3">
-                        <div className="flex items-center gap-4">
-                          {acc.imageUri && acc.imageUri.startsWith("http") ? (
-                            <img
-                              src={acc.imageUri}
-                              alt={acc.name}
-                              width={58}
-                              height={58}
-                              className="rounded-2xl bg-[#172135] border border-[#233044]"
-                            />
-                          ) : (
-                            <div
-                              className="w-[58px] h-[58px] flex items-center justify-center 
-                        bg-gradient-to-br from-blue-500 to-blue-700 
-                        text-white rounded-2xl text-xl font-bold"
-                            >
-                              {acc.symbol?.[0] || "?"}
-                            </div>
-                          )}
+					{/*Bought Tokens  */}
+					<TabsContent value="bought">
+						{boughtTokenLoading ? (
+							<div className="flex justify-center items-center h-40">
+								<div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
+							</div>
+						) : displayBoughtTokens && displayBoughtTokens.length > 0 ? (
+							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center max-w-7xl mx-auto">
+								{displayBoughtTokens.map((token, i: number) => {
+									const acc = token.tokenData;
+									const mint = token.mint;
+									const balance = token.balance;
 
-                          <div>
-                            <h2 className="text-xl font-semibold text-white">
-                              {acc.name}
-                            </h2>
-                            <p className="text-sm text-gray-400">
-                              {acc.symbol} Token
-                            </p>
-                          </div>
-                        </div>
+									return (
+										<Card
+											key={i}
+											onClick={() =>
+												router.push(`portfolio/token/bought/${mint}`)
+											}
+											className="
+                        w-full max-w-[420px] cursor-pointer rounded-xl 
+                        bg-[#0A0A0A] border border-white/10 
+                        hover:border-white/20 transition-all duration-300 group relative overflow-hidden
+                      "
+										>
+											{/* Decorative gradient */}
+											<div className="absolute top-0 right-0 w-[150px] h-[150px] bg-blue-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
-                        {/* Icons */}
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigator.clipboard.writeText(mint);
-                              toast.success("Copied!");
-                            }}
-                            className="h-10 w-10 rounded-xl bg-[#111827] border border-[#1f2937] 
-                 hover:bg-[#1e293b] text-gray-300"
-                          >
-                            <Copy size={18} />
-                          </Button>
+											{/* Header */}
+											<CardHeader className="flex flex-row items-center justify-between p-6 pb-3 relative z-10">
+												<div className="flex items-center gap-4">
+													{acc.imageUri && acc.imageUri.startsWith("http") ? (
+														<img
+															src={acc.imageUri}
+															alt={acc.name}
+															width={56}
+															height={56}
+															className="rounded-xl bg-white/5 border border-white/10"
+														/>
+													) : (
+														<div
+															className="w-14 h-14 flex items-center justify-center 
+                        bg-blue-500/10 border border-blue-500/20
+                        text-blue-400 rounded-xl text-xl font-bold"
+														>
+															{acc.symbol?.[0] || "?"}
+														</div>
+													)}
 
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            asChild
-                            className="h-10 w-10 rounded-xl bg-[#111827] border border-[#1f2937] 
-                   hover:bg-[#1e293b] text-gray-300"
-                          >
-                            <a
-                              href={`https://solscan.io/account/${mint}?cluster=devnet`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <ExternalLink size={18} />
-                            </a>
-                          </Button>
-                        </div>
-                      </CardHeader>
+													<div>
+														<h2 className="text-lg font-semibold text-white group-hover:text-blue-400 transition-colors">
+															{acc.name}
+														</h2>
+														<p className="text-sm text-muted-foreground">
+															{acc.symbol} Token
+														</p>
+													</div>
+												</div>
 
-                      <CardContent className="px-6 pb-6">
-                        {/* Stats Grid */}
-                        <div className="grid grid-cols-2 gap-4 mt-4">
-                          {/* Balance */}
-                          <div className="rounded-2xl bg-[#111827] border border-[#1f2937] p-4">
-                            <p className="text-xs text-gray-500">Balance</p>
-                            <p className="text-lg font-semibold text-blue-300 mt-1">
-                              {balance} {acc.symbol}
-                            </p>
-                          </div>
+												{/* Icons */}
+												<div className="flex items-center gap-2">
+													<Button
+														size="icon"
+														variant="ghost"
+														onClick={(e) => {
+															e.stopPropagation();
+															navigator.clipboard.writeText(mint);
+															toast.success("Copied!");
+														}}
+														className="h-8 w-8 rounded-lg hover:bg-white/10 text-muted-foreground hover:text-white"
+													>
+														<Copy size={16} />
+													</Button>
 
-                          {/* Current Price */}
-                          <div className="rounded-2xl bg-[#111827] border border-[#1f2937] p-4">
-                            <p className="text-xs text-gray-500">
-                              Current Price
-                            </p>
-                            <p className="text-lg font-semibold text-blue-200 mt-1">
-                              {toDisplay(acc.currentPrice / LAMPORTS_PER_SOL)}{" "}
-                              SOL
-                            </p>
-                          </div>
+													<Button
+														size="icon"
+														variant="ghost"
+														asChild
+														className="h-8 w-8 rounded-lg hover:bg-white/10 text-muted-foreground hover:text-white"
+													>
+														<a
+															href={`https://solscan.io/account/${mint}?cluster=devnet`}
+															target="_blank"
+															rel="noopener noreferrer"
+															onClick={(e) => e.stopPropagation()}
+														>
+															<ExternalLink size={16} />
+														</a>
+													</Button>
+												</div>
+											</CardHeader>
 
-                          {/* Total Supply */}
-                          <div className="rounded-2xl bg-[#111827] border border-[#1f2937] p-4 col-span-2">
-                            <p className="text-xs text-gray-500">
-                              Total Supply
-                            </p>
-                            <p className="text-lg font-semibold text-white mt-1">
-                              {toDisplay(acc.totalSupply)}
-                            </p>
-                          </div>
-                        </div>
+											<CardContent className="px-6 pb-6 relative z-10">
+												{/* Stats Grid */}
+												<div className="grid grid-cols-2 gap-3 mt-4">
+													{/* Balance */}
+													<div className="rounded-lg bg-white/5 border border-white/5 p-3">
+														<p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Balance</p>
+														<p className="text-sm font-mono font-medium text-blue-300">
+															{balance} {acc.symbol}
+														</p>
+													</div>
 
-                        {/* Mint Footer */}
-                        <div className="mt-6 rounded-2xl bg-[#0b121e] border border-[#1d2533] p-4">
-                          <p className="text-xs text-gray-500 font-mono flex justify-between items-center">
-                            <span>{shortenAddress(mint)}</span>
+													{/* Current Price */}
+													<div className="rounded-lg bg-white/5 border border-white/5 p-3">
+														<p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+															Current Price
+														</p>
+														<p className="text-sm font-mono font-medium text-blue-200">
+															{toDisplay(acc.currentPrice / LAMPORTS_PER_SOL)}{" "}
+															SOL
+														</p>
+													</div>
 
-                            <a
-                              href={`https://solscan.io/account/${mint}?cluster=devnet`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="text-blue-400 hover:text-blue-300 underline text-[11px]"
-                            >
-                              View ↗
-                            </a>
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-gray-400 text-center text-sm sm:text-base">
-                You haven&#39;t bought any tokens yet.
-              </p>
-            )}
-          </TabsContent>
-        </Tabs>
-      </div>
-    </>
-  );
+													{/* Total Supply */}
+													<div className="rounded-lg bg-white/5 border border-white/5 p-3 col-span-2">
+														<p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+															Total Supply
+														</p>
+														<p className="text-sm font-mono font-medium text-white">
+															{toDisplay(acc.totalSupply)}
+														</p>
+													</div>
+												</div>
+
+												{/* Mint Footer */}
+												<div className="mt-4 rounded-lg bg-white/[0.02] border border-white/5 p-3">
+													<p className="text-xs text-muted-foreground font-mono flex justify-between items-center">
+														<span>{shortenAddress(mint)}</span>
+
+														<a
+															href={`https://solscan.io/account/${mint}?cluster=devnet`}
+															target="_blank"
+															rel="noopener noreferrer"
+															onClick={(e) => e.stopPropagation()}
+															className="text-blue-400 hover:text-blue-300 underline text-[10px]"
+														>
+															View ↗
+														</a>
+													</p>
+												</div>
+											</CardContent>
+										</Card>
+									);
+								})}
+							</div>
+						) : (
+							<p className="text-gray-400 text-center text-sm sm:text-base">
+								You haven&#39;t bought any tokens yet.
+							</p>
+						)}
+					</TabsContent>
+				</Tabs>
+			</div>
+		</>
+	);
 }

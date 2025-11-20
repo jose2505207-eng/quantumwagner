@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
+import { Sparkles } from "lucide-react";
 
 interface ReputationCardProps {
   score?: number;
@@ -20,91 +20,60 @@ export default function DiamondReputationCard({
   const progress = Math.min((score / totalNeeded) * 100, 100);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
-      className="w-[186.67px] h-[222.6px]"
-    >
-      <Card
-        className="relative w-full h-full rounded-[14px] border border-white/10 p-[16.89px]
-        shadow-[0_0_25px_rgba(0,0,0,0.4)] flex items-center justify-center text-white overflow-hidden"
-      >
-        {/* Background Frosted Layer */}
-        <div className="absolute inset-0 backdrop-blur-[8px]" />
+    <div className="relative w-[200px] h-[260px] mx-auto group perspective-1000">
+      <div className="relative w-full h-full transition-all duration-500 transform preserve-3d group-hover:rotate-y-6">
+        {/* Main Card Body */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-950 to-black rounded-2xl border border-cyan-500/20 shadow-[0_0_30px_rgba(6,182,212,0.1)] overflow-hidden flex flex-col items-center pt-6 pb-4 px-4">
+            
+            {/* Background Effects */}
+            <div className="absolute top-0 left-0 w-full h-full opacity-20 mix-blend-overlay bg-[radial-gradient(circle_at_50%_0%,rgba(6,182,212,0.4),transparent_70%)]"></div>
+            <div className="absolute -top-20 -right-20 w-40 h-40 bg-cyan-500/10 blur-3xl rounded-full"></div>
+            <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-blue-600/10 blur-3xl rounded-full"></div>
 
-        {/* Gradient Base (Diamond blue tones) */}
-        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(0,184,219,0.25)_0%,rgba(81,162,255,0.1)_50%,rgba(0,146,184,0.25)_100%)]" />
+            {/* Icon */}
+            <div className="relative z-10 mb-5">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-b from-cyan-400 to-blue-600 p-[1px] shadow-[0_0_20px_rgba(6,182,212,0.3)]">
+                    <div className="w-full h-full rounded-full bg-black flex items-center justify-center relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/20 to-transparent"></div>
+                        <Sparkles className="w-6 h-6 text-cyan-400 fill-cyan-400/20" />
+                    </div>
+                </div>
+            </div>
 
-        {/* Liquid Shine Layer */}
-        <motion.div
-          className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.25)_0%,transparent_60%)] mix-blend-overlay"
-          animate={{
-            backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
+            {/* Text Info */}
+            <div className="relative z-10 text-center mb-auto">
+                <h3 className="text-lg font-bold text-white tracking-wide">DIAMOND</h3>
+                <p className="text-[9px] text-cyan-300/60 uppercase tracking-[0.2em] font-medium mt-1">Elite Trader</p>
+            </div>
 
-  
+            {/* Score */}
+            <div className="relative z-10 text-center mb-5">
+                <div className="text-3xl font-black text-white tracking-tighter drop-shadow-md">
+                    {score.toLocaleString()}
+                </div>
+                <div className="text-[9px] text-slate-500 uppercase tracking-wider font-medium mt-0.5">Reputation Score</div>
+            </div>
 
-        {/* Content */}
-        <CardContent className="relative z-10 p-0 flex flex-col items-center justify-center w-full text-center">
-          {/* Tier Title */}
-          <div className="text-[#00B8DB] font-medium text-[13px] mb-[6px] flex items-center gap-[6px]">
-            <span>◆</span>
-            <span>Diamond</span>
-            <span>◆</span>
-          </div>
-
-          {/* Subtitle */}
-          <p className="text-[11.5px] text-gray-300 mb-[3px] tracking-wide">
-            Reputation Score
-          </p>
-
-          {/* Score */}
-          <motion.h1
-            key={score}
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="text-[41px] font-bold text-white leading-none mb-[12px]"
-          >
-            {score.toLocaleString()}
-          </motion.h1>
-
-          {/* Next Tier */}
-          <div className="flex justify-between items-center w-full text-[11.5px] text-gray-300 px-[2px] mb-[8px]">
-            <span>
-              Next: <span>{nextTier}</span>
-            </span>
-            <span className="font-medium">{nextScore.toLocaleString()}</span>
-          </div>
-
-          {/* Progress Bar */}
-          <div className="w-full h-[6px] bg-white/10 rounded-full overflow-hidden mb-[4px]">
-            <motion.div
-              className="h-full bg-gradient-to-r from-[#00B8DB] via-[#4EC3FF] to-[#0092B8]"
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-            />
-          </div>
-
-          {/* Divider */}
-          <div className="w-full h-[1px] bg-white/10 mb-[10px] mt-2" />
-
-          {/* Percentile */}
-          <p className="text-[11.5px] text-gray-300">
-            Top{" "}
-            <span className="text-[#00B8DB] font-semibold">{percentile}%</span>{" "}
-            of all players
-          </p>
-        </CardContent>
-      </Card>
-    </motion.div>
+            {/* Progress */}
+            <div className="relative z-10 w-full">
+                <div className="flex justify-between text-[9px] text-slate-400 mb-1.5 px-1">
+                    <span>Next: {nextTier}</span>
+                    <span className="text-cyan-400">{Math.round(progress)}%</span>
+                </div>
+                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden border border-white/5">
+                    <motion.div 
+                        className="h-full bg-gradient-to-r from-cyan-500 to-blue-500"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${progress}%` }}
+                        transition={{ duration: 1, delay: 0.2 }}
+                    />
+                </div>
+                <div className="mt-2 text-center">
+                    <span className="text-[9px] text-slate-500">Top <span className="text-cyan-400">{percentile}%</span> of players</span>
+                </div>
+            </div>
+        </div>
+      </div>
+    </div>
   );
 }

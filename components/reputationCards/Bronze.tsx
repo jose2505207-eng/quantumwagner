@@ -1,10 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
+import { Shield } from "lucide-react";
 
 interface ReputationCardProps {
-  //   tier?: string;
   score?: number;
   nextTier?: string;
   nextScore?: number;
@@ -12,7 +11,6 @@ interface ReputationCardProps {
 }
 
 export default function BronzeReputationCard({
-  //   tier = "Bronze",
   score = 0,
   nextTier = "Silver",
   nextScore = 1000,
@@ -21,81 +19,60 @@ export default function BronzeReputationCard({
   const progress = Math.min((score / nextScore) * 100, 100);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
-      className="w-[186.67px] h-[222.6px]"
-    >
-      <Card
-        className="relative w-full h-full 
-        rounded-[14px] border border-white/10
-        p-[16.89px] opacity-100
-        bg-[linear-gradient(135deg,rgba(60,25,5,0.65)_0%,rgba(35,15,5,0.55)_50%,rgba(15,10,5,0.7)_100%)]
-        shadow-[0_0_20px_rgba(0,0,0,0.3)]
-        backdrop-blur-[4px]
-        flex items-center justify-center"
-      >
-        <CardContent className="p-0 flex flex-col items-center justify-center w-full text-center">
-          {/* Tier Title */}
-          <div className="text-[#FF7A29] font-medium text-[13px] mb-[6px] flex items-center gap-[6px]">
-            <span>◆</span>
-            <span>Bronze</span>
-            <span>◆</span>
-          </div>
+    <div className="relative w-[200px] h-[260px] mx-auto group perspective-1000">
+      <div className="relative w-full h-full transition-all duration-500 transform preserve-3d group-hover:rotate-y-6">
+        {/* Main Card Body */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#2A1A10] via-[#1F1208] to-black rounded-2xl border border-orange-700/20 shadow-[0_0_30px_rgba(194,65,12,0.1)] overflow-hidden flex flex-col items-center pt-6 pb-4 px-4">
+            
+            {/* Background Effects */}
+            <div className="absolute top-0 left-0 w-full h-full opacity-20 mix-blend-overlay bg-[radial-gradient(circle_at_50%_0%,rgba(194,65,12,0.4),transparent_70%)]"></div>
+            <div className="absolute -top-20 -right-20 w-40 h-40 bg-orange-600/10 blur-3xl rounded-full"></div>
+            <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-amber-700/10 blur-3xl rounded-full"></div>
 
-          {/* Subtitle */}
-          <p className="text-[11.5px] text-gray-400 mb-[3px] tracking-wide">
-            Reputation Score
-          </p>
+            {/* Icon */}
+            <div className="relative z-10 mb-5">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-b from-orange-500 to-amber-800 p-[1px] shadow-[0_0_20px_rgba(194,65,12,0.3)]">
+                    <div className="w-full h-full rounded-full bg-black flex items-center justify-center relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 to-transparent"></div>
+                        <Shield className="w-6 h-6 text-orange-500 fill-orange-500/20" />
+                    </div>
+                </div>
+            </div>
 
-          {/* Score */}
-          <motion.h1
-            key={score}
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="text-[41px] font-bold text-white leading-none mb-[12px]"
-          >
-            {score}
-          </motion.h1>
+            {/* Text Info */}
+            <div className="relative z-10 text-center mb-auto">
+                <h3 className="text-lg font-bold text-white tracking-wide">BRONZE</h3>
+                <p className="text-[9px] text-orange-300/60 uppercase tracking-[0.2em] font-medium mt-1">Novice Trader</p>
+            </div>
 
-          {/* Next Tier */}
-          <div className="flex justify-between items-center w-full text-[11.5px] text-gray-400 px-[2px] mb-[8px]">
-            <span>
-              Next: <span>{nextTier}</span>
-            </span>
-            <span className="text-gray-300 font-medium">{nextScore}</span>
-          </div>
+            {/* Score */}
+            <div className="relative z-10 text-center mb-5">
+                <div className="text-3xl font-black text-white tracking-tighter drop-shadow-md">
+                    {score.toLocaleString()}
+                </div>
+                <div className="text-[9px] text-slate-500 uppercase tracking-wider font-medium mt-0.5">Reputation Score</div>
+            </div>
 
-          {/* Progress Bar */}
-          <div className="w-full h-[6px] bg-white/10 rounded-full overflow-hidden mb-[4px]">
-            <motion.div
-              className="h-full bg-[#FF7A29]"
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-            />
-          </div>
-
-          {/* Divider */}
-          <div className="w-full h-[1px] bg-white/10 mb-[10px] mt-2" />
-
-          {/* Percentile */}
-          <p className="text-[11.5px] text-gray-400">
-            Top{" "}
-            <span className="text-[#FF7A29] font-semibold">{percentile}%</span>{" "}
-            of all players
-          </p>
-        </CardContent>
-      </Card>
-    </motion.div>
+            {/* Progress */}
+            <div className="relative z-10 w-full">
+                <div className="flex justify-between text-[9px] text-slate-400 mb-1.5 px-1">
+                    <span>Next: {nextTier}</span>
+                    <span className="text-orange-500">{Math.round(progress)}%</span>
+                </div>
+                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden border border-white/5">
+                    <motion.div 
+                        className="h-full bg-gradient-to-r from-orange-600 to-amber-600"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${progress}%` }}
+                        transition={{ duration: 1, delay: 0.2 }}
+                    />
+                </div>
+                <div className="mt-2 text-center">
+                    <span className="text-[9px] text-slate-500">Top <span className="text-orange-500">{percentile}%</span> of players</span>
+                </div>
+            </div>
+        </div>
+      </div>
+    </div>
   );
 }
-
-{/* <BronzeReputationCard
-  score={500}
-  nextTier="Silver"
-  nextScore={500}
-  percentile={45}
-/>; */}

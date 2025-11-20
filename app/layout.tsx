@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { AppBar } from "@/components/Appbar";
-import Footer from "@/components/Footer";
+import Navbar from "@/components/marketing/Navbar";
+import Footer from "@/components/marketing/Footer";
 import { Toaster } from "react-hot-toast";
 import RouteProgress from "./utils/hooks/routeProgress";
 import { SolanaProvider } from "./utils/SolanaProvider";
 import { WalletAuth } from "./utils/walletAuth";
+import { base, heading } from "@/constants/fonts";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Quantum Wager ",
@@ -23,10 +25,14 @@ export default function RootLayout({
  
   return (
     <html lang="en" className="dark">
-      <body className="relative bg-[#0b0d11] text-white min-h-screen flex flex-col">
+      <body className={cn(
+          "relative bg-[#050505] text-white min-h-screen flex flex-col font-base antialiased",
+          base.variable,
+          heading.variable
+        )}>
         <RouteProgress />
         <SolanaProvider>
-          <AppBar />
+          <Navbar />
           <WalletAuth></WalletAuth>
           <main className="flex-grow ">{children}</main>
           <Toaster

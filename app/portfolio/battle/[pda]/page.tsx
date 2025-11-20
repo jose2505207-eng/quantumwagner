@@ -19,7 +19,10 @@ import { Button } from "@/components/ui/button";
 import { Hammer } from "lucide-react";
 import toast from "react-hot-toast";
 import { BN } from "@coral-xyz/anchor";
-import { formatTimeline } from "@/app/battlearena/[pda]/page";
+
+const formatTimeline = (key: string, val: any) => {
+  return toDisplayDate(val);
+};
 
 const getKey = (obj) => {
   if (!obj) return "—";
