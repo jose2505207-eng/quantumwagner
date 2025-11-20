@@ -36,6 +36,7 @@ export function AppBar() {
     { label: "Markets", path: "/markets" },
     // { label: "Fastbet", path: "/fastbet" },
     { label: "BuyToken", path: "/buytoken" },
+    { label: "Launchpad", path: "/token" },
     { label: "Arena", path: "/battlearena" },
     { label: "leaderboard", path: "/leaderboard" },
     { label: "Portfolio", path: "/portfolio" },
