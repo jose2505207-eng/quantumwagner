@@ -10,6 +10,7 @@ import { Background } from "@/components/background";
 import { TokenHeader } from "@/components/token-details/token-header";
 import { TokenStats } from "@/components/token-details/token-stats";
 import { BuyInterface } from "@/components/token-details/buy-interface";
+import { TokenChart } from "@/components/token-details/TokenChart";
 
 export default function TokenBuyPage() {
   const params = useParams();
@@ -67,13 +68,21 @@ export default function TokenBuyPage() {
       <div className="relative z-10 container mx-auto px-4 py-24 max-w-6xl">
         <TokenHeader token={acc} status={status} />
         
-        {/* Swap Interface */}
-        <div className="mb-10">
-          <BuyInterface 
-            token={acc} 
-            onBuy={handleBuy} 
-            loading={buying} 
-          />
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-10">
+          {/* Chart Section */}
+          <div className="xl:col-span-2 h-[500px]">
+             <TokenChart tokenSymbol={acc.symbol} />
+          </div>
+
+          {/* Swap Interface */}
+          <div className="xl:col-span-1">
+            <BuyInterface 
+              token={acc} 
+              onBuy={handleBuy} 
+              loading={buying} 
+              compact={true}
+            />
+          </div>
         </div>
 
         {/* Stats */}

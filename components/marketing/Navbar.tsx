@@ -64,14 +64,17 @@ const Navbar = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
         >
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-1.5 group">
             <Image 
-              src="/quant.svg" 
+              src="/quantlogo.svg" 
               alt="Quantum Wager" 
-              width={160} 
+              width={40} 
               height={40} 
-              className="w-auto h-8"
+              className="w-10 h-10 drop-shadow-[0_0_5px_rgba(168,85,247,0.5)] transition-all duration-300 group-hover:drop-shadow-[0_0_10px_rgba(168,85,247,0.8)]"
             />
+            <span className="text-lg font-bold tracking-tight text-white drop-shadow-[0_0_10px_rgba(168,85,247,0.3)] transition-all duration-300 group-hover:drop-shadow-[0_0_15px_rgba(168,85,247,0.6)]">
+              Quantum Wager
+            </span>
           </Link>
         </motion.div>
 

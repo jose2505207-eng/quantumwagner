@@ -10,9 +10,10 @@ interface BuyInterfaceProps {
   token: any;
   onBuy: (amount: number) => Promise<void>;
   loading: boolean;
+  compact?: boolean;
 }
 
-export function BuyInterface({ token, onBuy, loading }: BuyInterfaceProps) {
+export function BuyInterface({ token, onBuy, loading, compact = false }: BuyInterfaceProps) {
   const [amount, setAmount] = useState("");
   const [isFocused, setIsFocused] = useState(false);
 
@@ -30,7 +31,7 @@ export function BuyInterface({ token, onBuy, loading }: BuyInterfaceProps) {
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5, delay: 0.4 }}
-      className="relative overflow-hidden rounded-3xl bg-[#0A0A0A] border border-white/10 shadow-2xl shadow-black/50"
+      className="relative overflow-hidden rounded-3xl bg-[#0A0A0A] border border-white/10 shadow-2xl shadow-black/50 h-full"
     >
       {/* Header */}
       <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
@@ -43,7 +44,10 @@ export function BuyInterface({ token, onBuy, loading }: BuyInterfaceProps) {
       </div>
       
       <div className="p-6 lg:p-8">
-        <div className="flex flex-col lg:flex-row items-center gap-4 lg:gap-6">
+        <div className={cn(
+          "flex flex-col items-center gap-4",
+          !compact && "lg:flex-row lg:gap-6"
+        )}>
           
           {/* Input Section */}
           <div className="w-full lg:flex-1 space-y-2">
@@ -81,9 +85,15 @@ export function BuyInterface({ token, onBuy, loading }: BuyInterfaceProps) {
           </div>
 
           {/* Swap Arrow */}
-          <div className="flex justify-center lg:pt-6 w-full lg:w-auto">
+          <div className={cn(
+            "flex justify-center w-full",
+            !compact ? "lg:pt-6 lg:w-auto" : "py-2"
+          )}>
             <div className="bg-[#0A0A0A] p-3 rounded-xl border border-white/10 text-muted-foreground hover:text-white hover:border-primary/50 transition-all cursor-pointer shadow-lg">
-              <ArrowRight className="w-5 h-5 rotate-90 lg:rotate-0" />
+              <ArrowRight className={cn(
+                "w-5 h-5 rotate-90",
+                !compact && "lg:rotate-0"
+              )} />
             </div>
           </div>
 
@@ -112,7 +122,10 @@ export function BuyInterface({ token, onBuy, loading }: BuyInterfaceProps) {
           </div>
 
           {/* Action Button */}
-          <div className="w-full lg:w-[200px] lg:pt-6">
+          <div className={cn(
+            "w-full",
+            !compact && "lg:w-[200px] lg:pt-6"
+          )}>
              <Button
               onClick={handleBuyClick}
               disabled={loading || !amount || numericAmount <= 0}

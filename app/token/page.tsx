@@ -17,6 +17,7 @@ import Methods, { createToeknParams } from "@/app/utils/methods";
 import { Background } from "@/components/background";
 import { cn } from "@/lib/utils";
 import { MIN_TOKEN_SUPPLY, MAX_TOKEN_SUPPLY, MIN_INITIAL_PRICE } from "@/config";
+import { TokenChart } from "@/components/token-details/TokenChart";
 
 const PRESET_TAGS = ["Meme", "DeFi", "Utility", "Gaming", "AI", "Social", "DAO"];
 
@@ -584,6 +585,11 @@ export default function LaunchPage() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Chart Preview */}
+            <div className="h-[350px] w-full">
+               <TokenChart tokenSymbol={symbol || "TOKEN"} />
             </div>
 
             <div className="p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex gap-3">
