@@ -7,7 +7,7 @@ import { ArrowUpRight, ArrowDownRight, Activity } from "lucide-react";
 
 // Generate some realistic-looking random price data
 const generateData = (timeFrame: string) => {
-  const data = [];
+  const data: { time: string; value: number }[] = [];
   let price = 1.20;
   const now = new Date();
   let points = 24;
@@ -53,7 +53,7 @@ const generateData = (timeFrame: string) => {
 export function TokenChart({ tokenSymbol }: { tokenSymbol: string }) {
   const [mounted, setMounted] = useState(false);
   const [timeFrame, setTimeFrame] = useState('24H');
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<{ time: string; value: number }[]>([]);
   const [currentPrice, setCurrentPrice] = useState(0);
   const [priceChange, setPriceChange] = useState(0);
 
