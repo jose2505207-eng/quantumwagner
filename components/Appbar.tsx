@@ -60,17 +60,17 @@ export function AppBar() {
         {/* Logo */}
         <div
           onClick={() => router.push("/")}
-          className="cursor-pointer flex items-center gap-1.5 group"
+          className="cursor-pointer flex items-center gap-3 group"
         >
           <Image
             src="/quantlogo.svg"
             alt="Quantum Logo"
-            width={40}
-            height={40}
+            width={52}
+            height={52}
             priority
-            className="h-10 w-10 drop-shadow-[0_0_5px_rgba(168,85,247,0.5)] transition-all duration-300 group-hover:drop-shadow-[0_0_10px_rgba(168,85,247,0.8)]"
+            className="h-[52px] w-[52px] drop-shadow-[0_0_8px_rgba(168,85,247,0.6)] transition-all duration-300 group-hover:drop-shadow-[0_0_15px_rgba(168,85,247,0.9)]"
           />
-          <span className="text-lg font-bold tracking-tight text-white drop-shadow-[0_0_10px_rgba(168,85,247,0.3)] transition-all duration-300 group-hover:drop-shadow-[0_0_15px_rgba(168,85,247,0.6)]">
+          <span className="text-2xl font-bold tracking-tight text-white drop-shadow-[0_0_10px_rgba(168,85,247,0.3)] transition-all duration-300 group-hover:drop-shadow-[0_0_20px_rgba(168,85,247,0.6)]">
             Quantum Wager
           </span>
         </div>
