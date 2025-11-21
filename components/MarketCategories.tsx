@@ -109,14 +109,14 @@ export default function MarketCategories() {
                 <Container key={index} delay={0.1 + index * 0.05}>
                   <div 
                     onClick={() => router.push(`markets/category/${category.href}`)}
-                    className="group relative p-6 rounded-xl cursor-pointer overflow-hidden transition-all duration-500 hover:scale-[1.02] shadow-[0_0_20px_rgba(168,85,247,0.05)] hover:shadow-[0_0_30px_rgba(168,85,247,0.15)]"
+                    className="group relative p-6 rounded-xl cursor-pointer overflow-hidden transition-all duration-500 hover:scale-[1.02] shadow-[0_0_20px_rgba(168,85,247,0.1)] hover:shadow-[0_0_50px_rgba(168,85,247,0.25)] border border-white/10 hover:border-primary/50"
                   >
                     {/* Gradient border effect */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-xl"></div>
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-transparent to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-xl"></div>
                     <div className="absolute inset-[1px] bg-[#0A0A0A] rounded-xl"></div>
                     
                     {/* Subtle background glow */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-20 group-hover:opacity-40 transition-opacity duration-500 pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-30 group-hover:opacity-50 transition-opacity duration-500 pointer-events-none" />
 
                     {/* Card content */}
                     <div className="relative z-10">

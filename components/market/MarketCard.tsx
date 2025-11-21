@@ -46,8 +46,8 @@ const MarketCard = ({ market }) => {
 
   return (
     <Link href={`/markets/${market.id}`}>
-      <div className="flex flex-col p-6 border border-border/60 rounded-xl hover:border-primary/60 transition-all duration-300 ease-out group bg-[#0A0A0A]/50 backdrop-blur-sm hover:bg-[#0A0A0A]/80 hover:shadow-lg hover:shadow-primary/5 relative overflow-hidden cursor-pointer h-full">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
+      <div className="flex flex-col p-6 border border-border/60 rounded-xl hover:border-primary/60 transition-all duration-300 ease-out group bg-[#0A0A0A]/50 backdrop-blur-sm hover:bg-[#0A0A0A]/80 hover:shadow-[0_0_30px_rgba(168,85,247,0.15)] relative overflow-hidden cursor-pointer h-full">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/15 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
 
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
