@@ -1,6 +1,8 @@
 import React from "react";
 import Wrapper from "../global/wrapper";
 import Container from "../global/container";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import {
   TrendingUp,
   Users,
@@ -11,6 +13,7 @@ import {
 } from "lucide-react";
 
 const TradingStats = () => {
+  const { connected } = useWallet();
   const stats = [
     {
       icon: DollarSign,
@@ -130,47 +133,46 @@ const TradingStats = () => {
           </div>
         </Container>
 
-        <Container delay={0.3}>
-          <div className="relative mt-24 mx-auto max-w-5xl">
-            <div className="relative p-12 rounded-3xl overflow-hidden border border-white/10 bg-gradient-to-b from-white/5 to-transparent backdrop-blur-sm">
-              
-              {/* Glowing effects */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-2xl bg-primary/20 blur-[100px] -z-10 rounded-full opacity-50"></div>
-              
-              <div className="relative z-10 flex flex-col items-center text-center">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-8">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-                  </span>
-                  Live on Solana
-                </div>
-
-                <h3 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">
-                  Ready to start <span className="text-primary">trading?</span>
-                </h3>
+        {!connected && (
+          <Container delay={0.3}>
+            <div className="relative mt-24 mx-auto max-w-5xl">
+              <div className="relative p-12 rounded-3xl overflow-hidden border border-white/10 bg-gradient-to-b from-white/5 to-transparent backdrop-blur-sm">
                 
-                <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mb-10 leading-relaxed">
-                  Join thousands of traders making informed predictions. 
-                  Experience instant settlements and transparent markets.
-                </p>
+                {/* Glowing effects */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-2xl bg-primary/20 blur-[100px] -z-10 rounded-full opacity-50"></div>
+                
+                <div className="relative z-10 flex flex-col items-center text-center">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-8">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                    </span>
+                    Live on Solana
+                  </div>
 
-                <div className="flex flex-col sm:flex-row items-center gap-5 w-full sm:w-auto">
-                  <button className="w-full sm:w-auto group relative inline-flex items-center justify-center gap-3 px-8 py-4 bg-primary text-primary-foreground font-bold rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary/25">
-                    <span>Connect Wallet</span>
-                    <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                    </svg>
-                  </button>
+                  <h3 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">
+                    Ready to start <span className="text-primary">trading?</span>
+                  </h3>
+                  
+                  <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mb-10 leading-relaxed">
+                    Join thousands of traders making informed predictions. 
+                    Experience instant settlements and transparent markets.
+                  </p>
 
-                  <button className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold transition-all duration-300 hover:scale-105 backdrop-blur-sm">
-                    View Documentation
-                  </button>
+                  <div className="flex flex-col sm:flex-row items-center gap-5 w-full sm:w-auto">
+                    <div className="w-full sm:w-auto [&>button]:w-full [&>button]:sm:w-auto [&>button]:h-[56px] [&>button]:px-8 [&>button]:rounded-xl [&>button]:font-bold [&>button]:bg-primary [&>button]:hover:bg-primary/90 [&>button]:transition-all [&>button]:duration-300 [&>button]:hover:scale-105 [&>button]:hover:shadow-lg [&>button]:hover:shadow-primary/25">
+                      <WalletMultiButton />
+                    </div>
+
+                    <button className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold transition-all duration-300 hover:scale-105 backdrop-blur-sm">
+                      View Documentation
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </Container>
+          </Container>
+        )}
       </Wrapper>
     </div>
   );
