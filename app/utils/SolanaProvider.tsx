@@ -1,6 +1,6 @@
 "use client";
 
-import React, { FC, ReactNode, useMemo } from "react";
+import React, { FC, ReactNode, useMemo, useState, useEffect } from "react";
 import {
   ConnectionProvider,
   WalletProvider,
@@ -28,9 +28,20 @@ export const SolanaProvider: FC<SolanaProviderProps> = ({ children }) => {
 
   const endpoint = useMemo(() => clusterApiUrl(network), [network]);
 
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      const userAgent = window.navigator.userAgent;
+      const mobile = /iPhone|iPad|iPod|Android/i.test(userAgent);
+      setIsMobile(mobile);
+    };
+    checkMobile();
+  }, []);
+
   const wallets = useMemo(
-    () => [
-      new SolanaMobileWalletAdapter({
+    () => {
+      const mwa = new SolanaMobileWalletAdapter({
         addressSelector: createDefaultAddressSelector(),
         appIdentity: {
           name: "Quantum Wager",
@@ -40,11 +51,19 @@ export const SolanaProvider: FC<SolanaProviderProps> = ({ children }) => {
         authorizationResultCache: createDefaultAuthorizationResultCache(),
         cluster: network,
         onWalletNotFound: createDefaultWalletNotFoundHandler(),
-      }),
-      new PhantomWalletAdapter(),
-      new SolflareWalletAdapter(),
-    ],
-    [network]
+      });
+
+      if (isMobile) {
+        return [mwa];
+      }
+
+      return [
+        mwa,
+        new PhantomWalletAdapter(),
+        new SolflareWalletAdapter(),
+      ];
+    },
+    [network, isMobile]
   );
 
   return (
