@@ -6,7 +6,12 @@ import {
   WalletProvider,
 } from "@solana/wallet-adapter-react";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
-import { PhantomWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adapter-wallets";
+import { 
+  SolanaMobileWalletAdapter, 
+  createDefaultAuthorizationResultCache,
+  createDefaultAddressSelector,
+  createDefaultWalletNotFoundHandler
+} from "@solana-mobile/wallet-adapter-mobile";
 import {
   WalletModalProvider
 } from "@solana/wallet-adapter-react-ui";
@@ -24,8 +29,17 @@ export const SolanaProvider: FC<SolanaProviderProps> = ({ children }) => {
 
   const wallets = useMemo(
     () => [
-      new PhantomWalletAdapter(),
-      new SolflareWalletAdapter(),
+      new SolanaMobileWalletAdapter({
+        addressSelector: createDefaultAddressSelector(),
+        appIdentity: {
+          name: "Quantum Wager",
+          uri: typeof window !== 'undefined' ? window.location.origin : "https://quantumwager.com",
+          icon: "/quantlogo.svg",
+        },
+        authorizationResultCache: createDefaultAuthorizationResultCache(),
+        cluster: network,
+        onWalletNotFound: createDefaultWalletNotFoundHandler(),
+      }),
     ],
     [network]
   );
