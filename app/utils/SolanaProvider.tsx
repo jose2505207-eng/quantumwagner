@@ -5,7 +5,7 @@ import {
   ConnectionProvider,
   WalletProvider,
 } from "@solana/wallet-adapter-react";
-import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
+import { Adapter, WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { 
   SolanaMobileWalletAdapter, 
   createDefaultAuthorizationResultCache,
@@ -25,27 +25,30 @@ interface SolanaProviderProps {
 
 export const SolanaProvider: FC<SolanaProviderProps> = ({ children }) => {
   const network = WalletAdapterNetwork.Devnet;
-
   const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+  
+  const [wallets, setWallets] = useState<Adapter[]>([]);
 
-  const wallets = useMemo(
-    () => [
-      new SolanaMobileWalletAdapter({
-        addressSelector: createDefaultAddressSelector(),
-        appIdentity: {
-          name: "Quantum Wager",
-          uri: typeof window !== 'undefined' ? window.location.origin : "https://quantumwager.com",
-          icon: typeof window !== 'undefined' ? `${window.location.origin}/quantlogo.svg` : "/quantlogo.svg",
-        },
-        authorizationResultCache: createDefaultAuthorizationResultCache(),
-        cluster: network,
-        onWalletNotFound: createDefaultWalletNotFoundHandler(),
-      }),
-      new PhantomWalletAdapter(),
-      new SolflareWalletAdapter(),
-    ],
-    [network]
-  );
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const mwa = new SolanaMobileWalletAdapter({
+      addressSelector: createDefaultAddressSelector(),
+      appIdentity: {
+        name: "Quantum Wager",
+        uri: window.location.origin,
+        icon: `${window.location.origin}/quantlogo.svg`,
+      },
+      authorizationResultCache: createDefaultAuthorizationResultCache(),
+      cluster: network,
+      onWalletNotFound: createDefaultWalletNotFoundHandler(),
+    });
+
+    const phantom = new PhantomWalletAdapter();
+    const solflare = new SolflareWalletAdapter();
+
+    setWallets([mwa, phantom, solflare]);
+  }, [network]);
 
   return (
     <ConnectionProvider endpoint={endpoint}>
