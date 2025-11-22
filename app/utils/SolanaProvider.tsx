@@ -28,20 +28,9 @@ export const SolanaProvider: FC<SolanaProviderProps> = ({ children }) => {
 
   const endpoint = useMemo(() => clusterApiUrl(network), [network]);
 
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      const userAgent = window.navigator.userAgent;
-      const mobile = /iPhone|iPad|iPod|Android/i.test(userAgent);
-      setIsMobile(mobile);
-    };
-    checkMobile();
-  }, []);
-
   const wallets = useMemo(
-    () => {
-      const mwa = new SolanaMobileWalletAdapter({
+    () => [
+      new SolanaMobileWalletAdapter({
         addressSelector: createDefaultAddressSelector(),
         appIdentity: {
           name: "Quantum Wager",
@@ -51,24 +40,16 @@ export const SolanaProvider: FC<SolanaProviderProps> = ({ children }) => {
         authorizationResultCache: createDefaultAuthorizationResultCache(),
         cluster: network,
         onWalletNotFound: createDefaultWalletNotFoundHandler(),
-      });
-
-      if (isMobile) {
-        return [mwa];
-      }
-
-      return [
-        mwa,
-        new PhantomWalletAdapter(),
-        new SolflareWalletAdapter(),
-      ];
-    },
-    [network, isMobile]
+      }),
+      new PhantomWalletAdapter(),
+      new SolflareWalletAdapter(),
+    ],
+    [network]
   );
 
   return (
     <ConnectionProvider endpoint={endpoint}>
-      <WalletProvider wallets={wallets} autoConnect>
+      <WalletProvider wallets={wallets} autoConnect onError={(err) => console.error("Wallet Error:", err)}>
         <WalletModalProvider>{children}</WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>
