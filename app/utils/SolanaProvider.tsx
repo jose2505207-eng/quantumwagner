@@ -34,7 +34,7 @@ export const SolanaProvider: FC<SolanaProviderProps> = ({ children }) => {
         appIdentity: {
           name: "Quantum Wager",
           uri: typeof window !== 'undefined' ? window.location.origin : "https://quantumwager.com",
-          icon: typeof window !== 'undefined' ? `${window.location.origin}/quantlogo.svg` : "/quantlogo.svg",
+          icon: "/quantlogo.svg",
         },
         authorizationResultCache: createDefaultAuthorizationResultCache(),
         cluster: network,
@@ -46,7 +46,7 @@ export const SolanaProvider: FC<SolanaProviderProps> = ({ children }) => {
 
   return (
     <ConnectionProvider endpoint={endpoint}>
-      <WalletProvider wallets={wallets} autoConnect>
+      <WalletProvider wallets={wallets} autoConnect onError={(err) => console.error("Wallet Error:", err)}>
         <WalletModalProvider>{children}</WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>
