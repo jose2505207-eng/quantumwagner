@@ -30,24 +30,32 @@ export const SolanaProvider: FC<SolanaProviderProps> = ({ children }) => {
   const [wallets, setWallets] = useState<Adapter[]>([]);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    const initWallets = async () => {
+      if (typeof window === 'undefined') return;
 
-    const mwa = new SolanaMobileWalletAdapter({
-      addressSelector: createDefaultAddressSelector(),
-      appIdentity: {
-        name: "Quantum Wager",
-        uri: window.location.origin,
-        icon: `${window.location.origin}/quantlogo.svg`,
-      },
-      authorizationResultCache: createDefaultAuthorizationResultCache(),
-      cluster: network,
-      onWalletNotFound: createDefaultWalletNotFoundHandler(),
-    });
+      try {
+        const mwa = new SolanaMobileWalletAdapter({
+          addressSelector: createDefaultAddressSelector(),
+          appIdentity: {
+            name: "Quantum Wager",
+            uri: window.location.origin,
+            icon: `${window.location.origin}/quantlogo.svg`,
+          },
+          authorizationResultCache: createDefaultAuthorizationResultCache(),
+          cluster: network,
+          onWalletNotFound: createDefaultWalletNotFoundHandler(),
+        });
 
-    const phantom = new PhantomWalletAdapter();
-    const solflare = new SolflareWalletAdapter();
+        const phantom = new PhantomWalletAdapter();
+        const solflare = new SolflareWalletAdapter();
 
-    setWallets([mwa, phantom, solflare]);
+        setWallets([mwa, phantom, solflare]);
+      } catch (error) {
+        console.error("Failed to initialize wallets:", error);
+      }
+    };
+
+    initWallets();
   }, [network]);
 
   return (
