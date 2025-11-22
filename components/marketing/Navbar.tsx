@@ -90,6 +90,14 @@ const Navbar = () => {
               </NavigationMenuItem>
 
               <NavigationMenuItem>
+                <Link href="/how-it-works" legacyBehavior passHref>
+                  <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "bg-transparent text-muted-foreground hover:text-foreground focus:text-foreground hover:bg-white/5")}>
+                    How It Works
+                  </NavigationMenuLink>
+                </Link>
+              </NavigationMenuItem>
+
+              <NavigationMenuItem>
                 <NavigationMenuTrigger className="bg-transparent text-muted-foreground hover:text-foreground focus:text-foreground hover:bg-white/5">Token</NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] bg-[#0A0A0A] border border-white/10">
@@ -152,8 +160,7 @@ const Navbar = () => {
         <Container animation="fadeLeft" delay={0.1}>
           <div className="flex items-center gap-x-4">
             <div className="hidden lg:flex items-center gap-3">
-                <WalletMultiButton className="!bg-primary hover:!bg-primary/90 !h-9 !px-4 !text-sm !font-medium !rounded-md transition-all duration-300 hover:!scale-105" />
-                {connected && <WalletDisconnectButton className="!h-9 !px-3 !text-sm !bg-red-500/10 hover:!bg-red-500/20 !text-red-500 !border !border-red-500/20 !rounded-md" />}
+                <WalletMultiButton style={{}} />
             </div>
             <div className="lg:hidden">
               <MobileMenu />

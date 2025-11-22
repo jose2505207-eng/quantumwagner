@@ -1,7 +1,8 @@
 "use client";
 
 import { 
-  BarChart3, Zap, Swords, ArrowRight 
+  BarChart3, Zap, Swords, Rocket, Coins, 
+  Briefcase, Trophy, PlusCircle, ArrowRight 
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Wrapper from "./global/wrapper";
@@ -38,6 +39,51 @@ export default function MarketCategories() {
       color: "text-purple-400",
       bg: "bg-purple-400/10",
       border: "border-purple-400/20"
+    },
+    {
+      title: "Token Launchpad",
+      description: "Deploy fully-featured SPL tokens on Solana in seconds. Zero coding required.",
+      icon: Rocket,
+      link: "/token",
+      color: "text-pink-400",
+      bg: "bg-pink-400/10",
+      border: "border-pink-400/20"
+    },
+    {
+      title: "Token Marketplace",
+      description: "Discover, analyze, and swap the hottest new tokens. Advanced filtering and real-time data.",
+      icon: Coins,
+      link: "/buytoken",
+      color: "text-emerald-400",
+      bg: "bg-emerald-400/10",
+      border: "border-emerald-400/20"
+    },
+    {
+      title: "Create Battle",
+      description: "Host your own prediction events. Set the terms and earn fees as the organizer.",
+      icon: PlusCircle,
+      link: "/battlearena/new",
+      color: "text-orange-400",
+      bg: "bg-orange-400/10",
+      border: "border-orange-400/20"
+    },
+    {
+      title: "Leaderboard",
+      description: "Compete against the best predictors. Climb the ranks and earn reputation points.",
+      icon: Trophy,
+      link: "/leaderboard",
+      color: "text-amber-400",
+      bg: "bg-amber-400/10",
+      border: "border-amber-400/20"
+    },
+    {
+      title: "Portfolio",
+      description: "Your command center. Track active positions, monitor PnL, and manage assets.",
+      icon: Briefcase,
+      link: "/portfolio",
+      color: "text-cyan-400",
+      bg: "bg-cyan-400/10",
+      border: "border-cyan-400/20"
     }
   ];
 
@@ -69,7 +115,7 @@ export default function MarketCategories() {
         </Container>
 
         <Container delay={0.1}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {categories.map((category, index) => (
               <Container key={index} delay={0.1 + index * 0.05}>
                 <div 
