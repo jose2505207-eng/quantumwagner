@@ -1,0 +1,348 @@
+// Quantum Wager — persistence schema.
+// SQLite for zero-friction local/dev. Swap `provider`/`url` for Postgres in prod.
+// Server is the source of truth for XP, wins, and resolution.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------------------------------
+// Identity & auth
+// ----------------------------------------------------------------------------
+
+model User {
+  id            String          @id @default(cuid())
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  username      String?
+  // primary wallet address (denormalised for quick lookup/auth)
+  walletAddress String          @unique
+  isDemo        Boolean         @default(false)
+
+  wallets       Wallet[]
+  profile       PlayerProfile?
+  xpEvents      XPEvent[]
+  userQuests    UserQuest[]
+  streak        Streak?
+  predictions   Prediction[]
+  fastBetEntries FastBetEntry[]
+  battleEntries MemeBattleEntry[]
+  battleVotes   MemeBattleVote[]
+  launchTokens  LaunchToken[]
+  leaderboard   LeaderboardEntry[]
+  transactions  Transaction[]
+  auditLogs     AuditLog[]
+  marketsCreated Market[]       @relation("MarketCreator")
+}
+
+model Wallet {
+  id        String   @id @default(cuid())
+  address   String   @unique
+  chain     String   @default("solana")
+  network   String   @default("devnet")
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+}
+
+// Single-use login nonces for signed-message auth.
+model AuthNonce {
+  id            String   @id @default(cuid())
+  walletAddress String
+  nonce         String   @unique
+  used          Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  expiresAt     DateTime
+}
+
+// ----------------------------------------------------------------------------
+// Gamification
+// ----------------------------------------------------------------------------
+
+model PlayerProfile {
+  id           String   @id @default(cuid())
+  user         User     @relation(fields: [userId], references: [id])
+  userId       String   @unique
+  xp           Int      @default(0)
+  rankId       String   @default("unranked")
+  level        Int      @default(1)
+  // milestone level ids completed, stored as JSON string array
+  completedLevels String @default("[]")
+  wins         Int      @default(0)
+  losses       Int      @default(0)
+  updatedAt    DateTime @updatedAt
+}
+
+// Append-only XP ledger. Every XP change is an event (auditable).
+model XPEvent {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  amount    Int
+  reason    String
+  // optional linkage to the source action
+  refType   String?
+  refId     String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Quest {
+  id          String      @id // stable slug, e.g. "daily-checkin"
+  title       String
+  description String
+  xp          Int
+  kind        String      @default("claim") // claim | derived
+  active      Boolean     @default(true)
+  userQuests  UserQuest[]
+}
+
+model UserQuest {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  quest     Quest    @relation(fields: [questId], references: [id])
+  questId   String
+  // calendar day (yyyy-mm-dd) this claim belongs to (daily reset)
+  day       String
+  claimedAt DateTime @default(now())
+
+  @@unique([userId, questId, day])
+  @@index([userId, day])
+}
+
+model Streak {
+  id          String    @id @default(cuid())
+  user        User      @relation(fields: [userId], references: [id])
+  userId      String    @unique
+  count       Int       @default(0)
+  lastCheckIn String?   // yyyy-mm-dd
+  updatedAt   DateTime  @updatedAt
+}
+
+// ----------------------------------------------------------------------------
+// Prediction markets
+// ----------------------------------------------------------------------------
+
+model Market {
+  id          String   @id @default(cuid())
+  question    String
+  description String   @default("")
+  category    String   @default("CRYPTO")
+  status      String   @default("ACTIVE") // ACTIVE | RESOLVED | CANCELLED
+  outcome     String?  // YES | NO | null
+  yesPool     Float    @default(0)
+  noPool      Float    @default(0)
+  endTime     DateTime
+  pda         String?  // on-chain market account, if any
+  isDemo      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  creator     User?    @relation("MarketCreator", fields: [creatorId], references: [id])
+  creatorId   String?
+  predictions Prediction[]
+  resolutions OracleResolution[]
+
+  @@index([status])
+}
+
+model Prediction {
+  id           String   @id @default(cuid())
+  market       Market   @relation(fields: [marketId], references: [id])
+  marketId     String
+  user         User     @relation(fields: [userId], references: [id])
+  userId       String
+  side         String   // YES | NO
+  amount       Float
+  // settlement
+  settled      Boolean  @default(false)
+  won          Boolean?
+  payout       Float    @default(0)
+  txSignature  String?  // on-chain stake tx, if recorded
+  createdAt    DateTime @default(now())
+  settledAt    DateTime?
+
+  @@index([userId])
+  @@index([marketId])
+}
+
+// ----------------------------------------------------------------------------
+// Fast bets
+// ----------------------------------------------------------------------------
+
+model FastBet {
+  id          String   @id @default(cuid())
+  question    String
+  symbol      String   @default("")
+  status      String   @default("live") // upcoming | live | closing-soon | resolving | resolved
+  outcome     String?  // YES | NO
+  pool        Float    @default(0)
+  startTime   DateTime @default(now())
+  endTime     DateTime
+  isDemo      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  entries     FastBetEntry[]
+}
+
+model FastBetEntry {
+  id          String   @id @default(cuid())
+  fastBet     FastBet  @relation(fields: [fastBetId], references: [id])
+  fastBetId   String
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  side        String   // YES | NO
+  amount      Float
+  won         Boolean?
+  payout      Float    @default(0)
+  txSignature String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ----------------------------------------------------------------------------
+// Meme battles
+// ----------------------------------------------------------------------------
+
+model MemeBattle {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @default("")
+  status      String   @default("OPEN") // OPEN | ACTIVE | RESOLVED
+  sideA       String   @default("Side A")
+  sideB       String   @default("Side B")
+  winner      String?  // A | B
+  pda         String?
+  isDemo      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  entries     MemeBattleEntry[]
+  votes       MemeBattleVote[]
+}
+
+model MemeBattleEntry {
+  id        String     @id @default(cuid())
+  battle    MemeBattle @relation(fields: [battleId], references: [id])
+  battleId  String
+  user      User       @relation(fields: [userId], references: [id])
+  userId    String
+  side      String     // A | B
+  amount    Float
+  txSignature String?
+  createdAt DateTime   @default(now())
+
+  @@index([userId])
+}
+
+model MemeBattleVote {
+  id        String     @id @default(cuid())
+  battle    MemeBattle @relation(fields: [battleId], references: [id])
+  battleId  String
+  user      User       @relation(fields: [userId], references: [id])
+  userId    String
+  side      String     // A | B
+  createdAt DateTime   @default(now())
+
+  @@unique([battleId, userId])
+}
+
+// ----------------------------------------------------------------------------
+// Launchpad
+// ----------------------------------------------------------------------------
+
+model LaunchToken {
+  id          String   @id @default(cuid())
+  name        String
+  symbol      String
+  description String   @default("")
+  imageUri    String   @default("")
+  mint        String?  // SPL mint, if deployed
+  totalSupply String   @default("0")
+  creator     User     @relation(fields: [creatorId], references: [id])
+  creatorId   String
+  txSignature String?
+  isDemo      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+// ----------------------------------------------------------------------------
+// Leaderboard
+// ----------------------------------------------------------------------------
+
+model LeaderboardSeason {
+  id        String   @id @default(cuid())
+  name      String
+  startsAt  DateTime @default(now())
+  endsAt    DateTime?
+  active    Boolean  @default(true)
+  entries   LeaderboardEntry[]
+}
+
+model LeaderboardEntry {
+  id        String            @id @default(cuid())
+  season    LeaderboardSeason @relation(fields: [seasonId], references: [id])
+  seasonId  String
+  user      User              @relation(fields: [userId], references: [id])
+  userId    String
+  xp        Int               @default(0)
+  wins      Int               @default(0)
+  updatedAt DateTime          @updatedAt
+
+  @@unique([seasonId, userId])
+  @@index([seasonId])
+}
+
+// ----------------------------------------------------------------------------
+// Oracle / resolution
+// ----------------------------------------------------------------------------
+
+model OracleResolution {
+  id         String   @id @default(cuid())
+  market     Market   @relation(fields: [marketId], references: [id])
+  marketId   String
+  source     String   // dev | admin | provider:<name>
+  status     String   @default("pending") // pending | proposed | resolved | disputed | failed
+  outcome    String?  // YES | NO
+  confidence Float    @default(0)
+  raw        String?  // raw provider payload (JSON string)
+  createdAt  DateTime @default(now())
+  resolvedAt DateTime?
+
+  @@index([marketId])
+}
+
+// ----------------------------------------------------------------------------
+// Transactions & audit
+// ----------------------------------------------------------------------------
+
+model Transaction {
+  id          String   @id @default(cuid())
+  user        User?    @relation(fields: [userId], references: [id])
+  userId      String?
+  kind        String   // prediction | fastbet | battle | launch | claim | resolve
+  amount      Float    @default(0)
+  signature   String?  // on-chain tx signature, if any
+  refType     String?
+  refId       String?
+  status      String   @default("recorded")
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actor     User?    @relation(fields: [actorId], references: [id])
+  actorId   String?
+  action    String   // e.g. market.create, prediction.place, market.resolve
+  target    String?
+  meta      String?  // JSON string
+  createdAt DateTime @default(now())
+
+  @@index([action])
+}
