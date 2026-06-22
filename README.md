@@ -38,22 +38,46 @@ Prerequisites: Node 20+, npm.
 npm install --legacy-peer-deps
 
 # 2. Configure environment
-cp .env.example .env.local
-#   edit .env.local — set NEXT_PUBLIC_API_URL and Solana RPC if needed
+cp .env.example .env
+#   defaults work out of the box for local dev (SQLite + same-origin API)
 
-# 3. Run the dev server
-npm run dev          # http://localhost:3000
+# 3. Set up the database (Prisma + SQLite)
+npm run db:migrate       # create the SQLite db + apply migrations
+npm run db:seed          # load clearly-marked DEMO data (isDemo=true)
 
-# 4. Production build / serve
+# 4. Run the app (frontend + in-repo API together, one process)
+npm run dev              # http://localhost:3000
+
+# 5. Production build / serve
 npm run build
-npm run start
+npm run start            # requires a strong JWT_SECRET in the environment
 ```
 
-With `NEXT_PUBLIC_APP_MODE=development` (default) the app runs fully even if the
-backend is unreachable — it falls back to badged demo data so you can explore
-the whole journey offline.
+The **backend lives in this repo** as Next.js Route Handlers under `app/api/*`
+(see [`docs/API.md`](docs/API.md)), backed by Prisma + SQLite — so `npm run dev`
+runs the whole stack on one port. `NEXT_PUBLIC_API_URL` defaults to same-origin;
+set it to point at an external backend instead.
 
-To run against a local backend, set `NEXT_PUBLIC_API_URL=http://localhost:8000`.
+Verify the API quickly:
+
+```bash
+curl localhost:3000/api/health          # { success, data: { status: "healthy" } }
+curl localhost:3000/api/leaderboard     # seeded season standings
+```
+
+With `NEXT_PUBLIC_APP_MODE=development` (default) the UI also falls back to
+badged demo data when an endpoint is empty/unreachable, so the whole journey is
+explorable offline.
+
+### Database commands
+
+```bash
+npm run db:migrate        # dev migration (prisma migrate dev)
+npm run db:migrate:deploy # apply migrations in CI/prod (prisma migrate deploy)
+npm run db:seed           # seed DEMO data
+npm run db:reset          # drop + recreate + reseed (destructive)
+npm run db:studio         # browse data in Prisma Studio
+```
 
 ## Deploy Frontend
 
@@ -74,31 +98,50 @@ Set these in the host's environment (see `.env.example` for the full list):
 
 ## Deploy Backend
 
-The backend is a **separate service** (hosted at `quantum-wager.onrender.com`)
-and is not part of this repo. The frontend only needs `NEXT_PUBLIC_API_URL`
-pointed at it. The endpoints this app consumes:
+The backend ships **inside this app** (Next.js Route Handlers), so deploying the
+frontend deploys the backend. For a Node host:
 
-```
-POST /api/auth/nonce        GET  /api/markets
-POST /api/auth/verify       GET  /api/markets/:id
-GET  /api/auth/profile      GET  /api/positions
-                            POST /api/positions
+```bash
+npm run build
+npm run db:migrate:deploy   # apply migrations to the production database
+npm run db:seed             # optional: demo data
+npm run start
 ```
 
-When standing up your own backend, keep these paths (or update `lib/api.ts`).
+Required server env (see `.env.example`): `DATABASE_URL` (use Postgres in prod —
+change the Prisma datasource `provider` to `postgresql`), a strong `JWT_SECRET`,
+`WALLET_AUTH_MESSAGE`, `ADMIN_RESOLUTION_KEY`, `ORACLE_MODE`. Full endpoint list:
+[`docs/API.md`](docs/API.md).
+
+> On serverless hosts (e.g. Vercel) SQLite's local file is not durable — point
+> `DATABASE_URL` at a managed Postgres and switch the Prisma provider.
+
+An external backend can still be used instead by setting `NEXT_PUBLIC_API_URL`.
 
 ## Deploy Contracts to Devnet
 
-The Anchor program is already deployed to devnet
-(`C8SAQXW3qhWTT1uGdpSegU466qTQAKQs3JB15TQ8toSc`); its IDL lives in
-[`idl/`](idl/). To deploy your own build, see
-[`docs/DEVNET_DEPLOYMENT.md`](docs/DEVNET_DEPLOYMENT.md).
+A full Anchor program is already deployed to devnet
+(`C8SAQXW3qhWTT1uGdpSegU466qTQAKQs3JB15TQ8toSc`); its IDL lives in [`idl/`](idl/).
+A clean, minimal, auditable reference program (escrow + resolution + tests) is
+scaffolded in [`contracts/quantum_wager/`](contracts/quantum_wager/README.md).
+
+```bash
+cd contracts/quantum_wager
+anchor build && anchor keys sync
+anchor test
+anchor deploy --provider.cluster devnet
+```
+
+See [`docs/DEVNET_DEPLOYMENT.md`](docs/DEVNET_DEPLOYMENT.md) and the workspace
+README. **Devnet only — mainnet requires an audit, economic, and legal review.**
 
 ## Documentation
 
 | Doc | Contents |
 | --- | --- |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md)       | System topology, stack, data flow |
+| [API.md](docs/API.md)                         | Full REST endpoint reference |
 | [GAME_LOOP.md](docs/GAME_LOOP.md)             | Levels, XP, ranks, quests, core loop |
 | [SECURITY_NOTES.md](docs/SECURITY_NOTES.md)   | Trust boundaries, prod/mainnet checklist |
 | [DEVNET_DEPLOYMENT.md](docs/DEVNET_DEPLOYMENT.md) | Anchor devnet deployment |
+| [BUILD_PROGRESS.md](docs/BUILD_PROGRESS.md)   | Build log (loop-by-loop) |

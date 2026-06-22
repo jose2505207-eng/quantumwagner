@@ -31,3 +31,48 @@ Running log of the autonomous build. Newest entries at the bottom of each loop.
 - Server is authoritative for XP / wins / resolution. Frontend never grants XP server-side.
 
 **Gaps to close (this run):** in-repo backend + DB + migrations + seed (Loops 4/5/6), oracle resolver (13), frontend→backend wiring (7-11), contracts workspace scaffold (12), verification + docs (17-20).
+
+## Loops 4 / 5 / 6 — Backend + DB + Wallet Auth (DONE)
+
+- Prisma schema (20 models) + initial migration + idempotent seed (DEMO-flagged).
+- `server/*` libs: db singleton, zod env validation (build-phase aware), http
+  envelope/error wrapper, ed25519 wallet auth (tweetnacl) + JWT, user/profile
+  serializer, authoritative `awardXp`/`completeLevelServer`, quests sync, audit.
+- 30+ Next route handlers (Node runtime): health, config/public, auth
+  (nonce/verify-wallet/me + legacy verify/profile), player
+  (profile/progress/quests/claim), markets (+predictions/resolve/positions),
+  fast-bets, battles, launchpad, leaderboard, oracle (webhook/resolutions).
+- Verified: `npm run db:migrate`, `npm run db:seed` (4 users/3 markets/4 lb
+  entries/4 quests), `npm run build` (all routes), `tsc` clean.
+
+## Loop 13 — Oracle Resolution (DONE)
+
+- `server/oracle.ts`: `OracleAdapter` interface + `devResolver` + `adminResolver`
+  (key-gated) + `applyResolution` (persists resolution, settles predictions
+  pari-mutuel, awards XP/wins, updates leaderboard, audit). No hardcoded wins.
+- `/api/oracle/webhook` + `/api/oracle/resolutions/:id`.
+
+## Loops 7–11 + 14 — Frontend ↔ Backend + End-to-End (DONE)
+
+- API base defaults to same-origin (in-repo backend); `NEXT_PUBLIC_API_URL` overrides.
+- `/api/positions` for the portfolio; `useLeaderboard` + `LiveLeaderboard`
+  (real season standings) on the leaderboard page; `GameSync` hydrates the HUD
+  from `/api/player/progress` (server-authoritative XP).
+- E2E proven via tsx script: nonce → sign → verify (L1, +100xp) → create market
+  → first prediction (L2, 250xp) → admin oracle resolve → win settled (+120xp,
+  100% win rate) → leaderboard updated (rank, rookie tier).
+
+## Loop 12 — Contracts Workspace (DONE, scaffold)
+
+- `contracts/quantum_wager/`: Anchor program (initialize_market, place_bet→vault
+  escrow, resolve_market admin-gated, claim_winnings pari-mutuel, events),
+  Anchor.toml/Cargo, mocha tests, deploy migration, devnet README. UNAUDITED /
+  devnet-only with mainnet checklist. Excluded from root tsconfig.
+  (Not compiled here — no Rust/Anchor toolchain in this environment.)
+
+## Loops 17–20 — Verify + Docs (DONE)
+
+- `.env.example` expanded (frontend + backend + contracts vars).
+- `docs/API.md` (full endpoint reference); README run/deploy sections rewritten
+  for the in-repo backend + DB; docs index updated.
+- Final verification recorded in the closing report.
