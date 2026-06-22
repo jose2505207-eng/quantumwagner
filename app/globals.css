@@ -337,5 +337,196 @@ image {
 }
 
 #nprogress .spinner {
-  display: none !important; 
+  display: none !important;
+}
+
+/* =====================================================================
+   QUANTUM WAGER — Neon arena design system
+   Reusable tokens + utilities used by the game components.
+   ===================================================================== */
+
+:root {
+  /* Brand neon palette */
+  --qw-bg: #050505;
+  --qw-bg-elev: #0b0b12;
+  --qw-purple: #8b5cf6;
+  --qw-magenta: #d946ef;
+  --qw-pink: #ec4899;
+  --qw-cyan: #22d3ee;
+  --qw-blue: #3b82f6;
+  --qw-amber: #f59e0b;
+  --qw-green: #22c55e;
+  --qw-red: #ef4444;
+
+  --qw-glass-bg: rgba(255, 255, 255, 0.035);
+  --qw-glass-border: rgba(168, 85, 247, 0.18);
+}
+
+/* Glass panel — the base surface for every game card/HUD */
+.qw-glass {
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.05),
+    rgba(10, 10, 18, 0.6)
+  );
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--qw-glass-border);
+  border-radius: 1rem;
+}
+
+/* Soft outer neon glow */
+.qw-glow {
+  box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.15),
+    0 8px 40px -12px rgba(168, 85, 247, 0.4);
+}
+.qw-glow-cyan {
+  box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.18),
+    0 8px 40px -12px rgba(34, 211, 238, 0.45);
+}
+
+/* Card lift on hover (respects reduced motion below) */
+.qw-lift {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.25s ease;
+  will-change: transform;
+}
+.qw-lift:hover {
+  transform: translateY(-4px);
+  border-color: rgba(168, 85, 247, 0.45);
+  box-shadow: 0 18px 50px -18px rgba(168, 85, 247, 0.55);
+}
+
+/* Neon gradient text for hero/headings */
+.qw-gradient-text {
+  background: linear-gradient(
+    100deg,
+    var(--qw-cyan),
+    var(--qw-purple) 45%,
+    var(--qw-magenta)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Button shine sweep */
+.qw-shine {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.qw-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-120%);
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.25) 50%,
+    transparent 80%
+  );
+  transition: transform 0.7s ease;
+  z-index: 1;
+}
+.qw-shine:hover::after {
+  transform: translateX(120%);
+}
+
+/* Live pulse dot */
+.qw-pulse-dot {
+  position: relative;
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: var(--qw-green);
+}
+.qw-pulse-dot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: var(--qw-green);
+  animation: qw-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes qw-ping {
+  75%,
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+/* XP toast rise */
+@keyframes qw-xp-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+  12% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  85% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+}
+.qw-xp-toast {
+  animation: qw-xp-rise 2.6s ease forwards;
+}
+
+/* Animated gradient progress fill */
+@keyframes qw-bar-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+.qw-bar-fill {
+  background: linear-gradient(
+    90deg,
+    var(--qw-cyan),
+    var(--qw-purple),
+    var(--qw-magenta),
+    var(--qw-cyan)
+  );
+  background-size: 200% 100%;
+  animation: qw-bar-flow 3s linear infinite;
+}
+
+/* Subtle arena grid backdrop */
+.qw-grid-bg {
+  background-image: radial-gradient(
+      circle at 50% 0%,
+      rgba(139, 92, 246, 0.12),
+      transparent 55%
+    ),
+    linear-gradient(rgba(168, 85, 247, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(168, 85, 247, 0.05) 1px, transparent 1px);
+  background-size: 100% 100%, 44px 44px, 44px 44px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qw-lift,
+  .qw-shine::after,
+  .qw-pulse-dot::before,
+  .qw-xp-toast,
+  .qw-bar-fill {
+    animation: none !important;
+    transition: none !important;
+  }
+  .qw-lift:hover {
+    transform: none;
+  }
 }

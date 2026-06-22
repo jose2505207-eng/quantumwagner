@@ -14,6 +14,7 @@ import MobileMenu from "./mobile-menu";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletDisconnectButton, WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { useUserStore } from "@/store/userInfo";
+import { NavbarHUD } from "@/components/game";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -159,6 +160,7 @@ const Navbar = () => {
 
         <Container animation="fadeLeft" delay={0.1}>
           <div className="flex items-center gap-x-4">
+            <NavbarHUD />
             <div className="hidden lg:flex items-center gap-3">
                 <WalletMultiButton style={{}} />
             </div>

@@ -1,6 +1,7 @@
 "use client";
 import { useParams } from "next/navigation";
-import { Spinner } from "../../page";
+import { Spinner } from "@/components/custom/Spinner";
+import { toDisplay } from "@/lib/format";
 import { BN, web3 } from "@coral-xyz/anchor";
 import Image from "next/image";
 import {
@@ -21,20 +22,6 @@ import { useUserTokens } from "@/app/utils/useUserTokens";
 import Methods from "@/app/utils/methods";
 
 const { PublicKey } = web3;
-
-export const toDisplay = (val): string => {
-  if (val === null || val === undefined) return "N/A";
-  try {
-    if (val instanceof PublicKey) return val.toBase58();
-    if (typeof val === "object" && val.words) return new BN(val).toString();
-    if (BN.isBN?.(val)) return val.toString();
-    if (typeof val === "string" && /^[0-9a-fA-F]+$/.test(val))
-      return parseInt(val, 16).toLocaleString();
-    return val.toString();
-  } catch {
-    return String(val);
-  }
-};
 
 export default function Token() {
   const params = useParams();

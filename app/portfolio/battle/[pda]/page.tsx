@@ -1,11 +1,11 @@
 "use client";
 
-import { Spinner } from "@/app/portfolio/page";
+import { Spinner } from "@/components/custom/Spinner";
 import { useAllTokens } from "@/app/utils/useAllTokens";
 import { useUserBattles } from "@/app/utils/useUserBattles";
 import { useParams } from "next/navigation";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
-import { toDisplay } from "../../token/[mid]/page";
+import { toDisplay } from "@/lib/format";
 import Methods from "@/app/utils/methods";
 import { useState } from "react";
 import {

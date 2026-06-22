@@ -3,9 +3,9 @@
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import Methods from "@/app/utils/methods";
-import { Spinner } from "@/app/portfolio/page";
+import { Spinner } from "@/components/custom/Spinner";
 import { useAllTokens } from "@/app/utils/useAllTokens";
-import { toDisplay } from "@/app/portfolio/token/[mid]/page";
+import { toDisplay } from "@/lib/format";
 import { Background } from "@/components/background";
 import { TokenHeader } from "@/components/token-details/token-header";
 import { TokenStats } from "@/components/token-details/token-stats";

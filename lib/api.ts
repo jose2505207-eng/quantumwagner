@@ -1,0 +1,72 @@
+/**
+ * Typed HTTP client for the LIVE Quantum Wager backend.
+ *
+ * This is the single entry point for real REST calls. It injects the wallet JWT
+ * (stored by walletAuth) and centralises base URL + error handling so screens
+ * never hand-roll axios calls with hardcoded URLs again.
+ */
+import axios, { AxiosError, AxiosInstance } from "axios";
+import { API_URL } from "@/lib/game/config";
+import { Market } from "@/app/types";
+
+export const api: AxiosInstance = axios.create({
+  baseURL: API_URL,
+  timeout: 15_000,
+});
+
+// Attach the wallet auth token (if present) to every request.
+api.interceptors.request.use((cfg) => {
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("token");
+    if (token) cfg.headers.Authorization = `Bearer ${token}`;
+  }
+  return cfg;
+});
+
+export class ApiError extends Error {
+  status?: number;
+  constructor(message: string, status?: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
+function toApiError(err: unknown, fallback: string): ApiError {
+  const ax = err as AxiosError<{ message?: string }>;
+  const msg = ax?.response?.data?.message || ax?.message || fallback;
+  return new ApiError(msg, ax?.response?.status);
+}
+
+// ----------------------------------------------------------------------------
+// Markets (live REST: GET /api/markets, GET /api/markets/:id)
+// ----------------------------------------------------------------------------
+
+export async function getMarkets(): Promise<Market[]> {
+  try {
+    const res = await api.get(`/api/markets`);
+    return (res.data?.data?.markets as Market[]) ?? [];
+  } catch (err) {
+    throw toApiError(err, "Failed to load markets");
+  }
+}
+
+export async function getMarket(id: string): Promise<Market | null> {
+  try {
+    const res = await api.get(`/api/markets/${id}`);
+    return (res.data?.data?.market as Market) ?? (res.data?.market as Market) ?? null;
+  } catch (err) {
+    throw toApiError(err, "Failed to load market");
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Auth / profile (live REST)
+// ----------------------------------------------------------------------------
+
+export async function getProfile() {
+  const res = await api.get(`/api/auth/profile`);
+  return res.data;
+}
+
+export { API_URL };

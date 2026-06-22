@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useAllTokens } from "@/app/utils/useAllTokens";
-import { toDisplay } from "@/app/portfolio/token/[mid]/page";
-import { Spinner } from "@/app/portfolio/page";
+import { toDisplay } from "@/lib/format";
+import { Spinner } from "@/components/custom/Spinner";
 import { BuyTokenHero } from "@/components/buytoken/buy-token-hero";
 import { TokenFilters } from "@/components/buytoken/token-filters";
 import { TokenGrid } from "@/components/buytoken/token-grid";

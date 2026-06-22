@@ -3,11 +3,13 @@
 import { Background } from "@/components/background";
 import FastBetHero from "@/components/fastbet/FastBetHero";
 import FastBetCard from "@/components/fastbet/FastBetCard";
+import { DemoBadge } from "@/components/game";
 import { motion } from "framer-motion";
 
 export default function FastBetsPage() {
-  // Mock Data
-  const mockFastBets = [
+  // DEMO DATA: there is no live fast-bet feed yet, so these rounds are
+  // illustrative seed data and are clearly badged as demo in the UI below.
+  const demoFastBets = [
     {
       id: 1,
       question: "Will PUMP reach $0.005 in 10 minutes?",
@@ -88,17 +90,18 @@ export default function FastBetsPage() {
             <h2 className="text-2xl font-bold text-white flex items-center gap-3">
               <span className="w-2 h-8 rounded-full bg-yellow-500" />
               Live & Upcoming
+              <DemoBadge note="Fast bets are demo rounds — no live fast-bet feed is connected yet." />
             </h2>
             <div className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl">
               <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
               <span className="text-sm font-semibold text-white">
-                {mockFastBets.filter(b => b.status === 'live').length} Active
+                {demoFastBets.filter(b => b.status === 'live').length} Active
               </span>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-            {mockFastBets.map((bet, index) => (
+            {demoFastBets.map((bet, index) => (
               <FastBetCard key={bet.id} {...bet} index={index} />
             ))}
           </div>

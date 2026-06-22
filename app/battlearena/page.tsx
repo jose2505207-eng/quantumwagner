@@ -1,7 +1,7 @@
 "use client";
 
 import { useAllBattles } from "@/app/utils/useAllBattles";
-import { Spinner } from "@/app/portfolio/page";
+import { Spinner } from "@/components/custom/Spinner";
 import { BattleHero } from "@/components/battlearena/battle-hero";
 import { Background } from "@/components/background";
 import { BattleCard } from "@/components/battlearena/battle-card";

@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { Globe, Send, Twitter, ExternalLink, Copy, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { toDisplay } from "@/app/portfolio/token/[mid]/page";
+import { toDisplay } from "@/lib/format";
 import { useState } from "react";
 
 interface TokenHeaderProps {

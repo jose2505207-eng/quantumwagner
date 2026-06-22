@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Coins, BarChart3, Users, Activity } from "lucide-react";
-import { toDisplay } from "@/app/portfolio/token/[mid]/page";
+import { toDisplay } from "@/lib/format";
 
 interface TokenStatsProps {
   token: any;

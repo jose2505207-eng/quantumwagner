@@ -1,7 +1,7 @@
 "use client";
 
-import { shortenAddress, Spinner } from "@/app/portfolio/page";
-import { toDisplay } from "@/app/portfolio/token/[mid]/page";
+import { shortenAddress, Spinner } from "@/components/custom/Spinner";
+import { toDisplay } from "@/lib/format";
 import { useUserBoughtTokens } from "@/app/utils/useUserBoughtTokens";
 import { useUserTokens } from "@/app/utils/useUserTokens";
 import { Button } from "@/components/ui/button";
@@ -11,8 +11,12 @@ import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { Copy, ExternalLink } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { DEMO_MODE } from "@/lib/game/config";
+import { DemoBadge } from "@/components/game";
 
-const mockUserTokens = [
+// DEMO data — only used as a fallback when DEMO_MODE is on and the user has no
+// real tokens. Always badged in the UI; never silently shown as real holdings.
+const DEMO_USER_TOKENS = [
 	{
 		account: {
 			tokenMint: "mint_created_1",
@@ -37,7 +41,7 @@ const mockUserTokens = [
 	},
 ];
 
-const mockBoughtTokens = [
+const DEMO_BOUGHT_TOKENS = [
 	{
 		mint: "mint_bought_1",
 		balance: "500",
@@ -68,11 +72,22 @@ export default function Tokens() {
 		useUserBoughtTokens();
 	const router = useRouter();
 
-	// Use mock data if real data is empty
-	const displayUserTokens =
-		userToken && userToken.length > 0 ? userToken : mockUserTokens;
-	const displayBoughtTokens =
-		userBoughtToken && userBoughtToken.length > 0 ? userBoughtToken : mockBoughtTokens;
+	// Honest fallback: demo tokens only when DEMO_MODE is on and there is no
+	// real data. Otherwise show the genuine (possibly empty) state.
+	const hasRealUserTokens = !!(userToken && userToken.length > 0);
+	const hasRealBoughtTokens = !!(userBoughtToken && userBoughtToken.length > 0);
+	const displayUserTokens = hasRealUserTokens
+		? userToken
+		: DEMO_MODE
+		? DEMO_USER_TOKENS
+		: [];
+	const displayBoughtTokens = hasRealBoughtTokens
+		? userBoughtToken
+		: DEMO_MODE
+		? DEMO_BOUGHT_TOKENS
+		: [];
+	const showingDemo =
+		(!hasRealUserTokens || !hasRealBoughtTokens) && DEMO_MODE;
 
 	return (
 		<>
@@ -81,9 +96,14 @@ export default function Tokens() {
 				<Tabs defaultValue="created" className="w-full">
 					{/* Header + Tabs */}
 					<div className="flex flex-col sm:flex-row items-center sm:justify-between gap-6 mb-10">
-						<h3 className="text-xl sm:text-2xl font-semibold bg-gradient-to-r from-[#a855f7] to-[#9333ea] bg-clip-text text-transparent">
-							Your Tokens
-						</h3>
+						<div className="flex items-center gap-2">
+							<h3 className="text-xl sm:text-2xl font-semibold bg-gradient-to-r from-[#a855f7] to-[#9333ea] bg-clip-text text-transparent">
+								Your Tokens
+							</h3>
+							{showingDemo && (
+								<DemoBadge note="Sample tokens, not your real holdings." />
+							)}
+						</div>
 
 						<TabsList className="bg-gray-900/70 border border-gray-800 rounded-lg flex justify-center sm:justify-start">
 							<TabsTrigger

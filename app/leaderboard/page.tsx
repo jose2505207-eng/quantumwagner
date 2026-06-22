@@ -4,6 +4,7 @@ import LeaderboardTabs from "@/components/leaderboard/leaderboard-tabs";
 import TopPredictors from "@/components/leaderboard/top-predictors";
 import YourRanking from "@/components/leaderboard/your-ranking";
 import AchievementSystem from "@/components/leaderboard/achievement-system";
+import { PlayerHUD, MissionMap } from "@/components/game";
 
 const LeaderboardPage = () => {
   return (
@@ -17,8 +18,12 @@ const LeaderboardPage = () => {
         <div className="flex-1">
           <TopPredictors />
         </div>
-        <div className="lg:w-80">
+        <div className="lg:w-80 space-y-6">
+          <PlayerHUD />
           <YourRanking />
+          <div className="qw-glass rounded-2xl p-5">
+            <MissionMap />
+          </div>
         </div>
       </div>
       <div className="px-4 lg:px-8 max-w-7xl mx-auto w-full">

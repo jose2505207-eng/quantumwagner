@@ -27,8 +27,9 @@ const MarketCard = ({ market }) => {
     noOdds = 100 - yesOdds;
   }
 
-  // Mock trend for now as it's not in the backend data
-  const trend = "stable"; 
+  // Trend is not in the backend data yet; default to stable until wired.
+  // (`as` keeps the union type so the up/down branches remain valid code.)
+  const trend = "stable" as "up" | "down" | "stable";
   const getTrendIcon = () => {
     switch (trend) {
       case "up":

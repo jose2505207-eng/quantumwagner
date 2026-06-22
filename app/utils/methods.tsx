@@ -133,7 +133,7 @@ export default function Methods() {
           MAX_MARKET_DURATION
         )
 
-        .accounts({
+        .accountsPartial({
           config: configPDA,
           admin,
           treasury,
@@ -208,7 +208,7 @@ export default function Methods() {
           tags,
           imageUrl ? imageUrl : null
         )
-        .accounts({
+        .accountsPartial({
           creator,
           config: configPDA,
           market: marketPDA,
@@ -253,12 +253,14 @@ export default function Methods() {
     try {
       const tx = await program.methods
         .placeBet(outcome, new anchor.BN(amount))
-        .accounts({
+        .accountsPartial({
           user,
           config: configPDA,
           market: marketPDA,
           userPosition: userPositionPDA,
-          treasury,
+          // NOTE: place_bet has no `treasury` account in the IDL; it was a
+          // no-op key (Anchor ignores unknown accounts). Removed to satisfy
+          // strict typing without changing on-chain behaviour.
           systemProgram: SystemProgram.programId,
         })
         .rpc({ skipPreflight: false, preflightCommitment: "confirmed" });
@@ -266,7 +268,8 @@ export default function Methods() {
       toast.success("Bet placed successfully");
       return tx;
     } catch (err: any) {
-      const msg = err.message || toast.error(`Error placing bet: ${msg}`);
+      const msg = err?.message || "Unknown error";
+      toast.error(`Error placing bet: ${msg}`);
       throw err;
     }
   };
@@ -277,7 +280,7 @@ export default function Methods() {
     try {
       const tx = await program.methods
         .cancelMarket()
-        .accounts({
+        .accountsPartial({
           admin,
           market: marketPDA,
         })
@@ -299,7 +302,7 @@ export default function Methods() {
     try {
       const tx = await program.methods
         .settleMarket(winningOutcome)
-        .accounts({
+        .accountsPartial({
           admin,
           market: marketPDA,
         })
@@ -333,7 +336,7 @@ export default function Methods() {
     try {
       const tx = await program.methods
         .withdrawWinnings()
-        .accounts({
+        .accountsPartial({
           user,
           market: marketPDA,
           userPosition: userPositionPDA,
@@ -391,7 +394,7 @@ export default function Methods() {
           MIN_BET_AMOUNT,
           MAX_BET_AMOUNT
         )
-        .accounts({
+        .accountsPartial({
           config: configPda,
           admin,
           emergencyAdmin,
@@ -465,7 +468,7 @@ export default function Methods() {
           { exponential: {} },
           data.tags
         )
-        .accounts({
+        .accountsPartial({
           creator: user,
           config: configPDA,
           tokenLaunch: tokenLaunchPda,
@@ -535,7 +538,7 @@ export default function Methods() {
     try {
       const tx = await program.methods
         .buyToken(new anchor.BN(tokenAmount))
-        .accounts({
+        .accountsPartial({
           buyer,
           config: configPDA,
           tokenLaunch: tokenLaunchPDA,
@@ -603,7 +606,7 @@ export default function Methods() {
 
     const tx = await program.methods
       .sellToken(new anchor.BN(tokenAmount))
-      .accounts({
+      .accountsPartial({
         seller,
         config: configPDA,
         tokenLaunch: tokenLaunchPDA,
@@ -686,7 +689,7 @@ export default function Methods() {
 
   //     const tx = await program.methods
   //       .migrateToDex()
-  //       .accounts({
+  //       .accountsPartial({
   //         creator,
   //         config: configPDA,
   //         tokenLaunch: tokenLaunchPDA,
@@ -749,7 +752,7 @@ export default function Methods() {
     try {
       const tx = await program.methods
         .claimCreatorTokens()
-        .accounts({
+        .accountsPartial({
           creator,
           tokenLaunch: tokenLaunchPDA,
           tokenMint,
@@ -832,7 +835,7 @@ export default function Methods() {
       for (const token of allTokens) {
         if (!token?.account) continue;
 
-        const mintAddress = token.account.tokenMint || token.account.token_mint;
+        const mintAddress = token.account.tokenMint;
         if (!mintAddress) continue;
 
         let mint: PublicKey;
@@ -855,9 +858,10 @@ export default function Methods() {
               tokenData: token.account,
             });
           }
-        } catch (err) {
-          if (!err.message.includes("could not find account")) {
-            console.warn("Skipping mint:", mintAddress, err.message);
+        } catch (err: any) {
+          const msg = err?.message ?? String(err);
+          if (!msg.includes("could not find account")) {
+            console.warn("Skipping mint:", mintAddress, msg);
           }
         }
       }
@@ -901,7 +905,7 @@ export default function Methods() {
 
       const tx = await program.methods
         .withdrawCreatorRoyalties()
-        .accounts({
+        .accountsPartial({
           creator,
           config: configPDA,
           tokenLaunch: tokenLaunchPDA,
@@ -976,7 +980,7 @@ export default function Methods() {
         metaMarketEnabled,
         imageUrl ? imageUrl : null
       )
-      .accounts({
+      .accountsPartial({
         creator,
         config: configPDA,
         battle: battlePDA,
@@ -1108,7 +1112,7 @@ export default function Methods() {
 
     const tx = await program.methods
       .enterBattle(side, new anchor.BN(amount))
-      .accounts({
+      .accountsPartial({
         user,
         config: configPDA,
         battle: battlePDA,
@@ -1149,7 +1153,7 @@ export default function Methods() {
 
     const tx = await program.methods
       .increaseBattlePosition(new anchor.BN(additionalAmount))
-      .accounts({
+      .accountsPartial({
         user,
         config: configPDA,
         battle: battlePDA,
@@ -1181,7 +1185,7 @@ export default function Methods() {
 
     const tx = await program.methods
       .resolveBattle(winner) // { sideA: {} } or { sideB: {} }
-      .accounts({
+      .accountsPartial({
         resolver,
         config: configPDA,
         battle: battlePDA,
