@@ -9,14 +9,14 @@ import { LevelId } from "./types";
  *   - XP -> Rank: the open-ended status climb.
  */
 
-/** The number shown in the HUD ("LVL 3"). */
+/** The number shown in the HUD ("LVL 3").
+ *  Count-based so it never overstates: it reflects how many of the 6 milestones
+ *  are cleared (order-independent), capped at the total. 0 cleared => LVL 1
+ *  (you're on level 1), all cleared => LVL 6. */
 export function arenaLevelNumber(completed: LevelId[]): number {
-  // Level N is reached once the first N-1 milestones are done. Floor at 1.
-  let n = 1;
-  for (const l of LEVELS) {
-    if (completed.includes(l.id)) n = Math.min(LEVELS.length, l.level + 1);
-  }
-  return Math.min(n, LEVELS.length);
+  const cleared = new Set(completed.filter((id) => LEVELS.some((l) => l.id === id)))
+    .size;
+  return Math.min(LEVELS.length, cleared + 1);
 }
 
 /** Total XP available across the guided journey (for "x / total" displays). */

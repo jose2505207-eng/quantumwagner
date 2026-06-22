@@ -40,6 +40,7 @@ import {
 } from "@/config";
 
 import toast from "react-hot-toast";
+import { useGameStore } from "@/store/useGameStore";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getAccount,
@@ -266,6 +267,8 @@ export default function Methods() {
         .rpc({ skipPreflight: false, preflightCommitment: "confirmed" });
 
       toast.success("Bet placed successfully");
+      // Real on-chain action → completes the "first prediction" milestone.
+      useGameStore.getState().completeLevel("first-prediction");
       return tx;
     } catch (err: any) {
       const msg = err?.message || "Unknown error";
@@ -483,6 +486,8 @@ export default function Methods() {
         .rpc();
 
       toast.success("Token launched successfully!");
+      // Real on-chain action → completes the "launch token" milestone.
+      useGameStore.getState().completeLevel("launch-token");
       return {
         tx,
         tokenMint: tokenMintPda.toBase58(),
@@ -1121,6 +1126,9 @@ export default function Methods() {
         systemProgram: SystemProgram.programId,
       })
       .rpc();
+
+    // Real on-chain action → completes the "join meme battle" milestone.
+    useGameStore.getState().completeLevel("join-meme-battle");
 
     return { tx, battlePositionPDA };
   };

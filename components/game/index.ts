@@ -15,3 +15,4 @@ export type { ArenaStat } from "./LiveArenaStats";
 export { XPToast } from "./XPToast";
 export { WalletGate } from "./WalletGate";
 export { NavbarHUD } from "./NavbarHUD";
+export { CompleteLevelOnMount } from "./CompleteLevelOnMount";

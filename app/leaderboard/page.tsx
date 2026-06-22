@@ -4,11 +4,13 @@ import LeaderboardTabs from "@/components/leaderboard/leaderboard-tabs";
 import TopPredictors from "@/components/leaderboard/top-predictors";
 import YourRanking from "@/components/leaderboard/your-ranking";
 import AchievementSystem from "@/components/leaderboard/achievement-system";
-import { PlayerHUD, MissionMap } from "@/components/game";
+import { PlayerHUD, MissionMap, CompleteLevelOnMount } from "@/components/game";
 
 const LeaderboardPage = () => {
   return (
     <div className="w-full relative flex flex-col pt-16">
+      {/* Entering the leaderboard is itself Level 6's milestone action. */}
+      <CompleteLevelOnMount level="enter-leaderboard" />
       {/* Gradient background */}
       <div className="absolute -top-16 inset-x-0 -z-10 mx-auto w-3/4 h-32 lg:h-60 rounded-full blur-[5rem] bg-[radial-gradient(86.02%_172.05%_at_50%_-40%,rgba(139,92,246,0.3)_0%,rgba(5,5,5,0)_80%)]"></div>
 
