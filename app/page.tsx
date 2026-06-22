@@ -113,12 +113,7 @@ export default function Home() {
           ) : (
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {featured.map((market, index) => (
-                <div key={market.id || index} className="relative">
-                  {source === "demo" && (
-                    <DemoBadge className="absolute right-3 top-3 z-10" />
-                  )}
-                  <MarketCard market={market} />
-                </div>
+                <MarketCard key={market.id || index} market={market} />
               ))}
             </div>
           )}

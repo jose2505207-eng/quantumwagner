@@ -3,9 +3,12 @@ import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import BettingButton from "../ui/betting-button";
 import { useCountdown } from "@/app/utils/hooks/useCountDown";
 import Link from "next/link";
+import { StatusPill, DemoBadge } from "@/components/game";
+import type { StatusKind } from "@/lib/game/types";
+import type { Market } from "@/app/types";
 
 interface MarketCardProps {
-  market: any;
+  market: Market & { isDemo?: boolean };
 }
 
 const MarketCard = ({ market }: MarketCardProps) => {
@@ -31,6 +34,18 @@ const MarketCard = ({ market }: MarketCardProps) => {
 
   const { days, hours, minutes, isExpired } = useCountdown(market.end_time);
 
+  const isDemo =
+    market.isDemo ||
+    market.id?.toString().startsWith("mock") ||
+    market.id?.toString().startsWith("demo");
+  const isResolved =
+    isExpired ||
+    String(market.status).toUpperCase() === "RESOLVED" ||
+    String(market.outcome ?? "").toUpperCase() === "RESOLVED";
+  // "Hot" when there's meaningful two-sided action; otherwise live.
+  const isHot = !isResolved && (market._count?.positions ?? 0) >= 200;
+  const statusKind: StatusKind = isResolved ? "resolved" : isHot ? "hot" : "live";
+
   const getTrendIcon = () => {
     switch (trend) {
       case "up":
@@ -55,23 +70,26 @@ const MarketCard = ({ market }: MarketCardProps) => {
   };
 
   return (
-    <div className="flex flex-col p-4 lg:p-6 border border-border/60 rounded-lg lg:rounded-xl hover:border-primary/60 transition-all duration-300 ease-out group bg-[#0A0A0A]/50 backdrop-blur-sm hover:bg-[#0A0A0A]/80 shadow-[0_0_20px_rgba(168,85,247,0.1)] hover:shadow-lg hover:shadow-primary/10 relative overflow-hidden h-full">
+    <div className="qw-glass qw-lift flex flex-col p-4 lg:p-6 rounded-lg lg:rounded-xl ease-out group relative overflow-hidden h-full">
       {/* Subtle gradient overlay on hover */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-20 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
 
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex-1 pr-4">
-          <div className="flex items-center gap-2 mb-1">
-            {market.id.toString().startsWith("mock") && (
-              <span className="text-[10px] font-bold uppercase tracking-wider bg-yellow-500/20 text-yellow-500 px-1.5 py-0.5 rounded border border-yellow-500/30">
-                Mock
-              </span>
-            )}
-          </div>
-          <h3 className="font-semibold text-base leading-tight group-hover:text-primary/90 transition-colors duration-300 line-clamp-2">
-            {market.question}
-          </h3>
+      <div className="flex items-center gap-2 mb-2">
+        {market.category && (
+          <span className="text-[10px] font-bold uppercase tracking-wider text-primary/80">
+            {market.category}
+          </span>
+        )}
+        <div className="ml-auto flex items-center gap-1.5">
+          {isDemo && <DemoBadge />}
+          <StatusPill status={statusKind} />
         </div>
+      </div>
+
+      <div className="flex items-start justify-between mb-4">
+        <h3 className="flex-1 pr-3 font-semibold text-base leading-tight group-hover:text-primary/90 transition-colors duration-300 line-clamp-2">
+          {market.question}
+        </h3>
         {getTrendIcon()}
       </div>
 
