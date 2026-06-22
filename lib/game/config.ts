@@ -25,9 +25,11 @@ export const APP_MODE: AppMode = readMode();
 export const DEMO_MODE: boolean =
   process.env.NEXT_PUBLIC_DEMO_MODE === "true" || APP_MODE !== "production";
 
-/** Live REST backend. Falls back to the historical hardcoded URL. */
-export const API_URL: string =
-  process.env.NEXT_PUBLIC_API_URL || "https://quantum-wager.onrender.com";
+/**
+ * REST backend base URL. Defaults to "" (same-origin) so the in-repo Next.js
+ * API routes are used. Set NEXT_PUBLIC_API_URL to target an external backend.
+ */
+export const API_URL: string = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 export const SOLANA_NETWORK: string =
   process.env.NEXT_PUBLIC_SOLANA_NETWORK || "devnet";

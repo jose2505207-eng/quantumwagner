@@ -50,6 +50,16 @@ interface GameState extends PlayerProgress {
     hasWallet?: boolean;
     predictionCount?: number;
   }) => void;
+  /**
+   * Merge server-authoritative progress into the local store (HUD display).
+   * Server XP wins (it is the source of truth); completed levels are unioned.
+   */
+  hydrateServer: (data: {
+    xp?: number;
+    completedLevels?: LevelId[];
+    streak?: number;
+  }) => void;
+
   /** Wipe progression (debug / sign-out). */
   reset: () => void;
 
@@ -184,6 +194,19 @@ export const useGameStore = create<GameState>()(
       },
 
       consumeToast: () => set({ lastToast: null }),
+
+      hydrateServer: ({ xp, completedLevels, streak }) => {
+        const state = get();
+        const mergedLevels = Array.from(
+          new Set([...state.completedLevels, ...(completedLevels ?? [])])
+        );
+        set({
+          // server is authoritative for XP — take it when provided
+          xp: typeof xp === "number" ? Math.max(xp, state.xp) : state.xp,
+          completedLevels: mergedLevels,
+          streak: typeof streak === "number" ? Math.max(streak, state.streak) : state.streak,
+        });
+      },
 
       reset: () => set({ ...EMPTY, lastToast: null }),
 

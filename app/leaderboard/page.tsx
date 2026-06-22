@@ -5,6 +5,7 @@ import TopPredictors from "@/components/leaderboard/top-predictors";
 import YourRanking from "@/components/leaderboard/your-ranking";
 import AchievementSystem from "@/components/leaderboard/achievement-system";
 import { PlayerHUD, MissionMap, CompleteLevelOnMount } from "@/components/game";
+import LiveLeaderboard from "@/components/leaderboard/LiveLeaderboard";
 
 const LeaderboardPage = () => {
   return (
@@ -15,6 +16,9 @@ const LeaderboardPage = () => {
       <div className="absolute -top-16 inset-x-0 -z-10 mx-auto w-3/4 h-32 lg:h-60 rounded-full blur-[5rem] bg-[radial-gradient(86.02%_172.05%_at_50%_-40%,rgba(139,92,246,0.3)_0%,rgba(5,5,5,0)_80%)]"></div>
 
       <LeaderboardHero />
+      <div className="px-4 lg:px-8 max-w-7xl mx-auto w-full">
+        <LiveLeaderboard />
+      </div>
       <LeaderboardTabs />
       <div className="flex flex-col-reverse lg:flex-row gap-8 px-4 lg:px-8 max-w-7xl mx-auto w-full">
         <div className="flex-1">

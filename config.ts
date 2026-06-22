@@ -3,8 +3,10 @@
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js"
 import { BN } from "@coral-xyz/anchor";
 
-// export const BACKEND_URL = "http://localhost:8000"
-export const BACKEND_URL = "https://quantum-wager.onrender.com"
+// Backend base URL. Defaults to "" (same-origin) so the in-repo Next.js API
+// routes are used. Set NEXT_PUBLIC_API_URL to target an external backend
+// (e.g. https://quantum-wager.onrender.com).
+export const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL ?? ""
 
 export const PROGRAM_ID = new PublicKey("C8SAQXW3qhWTT1uGdpSegU466qTQAKQs3JB15TQ8toSc")
 
