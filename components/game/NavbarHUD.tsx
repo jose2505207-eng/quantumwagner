@@ -31,7 +31,7 @@ export function NavbarHUD() {
     <Link
       href="/#daily-quests"
       title={`Level ${level} · ${rank.name} · ${formatXp(xp)} XP`}
-      className="qw-glass hidden items-center gap-2.5 rounded-full py-1 pl-1 pr-3 transition hover:border-violet-400/40 md:flex"
+      className="qw-glass hidden max-w-[220px] flex-shrink-0 items-center gap-2.5 rounded-full py-1 pl-1 pr-3 transition hover:border-violet-400/40 md:flex lg:hidden xl:flex"
     >
       <span
         className="flex h-7 w-7 items-center justify-center rounded-full text-xs font-extrabold text-black"
@@ -39,10 +39,10 @@ export function NavbarHUD() {
       >
         {level}
       </span>
-      <span className="flex flex-col leading-none">
+      <span className="flex min-w-0 flex-col leading-none">
         <span className="flex items-center gap-1.5">
           <span
-            className="text-[11px] font-bold uppercase tracking-wide"
+            className="max-w-[96px] truncate text-[11px] font-bold uppercase tracking-wide"
             style={{ color: rank.color }}
           >
             {rank.name}

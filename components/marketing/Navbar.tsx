@@ -59,8 +59,10 @@ const Navbar = () => {
         isScrolled ? "bg-[#050505]/50 backdrop-blur-md border-b border-white/5" : "bg-transparent"
       )}
     >
-      <Wrapper className="flex items-center justify-between h-full">
+      <Wrapper className="flex items-center gap-4 h-full">
+        {/* Brand zone — never shrinks, never overlaps the nav */}
         <motion.div
+          className="flex-shrink-0"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
@@ -79,9 +81,10 @@ const Navbar = () => {
           </Link>
         </motion.div>
 
-        <div className="hidden lg:flex flex-row flex-1 absolute inset-0 items-center justify-center w-max mx-auto">
+        {/* Nav zone — in normal flow, centered, can shrink (never overlaps HUD) */}
+        <nav className="hidden lg:flex flex-1 min-w-0 items-center justify-center">
           <NavigationMenu>
-            <NavigationMenuList>
+            <NavigationMenuList className="flex-nowrap gap-0.5 xl:gap-1">
               <NavigationMenuItem>
                 <Link href="/markets" legacyBehavior passHref>
                   <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "bg-transparent text-muted-foreground hover:text-foreground focus:text-foreground hover:bg-white/5")}>
@@ -137,7 +140,8 @@ const Navbar = () => {
                 </Link>
               </NavigationMenuItem>
 
-              <NavigationMenuItem>
+              {/* Portfolio is inline only at xl+; below that it lives in "More" */}
+              <NavigationMenuItem className="hidden xl:flex">
                 <Link href="/portfolio" legacyBehavior passHref>
                   <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "bg-transparent text-muted-foreground hover:text-foreground focus:text-foreground hover:bg-white/5")}>
                     Portfolio
@@ -146,7 +150,7 @@ const Navbar = () => {
               </NavigationMenuItem>
 
               {hasAccess && (
-                <NavigationMenuItem>
+                <NavigationMenuItem className="hidden xl:flex">
                   <Link href="/admin" legacyBehavior passHref>
                     <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "bg-transparent text-muted-foreground hover:text-foreground focus:text-foreground hover:bg-white/5")}>
                       Admin
@@ -154,12 +158,32 @@ const Navbar = () => {
                   </Link>
                 </NavigationMenuItem>
               )}
+
+              {/* "More" collapses Portfolio (+Admin) at lg width so nothing crowds the HUD */}
+              <NavigationMenuItem className="xl:hidden">
+                <NavigationMenuTrigger className="bg-transparent text-muted-foreground hover:text-foreground focus:text-foreground hover:bg-white/5">
+                  More
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <ul className="grid w-[260px] gap-3 p-4 bg-[#0A0A0A] border border-white/10">
+                    <ListItem href="/portfolio" title="Portfolio">
+                      Track your positions, reputation, and assets.
+                    </ListItem>
+                    {hasAccess && (
+                      <ListItem href="/admin" title="Admin">
+                        Platform administration and market resolution.
+                      </ListItem>
+                    )}
+                  </ul>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
-        </div>
+        </nav>
 
-        <Container animation="fadeLeft" delay={0.1}>
-          <div className="flex items-center gap-x-4">
+        {/* HUD zone — reserved space on the right; never overlapped by the nav */}
+        <Container animation="fadeLeft" delay={0.1} className="flex-shrink-0 ml-auto">
+          <div className="flex items-center gap-x-3">
             <NavbarHUD />
             <div className="hidden lg:flex items-center gap-3">
                 <WalletMultiButton style={{}} />
