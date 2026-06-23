@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { PriceHistoryGraph } from "@/components/market/PriceHistoryGraph";
+import { DEMO_MARKETS } from "@/lib/demo/markets";
 
 // Mock data for demo purposes
 const MOCK_MARKETS = [
@@ -408,8 +409,10 @@ export default function MarketDetailPage() {
   useEffect(() => {
     async function getMarket() {
       try {
-        if (typeof id === 'string' && id.startsWith('mock')) {
-          const mockMarket = MOCK_MARKETS.find(m => m.id === id);
+        if (typeof id === 'string' && (id.startsWith('mock') || id.startsWith('demo'))) {
+          const mockMarket =
+            MOCK_MARKETS.find(m => m.id === id) ||
+            DEMO_MARKETS.find(m => m.id === id);
           if (mockMarket) {
             setMarket(mockMarket as unknown as Market);
             // Calculate mock summary

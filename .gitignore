@@ -32,6 +32,11 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+
+# local sqlite database (migrations ARE committed, the db file is not)
+prisma/*.db
+prisma/*.db-journal
 
 # vercel
 .vercel

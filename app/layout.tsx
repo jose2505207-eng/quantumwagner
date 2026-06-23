@@ -8,6 +8,8 @@ import { SolanaProvider } from "./utils/SolanaProvider";
 import { WalletAuth } from "./utils/walletAuth";
 import { base, heading } from "@/constants/fonts";
 import { cn } from "@/lib/utils";
+import { XPToast } from "@/components/game";
+import { GameSync } from "@/components/game/GameSync";
 
 export const metadata: Metadata = {
   title: "Quantum Wager ",
@@ -34,6 +36,8 @@ export default function RootLayout({
         <SolanaProvider>
           <Navbar />
           <WalletAuth></WalletAuth>
+          <GameSync />
+          <XPToast />
           <main className="flex-grow ">{children}</main>
           <Toaster
             position="top-center"

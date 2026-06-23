@@ -15,7 +15,7 @@ import { formatDistanceToNowStrict } from "date-fns";
 import Methods from "@/app/utils/methods";
 import { useAllBattles } from "@/app/utils/useAllBattles";
 import { useAllTokens } from "@/app/utils/useAllTokens";
-import { Spinner } from "@/app/portfolio/page";
+import { Spinner } from "@/components/custom/Spinner";
 import { Background } from "@/components/background";
 import { cn } from "@/lib/utils";
 import { MIN_BATTLE_POOL } from "@/config";

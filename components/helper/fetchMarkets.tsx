@@ -1,6 +1,6 @@
 "use client";
 
-import { Market } from "@/components/market/types";
+import { Market } from "@/app/types";
 import { BACKEND_URL } from "@/config";
 import { useMarketStore } from "@/store/adminMarketStore";
 import axios from "axios";

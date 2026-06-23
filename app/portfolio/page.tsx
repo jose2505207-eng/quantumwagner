@@ -34,8 +34,13 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Position } from "@/store/types/user/postionType";
+import { DEMO_MODE } from "@/lib/game/config";
+import { DemoBadge } from "@/components/game";
+import { Spinner } from "@/components/custom/Spinner";
 
-const mockPositions: Position[] = [
+// DEMO positions — only ever shown when DEMO_MODE is on AND the user has no
+// real positions. Never silently presented as the user's real holdings.
+const DEMO_POSITIONS: Position[] = [
   {
     id: "pos_1",
     user_id: "user_1",
@@ -140,17 +145,6 @@ const mockPositions: Position[] = [
   }
 ];
 
-export const Spinner = () => (
-  <div className="flex items-center justify-center h-64">
-    <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-  </div>
-);
-
-export function shortenAddress(addr: string) {
-  if (!addr) return "Unknown";
-  return addr.slice(0, 4) + "..." + addr.slice(-4);
-}
-
 export default function Portfolio() {
   const {
     withdrawWinnings,
@@ -161,6 +155,7 @@ export default function Portfolio() {
   } = Methods();
   const { positions, setPositions } = usePositionStore();
   const [loading, setLoading] = useState(false);
+  const [usingDemoPositions, setUsingDemoPositions] = useState(false);
   const [tab, setTab] = useState("active");
   const [withdrawingMap, setWithdrawingMap] = useState<Record<string, boolean>>(
     {}
@@ -173,13 +168,26 @@ export default function Portfolio() {
     loadPositions();
   }, []);
 
+  // Honest fallback: only show demo positions when DEMO_MODE is on, and always
+  // flag it. In production with no token / no data we show the real empty state.
+  const applyFallback = (reason?: string) => {
+    if (DEMO_MODE) {
+      setPositions(DEMO_POSITIONS);
+      setUsingDemoPositions(true);
+    } else {
+      setPositions([]);
+      setUsingDemoPositions(false);
+      if (reason) toast.error(reason);
+    }
+  };
+
   const loadPositions = async () => {
     try {
       setLoading(true);
+      setUsingDemoPositions(false);
       const token = localStorage.getItem("token");
       if (!token) {
-        // Fallback to mock data if no token
-        setPositions(mockPositions);
+        applyFallback();
         return;
       }
 
@@ -187,12 +195,16 @@ export default function Portfolio() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setPositions(res.data.data.positions && res.data.data.positions.length > 0 ? res.data.data.positions : mockPositions);
+      const real = res.data?.data?.positions;
+      if (real && real.length > 0) {
+        setPositions(real);
+        setUsingDemoPositions(false);
+      } else {
+        applyFallback();
+      }
     } catch (err) {
       console.error("Failed to fetch positions:", err);
-      // Fallback to mock data on error
-      setPositions(mockPositions);
-      toast.error("Failed to load positions, showing mock data");
+      applyFallback("Couldn't reach the positions service.");
     } finally {
       setLoading(false);
     }
@@ -252,6 +264,14 @@ export default function Portfolio() {
             <p className="text-muted-foreground mt-1">
               Track your performance, reputation, and assets.
             </p>
+            {usingDemoPositions && (
+              <div className="mt-2 flex items-center gap-2">
+                <DemoBadge note="These are sample positions, not your real holdings." />
+                <span className="text-xs text-muted-foreground">
+                  Sample positions shown — connect & trade to see your real holdings.
+                </span>
+              </div>
+            )}
           </div>
           
           <div className="flex gap-4">

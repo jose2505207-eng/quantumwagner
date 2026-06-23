@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useUserBoughtTokens } from "@/app/utils/useUserBoughtTokens";
-import { toDisplay } from "@/app/portfolio/token/[mid]/page";
+import { toDisplay } from "@/lib/format";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

@@ -1,11 +1,15 @@
 "use client";
-import { Spinner } from "@/app/portfolio/page";
+import { Spinner } from "@/components/custom/Spinner";
 import { useAllTokens } from "@/app/utils/useAllTokens";
 import { useUserBattles } from "@/app/utils/useUserBattles";
 import { PublicKey } from "@solana/web3.js";
 import { useRouter } from "next/navigation";
+import { DEMO_MODE } from "@/lib/game/config";
+import { DemoBadge } from "@/components/game";
 
-const mockBattles = [
+// DEMO data — only used as a fallback when DEMO_MODE is on and the user has no
+// real battles. Always badged in the UI; never silently shown as real data.
+const DEMO_BATTLES = [
 	{
 		id: "battle_1",
 		pda: "battle_pda_1",
@@ -34,7 +38,7 @@ const mockBattles = [
 	},
 ];
 
-const mockAllTokens = [
+const DEMO_ALL_TOKENS = [
 	{
 		account: {
 			tokenMint: "token_mint_1",
@@ -70,11 +74,21 @@ export default function UserBattlesList() {
 	const { tokens: allToken, loading: tokenLoading } = useAllTokens();
 	const router = useRouter();
 
-	// Use mock data if real data is empty
-	const displayBattles =
-		userBattles && userBattles.length > 0 ? userBattles : mockBattles;
+	// Honest fallback: demo battles only when DEMO_MODE is on and there is no
+	// real data. Otherwise show the genuine (possibly empty) state.
+	const hasRealBattles = !!(userBattles && userBattles.length > 0);
+	const displayBattles = hasRealBattles
+		? userBattles
+		: DEMO_MODE
+		? DEMO_BATTLES
+		: [];
 	const displayTokens =
-		allToken && allToken.length > 0 ? allToken : mockAllTokens;
+		allToken && allToken.length > 0
+			? allToken
+			: DEMO_MODE
+			? DEMO_ALL_TOKENS
+			: [];
+	const showingDemo = !hasRealBattles && DEMO_MODE;
 
 	if (battleLoading || tokenLoading) return <Spinner />;
 
@@ -94,9 +108,14 @@ export default function UserBattlesList() {
 	return (
 		<div className="w-full flex flex-col gap-4 ">
 			<div className="flex flex-col sm:flex-row items-center sm:justify-between gap-6 mb-10">
-				<h3 className="text-xl sm:text-2xl font-semibold bg-gradient-to-r from-[#a855f7] to-[#9333ea] bg-clip-text text-transparent">
-					Your Created Battels
-				</h3>
+				<div className="flex items-center gap-2">
+					<h3 className="text-xl sm:text-2xl font-semibold bg-gradient-to-r from-[#a855f7] to-[#9333ea] bg-clip-text text-transparent">
+						Your Created Battles
+					</h3>
+					{showingDemo && (
+						<DemoBadge note="Sample battles, not your real data." />
+					)}
+				</div>
 			</div>
 			{displayBattles?.map((b) => {
         const d = b.data;
