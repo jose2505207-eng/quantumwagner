@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { BN } from "@coral-xyz/anchor";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
