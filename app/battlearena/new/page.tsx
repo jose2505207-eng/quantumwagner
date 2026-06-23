@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import toast from "react-hot-toast";
-import BN from "bn.js";
+import { BN } from "@coral-xyz/anchor";
 import { 
   Swords, Calendar, Clock, Upload, Search, 
   Trophy, Users, ArrowRight, Sparkles, AlertCircle,

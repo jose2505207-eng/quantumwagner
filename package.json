@@ -2,9 +2,10 @@
   "name": "buzz-frontend",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@10.14.0",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
@@ -20,6 +21,20 @@
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "prisma",
+      "esbuild",
+      "bigint-buffer",
+      "bufferutil",
+      "utf-8-validate",
+      "protobufjs",
+      "tiny-secp256k1",
+      "unrs-resolver"
+    ]
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.1",
