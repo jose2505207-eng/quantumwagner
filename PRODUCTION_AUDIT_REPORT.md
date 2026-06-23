@@ -28,7 +28,7 @@ and no security/economic/legal review has occurred.
 | Area | Gap |
 | ---- | --- |
 | On-chain | Predictions/payouts are recorded **off-chain**; the Anchor program is a scaffold, not compiled/deployed from here. Tx signatures are stored but not verified on-chain. |
-| Database | SQLite (not durable on serverless). Must move to Postgres. |
+| Database | **Postgres-ready** (provider `postgresql`, baseline migration committed). Needs a provisioned managed instance + `DATABASE_URL`; not yet connected to a live prod DB here. |
 | Fast bets | Backend is real; the **UI feed is still demo** data (badged). |
 | Token launch | Metadata persisted; **SPL deployment not wired**. |
 | Rate limiting | In-memory only — not distributed. |
@@ -43,7 +43,7 @@ and no security/economic/legal review has occurred.
 - **Data integrity:** off-chain payouts mean the ledger is only as trustworthy as the DB; add reconciliation against chain once on-chain settlement lands. XP is event-sourced (`XPEvent`) and reconstructable.
 - **UX/mobile:** navbar overlap fixed; broader pixel QA at 320–1440px still recommended via screenshots.
 - **Performance:** fine for demo scale; no load testing performed.
-- **Deployment:** SQLite + serverless mismatch is the main footgun (documented).
+- **Deployment:** Now Postgres + pnpm (frozen lockfile passes; `onlyBuiltDependencies` set). Remaining footgun: a managed Postgres must be provisioned and `DATABASE_URL` set + migrated, or the API fails at runtime (build still succeeds).
 
 ## Required env vars
 
@@ -64,14 +64,14 @@ and no security/economic/legal review has occurred.
 ## Remaining blockers (to production)
 
 1. Wire on-chain settlement (compile/deploy Anchor program; verify tx signatures).
-2. Migrate to Postgres; distributed rate limiting.
+2. Provision managed Postgres + set `DATABASE_URL` + run `prisma migrate deploy`; add distributed rate limiting.
 3. Integration/E2E tests in CI for money flows.
 4. Security audit + economic review + **legal/compliance review**.
 5. Monitoring/alerting + analytics.
 
 ## Recommended next steps
 
-1. Provision Postgres, flip Prisma provider, deploy to Vercel/Render with real secrets.
+1. Provision managed Postgres, set `DATABASE_URL`, run `pnpm db:migrate:deploy`, deploy to Vercel/Render with real secrets.
 2. Compile + devnet-deploy `contracts/quantum_wager`; replace off-chain payout with on-chain settlement + reconciliation.
 3. Add Playwright E2E covering Level 1→6 and failure paths.
 4. Engage auditors + counsel before any real-money/mainnet step.

@@ -1,13 +1,13 @@
-// Quantum Wager — persistence schema.
-// SQLite for zero-friction local/dev. Swap `provider`/`url` for Postgres in prod.
+// Quantum Wager — persistence schema (PostgreSQL).
 // Server is the source of truth for XP, wins, and resolution.
+// JSON-ish payloads are stored as String (portable) and (de)serialized in code.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 

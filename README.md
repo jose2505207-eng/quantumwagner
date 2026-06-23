@@ -31,32 +31,37 @@ Zustand · framer-motion · `@solana/wallet-adapter-*` · `@coral-xyz/anchor`.
 
 ## Run End-to-End Locally
 
-Prerequisites: Node 20+, npm.
+Prerequisites: Node 20+, **pnpm 10** (`corepack enable`), and a **PostgreSQL**
+database (local or a managed dev branch). The package manager is pnpm only.
 
 ```bash
-# 1. Install (the dependency tree needs legacy peer resolution)
-npm install --legacy-peer-deps
+# 1. Install
+pnpm install
 
-# 2. Configure environment
+# 2. Start a local Postgres (any option), e.g. Docker:
+docker run --name qw-pg -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:16
+
+# 3. Configure environment
 cp .env.example .env
-#   defaults work out of the box for local dev (SQLite + same-origin API)
+#   set DATABASE_URL to your Postgres, e.g.
+#   postgresql://postgres:postgres@localhost:5432/quantum_wager?schema=public
 
-# 3. Set up the database (Prisma + SQLite)
-npm run db:migrate       # create the SQLite db + apply migrations
-npm run db:seed          # load clearly-marked DEMO data (isDemo=true)
+# 4. Set up the database (Prisma + Postgres)
+pnpm db:migrate          # apply migrations (creates the schema)
+pnpm db:seed             # load clearly-marked DEMO data (isDemo=true)
 
-# 4. Run the app (frontend + in-repo API together, one process)
-npm run dev              # http://localhost:3000
+# 5. Run the app (frontend + in-repo API together, one process)
+pnpm dev                 # http://localhost:3000
 
-# 5. Production build / serve
-npm run build
-npm run start            # requires a strong JWT_SECRET in the environment
+# 6. Production build / serve
+pnpm build
+pnpm start               # requires a strong JWT_SECRET in the environment
 ```
 
 The **backend lives in this repo** as Next.js Route Handlers under `app/api/*`
-(see [`docs/API.md`](docs/API.md)), backed by Prisma + SQLite — so `npm run dev`
-runs the whole stack on one port. `NEXT_PUBLIC_API_URL` defaults to same-origin;
-set it to point at an external backend instead.
+(see [`docs/API.md`](docs/API.md)), backed by Prisma + **PostgreSQL** — so
+`pnpm dev` runs the whole stack on one port. `NEXT_PUBLIC_API_URL` defaults to
+same-origin; set it to point at an external backend instead.
 
 Verify the API quickly:
 
@@ -72,12 +77,15 @@ explorable offline.
 ### Database commands
 
 ```bash
-npm run db:migrate        # dev migration (prisma migrate dev)
-npm run db:migrate:deploy # apply migrations in CI/prod (prisma migrate deploy)
-npm run db:seed           # seed DEMO data
-npm run db:reset          # drop + recreate + reseed (destructive)
-npm run db:studio         # browse data in Prisma Studio
+pnpm db:migrate        # dev migration (prisma migrate dev) — local only
+pnpm db:migrate:deploy # apply migrations in CI/prod (prisma migrate deploy)
+pnpm db:seed           # seed DEMO data
+pnpm db:reset          # drop + recreate + reseed (destructive) — local only
+pnpm db:studio         # browse data in Prisma Studio
 ```
+
+> The build runs `prisma generate` only (never `migrate dev`). Apply schema
+> changes to a real database with `pnpm db:migrate:deploy`.
 
 ## Deploy Frontend
 
@@ -99,24 +107,36 @@ Set these in the host's environment (see `.env.example` for the full list):
 ## Deploy Backend
 
 The backend ships **inside this app** (Next.js Route Handlers), so deploying the
-frontend deploys the backend. For a Node host:
+frontend deploys the backend.
+
+**On Vercel** (recommended): the build runs `pnpm build` (= `prisma generate &&
+next build`) automatically. After the **first** deploy (or whenever the schema
+changes), apply migrations to your managed Postgres **once** from your machine or
+a Vercel deploy hook — do **not** put `migrate deploy` in the build:
 
 ```bash
-npm run build
-npm run db:migrate:deploy   # apply migrations to the production database
-npm run db:seed             # optional: demo data
-npm run start
+# with DATABASE_URL pointing at the production Postgres:
+pnpm db:migrate:deploy      # apply migrations (idempotent, non-destructive)
+pnpm db:seed                # optional: demo data (safe to skip in prod)
 ```
 
-Required server env (see `.env.example`): `DATABASE_URL` (use Postgres in prod —
-change the Prisma datasource `provider` to `postgresql`), a strong `JWT_SECRET`,
-`WALLET_AUTH_MESSAGE`, `ADMIN_RESOLUTION_KEY`, `ORACLE_MODE`. Full endpoint list:
-[`docs/API.md`](docs/API.md).
+For a plain Node host:
 
-> On serverless hosts (e.g. Vercel) SQLite's local file is not durable — point
-> `DATABASE_URL` at a managed Postgres and switch the Prisma provider.
+```bash
+pnpm install --frozen-lockfile
+pnpm build
+pnpm db:migrate:deploy
+pnpm start                  # requires a strong JWT_SECRET
+```
 
-An external backend can still be used instead by setting `NEXT_PUBLIC_API_URL`.
+Required server env (see `.env.example`): **`DATABASE_URL`** (managed Postgres,
+`sslmode=require`), a strong `JWT_SECRET`, `WALLET_AUTH_MESSAGE`,
+`ADMIN_RESOLUTION_KEY`, `ORACLE_MODE`. Full endpoint list: [`docs/API.md`](docs/API.md).
+
+> The datasource provider is now `postgresql`. Build-time `prisma generate` does
+> not connect to the DB, so a missing/unreachable `DATABASE_URL` won't fail the
+> Vercel build — but the app's API will fail at runtime until it's set and
+> migrated. An external backend can be used instead via `NEXT_PUBLIC_API_URL`.
 
 ## Deploy Contracts to Devnet
 

@@ -26,7 +26,7 @@ backend-real but UI/on-chain partially demo (documented).
 ## Loop 2 — Architecture (shipped)
 
 - **API:** REST via Next route handlers (`docs/API.md`). Same-origin by default.
-- **DB:** Prisma, 20 models, migration + seed. SQLite dev → Postgres prod (one datasource change).
+- **DB:** Prisma + **PostgreSQL** (provider `postgresql`), 21 tables, Postgres baseline migration + seed. Provision a managed Postgres and set `DATABASE_URL`.
 - **Auth:** nonce → ed25519 verify → JWT (`server/auth.ts`, `server/crypto.ts`).
 - **Oracle:** adapter + dev/admin resolver + webhook (`server/oracle.ts`); pari-mutuel settlement (`server/settlement.ts`).
 - **Admin:** resolution gated by `ADMIN_RESOLUTION_KEY`.
@@ -42,7 +42,7 @@ backend-real but UI/on-chain partially demo (documented).
 | 5 | No critical flow on hidden mock data | ✅ DEMO_MODE-gated + badged |
 | 6 | Wallet auth = signed message | ✅ |
 | 7 | Backend authoritative (XP/bets/portfolio/outcome/leaderboard) | ✅ |
-| 8 | Schema + migrations | ✅ |
+| 8 | Schema + migrations | ✅ Postgres baseline migration committed |
 | 9 | Prediction tx lifecycle | ⚠️ off-chain lifecycle real; on-chain not wired |
 | 10 | Resolution not frontend-controlled | ✅ |
 | 11 | Admin actions protected | ✅ key-gated |
@@ -57,4 +57,5 @@ backend-real but UI/on-chain partially demo (documented).
 | 20 | Final audit report | ✅ `PRODUCTION_AUDIT_REPORT.md` |
 
 **Overall:** Beta/demo-ready on devnet. Not production/mainnet-ready — see the
-audit report for blockers (on-chain settlement, Postgres, audit, legal).
+audit report for blockers (on-chain settlement, security/economic audit, legal).
+Database is now Postgres-ready (provision a managed instance + set `DATABASE_URL`).
