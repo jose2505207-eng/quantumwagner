@@ -67,8 +67,9 @@ export default function BattlePage() {
   };
 
   const numericAmount = parseFloat(amount) || 0;
-  const lamports = numericAmount * LAMPORTS_PER_SOL;
-  const invalidAmount = numericAmount <= 0 || lamports < MIN_BATTLE_POOL;
+  const lamports = Math.floor(numericAmount * LAMPORTS_PER_SOL);
+  const lamportsBN = new BN(lamports);
+  const invalidAmount = numericAmount <= 0 || lamportsBN.lt(MIN_BATTLE_POOL);
 
   const handleEnterBattle = async () => {
     if (!selectedSide || invalidAmount) return;
