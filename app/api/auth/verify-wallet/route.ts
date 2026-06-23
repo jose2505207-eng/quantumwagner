@@ -6,6 +6,7 @@ import { verifyWalletSchema } from "@/server/validators";
 import { completeLevelServer } from "@/server/xp";
 import { LEVEL_BY_ID } from "@/lib/game/levels";
 import { logAudit } from "@/server/audit";
+import { rateLimit } from "@/server/rateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,6 +17,7 @@ export const dynamic = "force-dynamic";
  * with the existing frontend (`success`, `token`, `user`).
  */
 export const POST = handler(async (req: Request) => {
+  rateLimit(req, "auth-verify", 20, 60_000);
   const body = verifyWalletSchema.parse(await req.json());
   if (!isValidWallet(body.wallet_address)) return fail("invalid wallet address", 400);
 

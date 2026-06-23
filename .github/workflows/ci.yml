@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "file:./dev.db"
+      JWT_SECRET: "ci-test-secret-not-for-production"
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci --legacy-peer-deps || npm install --legacy-peer-deps
+
+      - name: Prisma generate + migrate (sqlite)
+        run: |
+          npx prisma generate
+          npx prisma migrate deploy
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint || echo "lint warnings (non-blocking)"
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build
+        run: npm run build

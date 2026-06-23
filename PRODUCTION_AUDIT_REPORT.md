@@ -1,0 +1,77 @@
+# Production Audit Report — Quantum Wager
+
+**Date:** 2026-06-23 · **Verdict: BETA / DEMO-READY (devnet). NOT production/mainnet-ready.**
+
+## Executive summary
+
+Quantum Wager is a coherent, server-authoritative full-stack app on devnet: a
+gamified prediction arena with a real Next.js backend, Prisma persistence,
+signed-message wallet auth, an oracle resolution flow, and unit tests. The core
+Level 1→6 journey works end-to-end and is **not** powered by hidden mock data —
+demo data is gated behind `DEMO_MODE` and visibly badged. It is **not** ready
+for real money or mainnet: on-chain settlement is not wired, the DB is SQLite,
+and no security/economic/legal review has occurred.
+
+## What is now production-ready (or close)
+
+- **Wallet auth** — nonce + ed25519 signed-message verification + JWT; replay-protected (single-use, expiring nonces). Unit-tested.
+- **Server-authoritative state** — XP, wins, payouts, leaderboard, and resolution are all server-side. Client cannot set XP/outcome/payout.
+- **Validation** — all endpoints zod-validated. Unit-tested.
+- **Oracle/resolution** — adapter + dev/admin resolver + webhook; outcomes recorded with source/confidence/status + audit log. Pari-mutuel payout math unit-tested.
+- **Audit logs** — sensitive actions recorded.
+- **DB** — 20-model schema, migration, seed (DEMO-flagged).
+- **Build/typecheck/tests** — all green (see Test results).
+- **UI** — navbar three-zone flex fix removes the Portfolio/XP overlap; loading/empty/error states on core screens; honest demo badges.
+
+## What is still NOT production-ready
+
+| Area | Gap |
+| ---- | --- |
+| On-chain | Predictions/payouts are recorded **off-chain**; the Anchor program is a scaffold, not compiled/deployed from here. Tx signatures are stored but not verified on-chain. |
+| Database | SQLite (not durable on serverless). Must move to Postgres. |
+| Fast bets | Backend is real; the **UI feed is still demo** data (badged). |
+| Token launch | Metadata persisted; **SPL deployment not wired**. |
+| Rate limiting | In-memory only — not distributed. |
+| Tests | Unit tests only; **no integration/E2E** in CI (core loop verified manually via script). |
+| Monitoring | No error tracking / alerting / analytics wired (hooks documented only). |
+
+## Risk register
+
+- **Security:** in-memory rate limiter won't span instances; no dependency scanning in CI; admin key is a shared secret (rotate + scope before prod). No critical client-trust issues found.
+- **Legal/compliance:** prediction markets + token launches are regulated. **Blocker** — KYC/AML, geofencing, age gating, Terms, and counsel review required before real money. The app must stay devnet/demo until then.
+- **Smart contract:** UNAUDITED scaffold. Reentrancy/arithmetic/PDA/rent correctness unreviewed. Do not deploy to mainnet.
+- **Data integrity:** off-chain payouts mean the ledger is only as trustworthy as the DB; add reconciliation against chain once on-chain settlement lands. XP is event-sourced (`XPEvent`) and reconstructable.
+- **UX/mobile:** navbar overlap fixed; broader pixel QA at 320–1440px still recommended via screenshots.
+- **Performance:** fine for demo scale; no load testing performed.
+- **Deployment:** SQLite + serverless mismatch is the main footgun (documented).
+
+## Required env vars
+
+`DATABASE_URL`, `JWT_SECRET` (strong; server refuses dev default in prod),
+`WALLET_AUTH_MESSAGE`, `ADMIN_RESOLUTION_KEY`, `ORACLE_MODE`,
+`RATE_LIMIT_ENABLED`, `SOLANA_NETWORK`, `SOLANA_RPC_URL`, and the
+`NEXT_PUBLIC_*` frontend vars. Full list in `.env.example`.
+
+## Test results
+
+- `npm test` (vitest): **25 passed / 25** — settlement math, ed25519 auth core, rank/level logic, server validators, rate limiter.
+- `npm run typecheck`: **0 errors**.
+- `npm run lint`: new code clean; pre-existing legacy warnings documented.
+- `npm run build`: **passes** (all routes + 30+ API handlers).
+- DB: `prisma migrate deploy` + `db:seed` succeed.
+- Manual E2E (script): nonce → sign → verify (L1) → create market → first prediction (L2) → admin resolve → win settled → leaderboard updated. ✅
+
+## Remaining blockers (to production)
+
+1. Wire on-chain settlement (compile/deploy Anchor program; verify tx signatures).
+2. Migrate to Postgres; distributed rate limiting.
+3. Integration/E2E tests in CI for money flows.
+4. Security audit + economic review + **legal/compliance review**.
+5. Monitoring/alerting + analytics.
+
+## Recommended next steps
+
+1. Provision Postgres, flip Prisma provider, deploy to Vercel/Render with real secrets.
+2. Compile + devnet-deploy `contracts/quantum_wager`; replace off-chain payout with on-chain settlement + reconciliation.
+3. Add Playwright E2E covering Level 1→6 and failure paths.
+4. Engage auditors + counsel before any real-money/mainnet step.

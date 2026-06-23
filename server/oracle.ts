@@ -2,6 +2,7 @@ import { prisma } from "./db";
 import { env } from "./env";
 import { awardXp } from "./xp";
 import { logAudit } from "./audit";
+import { computePayout } from "./settlement";
 
 /**
  * Oracle resolution architecture.
@@ -99,8 +100,7 @@ export async function applyResolution(proposal: ResolutionProposal) {
 
   for (const p of market.predictions) {
     const won = p.side === winningSide;
-    const payout =
-      won && winnersStake > 0 ? (p.amount / winnersStake) * totalPool : 0;
+    const payout = won ? computePayout(p.amount, winnersStake, totalPool) : 0;
     await prisma.prediction.update({
       where: { id: p.id },
       data: { settled: true, won, payout, settledAt: new Date() },

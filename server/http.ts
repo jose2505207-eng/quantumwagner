@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
+import { HttpError } from "./errors";
 
 /** Standard JSON success envelope. */
 export function ok<T>(data: T, init?: ResponseInit) {
@@ -34,10 +35,5 @@ export function handler<A extends unknown[]>(
   };
 }
 
-export class HttpError extends Error {
-  status: number;
-  constructor(message: string, status = 400) {
-    super(message);
-    this.status = status;
-  }
-}
+// Re-export so existing `import { HttpError } from "@/server/http"` keeps working.
+export { HttpError } from "./errors";

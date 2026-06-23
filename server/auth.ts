@@ -5,6 +5,7 @@ import { PublicKey } from "@solana/web3.js";
 import { prisma } from "./db";
 import { env } from "./env";
 import { HttpError } from "./http";
+import { verifyEd25519 } from "./crypto";
 
 const TOKEN_TTL = "7d";
 const NONCE_TTL_MS = 5 * 60 * 1000;
@@ -89,16 +90,7 @@ export async function verifySignedMessage(params: {
   if (!record || record.used || record.walletAddress !== walletAddress) return false;
   if (record.expiresAt.getTime() < Date.now()) return false;
 
-  let valid = false;
-  try {
-    valid = nacl.sign.detached.verify(
-      new TextEncoder().encode(message),
-      bs58.decode(signature),
-      new PublicKey(walletAddress).toBytes()
-    );
-  } catch {
-    valid = false;
-  }
+  const valid = verifyEd25519(message, signature, walletAddress);
 
   if (valid) {
     await prisma.authNonce.update({ where: { nonce }, data: { used: true } });
