@@ -346,3 +346,49 @@
   [data-theme="luxury"] .lux-reveal { animation: none; }
   [data-theme="luxury"] .lux-lift:hover { transform: none; }
 }
+
+/* ---- Wallet adapter button → brushed gold (overrides the purple default) -- */
+[data-theme="luxury"] .wallet-adapter-button-trigger {
+  background: var(--grad-gold) !important;
+  color: var(--text-on-gold) !important;
+  border: none !important;
+  border-radius: var(--radius-md) !important;
+  height: 44px !important;
+  padding: 0 22px !important;
+  font-family: var(--font-sans) !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  letter-spacing: 0.01em !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+[data-theme="luxury"] .wallet-adapter-button-trigger:hover {
+  background: var(--grad-gold-hover) !important;
+  box-shadow: var(--glow-gold) !important;
+  transform: none !important;
+}
+[data-theme="luxury"] .wallet-adapter-modal-content {
+  background: var(--surface-card) !important;
+  border: 1px solid var(--border-gold) !important;
+  box-shadow: var(--shadow-pop) !important;
+}
+[data-theme="luxury"] .wallet-adapter-modal-list .wallet-adapter-button:hover {
+  background: rgba(201, 168, 92, 0.1) !important;
+  border-color: var(--border-gold) !important;
+}
+
+/* ---- Luxury top nav (applied via conditional classes in Navbar) ---------- */
+[data-theme="luxury"] .lux-nav {
+  background: rgba(10, 11, 13, 0.62);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--border-hairline);
+}
+[data-theme="luxury"] .lux-nav-link {
+  color: var(--text-muted);
+  transition: color var(--dur-fast) var(--ease-out-expo);
+}
+[data-theme="luxury"] .lux-nav-link:hover,
+[data-theme="luxury"] .lux-nav-link:focus-visible {
+  color: var(--text-primary);
+  background: transparent;
+}

@@ -15,6 +15,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletDisconnectButton, WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { useUserStore } from "@/store/userInfo";
 import { NavbarHUD } from "@/components/game";
+import { LUXURY_UI } from "@/lib/luxury";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -56,7 +57,11 @@ const Navbar = () => {
     <header
       className={cn(
         "fixed top-0 inset-x-0 z-50 w-full h-16 transition-all duration-300",
-        isScrolled ? "bg-[#050505]/50 backdrop-blur-md border-b border-white/5" : "bg-transparent"
+        LUXURY_UI
+          ? "lux-nav"
+          : isScrolled
+          ? "bg-[#050505]/50 backdrop-blur-md border-b border-white/5"
+          : "bg-transparent"
       )}
     >
       <Wrapper className="flex items-center gap-4 h-full">
