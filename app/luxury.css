@@ -1,0 +1,394 @@
+/* =====================================================================
+   QUANTUM WAGER — Luxury theme layer
+   Ported from the "Quantum Wager Design System" (Claude Design MCP).
+   EVERYTHING here is scoped under [data-theme="luxury"] so it only
+   applies when NEXT_PUBLIC_LUXURY_UI=true. The default UI is untouched.
+   Toggle via app/layout.tsx -> <html data-theme="luxury">.
+   ===================================================================== */
+
+[data-theme="luxury"] {
+  /* ---- Base neutrals ------------------------------------------------ */
+  --qw-black: #060607;
+  --qw-ink-900: #0a0b0d;
+  --qw-ink-850: #0e0f12;
+  --qw-graphite-800: #14161a;
+  --qw-graphite-750: #181a1f;
+  --qw-charcoal-700: #1e2128;
+  --qw-charcoal-650: #262a32;
+  --qw-slate-600: #343943;
+  --qw-slate-500: #4a4f5a;
+
+  /* ---- Ivory / champagne text ramp --------------------------------- */
+  --qw-ivory: #f4f1e9;
+  --qw-pearl: #d8d6cf;
+  --qw-ash: #9b9a95;
+  --qw-stone: #6b6b68;
+  --qw-faint: #45464a;
+
+  /* ---- Metallic gold / champagne ----------------------------------- */
+  --qw-gold-50: #f6eccf;
+  --qw-champagne: #e4d2a0;
+  --qw-gold: #c9a85c;
+  --qw-gold-deep: #a6863e;
+  --qw-gold-bronze: #7c6328;
+
+  /* ---- Market semantics -------------------------------------------- */
+  --qw-green: #34d399;
+  --qw-green-soft: #1f8a5e;
+  --qw-green-wash: rgba(52, 211, 153, 0.1);
+  --qw-red: #e5484d;
+  --qw-red-soft: #a8333a;
+  --qw-red-wash: rgba(229, 72, 77, 0.1);
+
+  /* ---- Rare accent ------------------------------------------------- */
+  --qw-violet: #7b7cf0;
+  --qw-violet-soft: #4b4ca8;
+  --qw-blue: #5b8def;
+
+  /* ---- Status tier metals ------------------------------------------ */
+  --qw-tier-bronze: #b0763c;
+  --qw-tier-silver: #c2c7ce;
+  --qw-tier-gold: #d8b25b;
+  --qw-tier-platinum: #9fd3d6;
+  --qw-tier-diamond: #8fb4f2;
+  --qw-tier-quantum: #b58cf2;
+
+  /* ---- Semantic aliases -------------------------------------------- */
+  --surface-page: var(--qw-ink-900);
+  --surface-shell: var(--qw-ink-850);
+  --surface-card: var(--qw-graphite-800);
+  --surface-raised: var(--qw-graphite-750);
+  --surface-inset: var(--qw-charcoal-700);
+  --surface-hover: var(--qw-charcoal-650);
+
+  --text-primary: var(--qw-ivory);
+  --text-secondary: var(--qw-pearl);
+  --text-muted: var(--qw-ash);
+  --text-subtle: var(--qw-stone);
+  --text-disabled: var(--qw-faint);
+  --text-on-gold: #1a1408;
+
+  --border-hairline: rgba(244, 241, 233, 0.07);
+  --border-line: rgba(244, 241, 233, 0.11);
+  --border-strong: rgba(244, 241, 233, 0.18);
+  --border-gold: rgba(201, 168, 92, 0.45);
+
+  --brand-gold: var(--qw-gold);
+  --brand-gold-hi: var(--qw-champagne);
+  --brand-gold-lo: var(--qw-gold-deep);
+
+  --market-up: var(--qw-green);
+  --market-down: var(--qw-red);
+  --accent-ai: var(--qw-violet);
+  --accent-info: var(--qw-blue);
+  --focus-ring: rgba(201, 168, 92, 0.55);
+
+  /* ---- Typography (families mapped to next/font variables) --------- */
+  --font-display: var(--font-newsreader), Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-heading), -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  --text-display-xl: clamp(48px, 7vw, 76px);
+  --text-display-lg: clamp(40px, 5.5vw, 56px);
+  --text-display-md: clamp(32px, 4vw, 42px);
+  --text-h1: 34px;
+  --text-h2: 27px;
+  --text-h3: 21px;
+  --text-h4: 18px;
+  --text-body-lg: 17px;
+  --text-body: 15px;
+  --text-sm: 13.5px;
+  --text-xs: 12px;
+  --text-label: 11.5px;
+  --text-figure-hero: clamp(38px, 5vw, 52px);
+  --text-figure-lg: 32px;
+  --text-figure-md: 22px;
+  --text-figure-sm: 15px;
+
+  --fw-light: 300;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --lh-tight: 1.05;
+  --lh-snug: 1.18;
+  --lh-normal: 1.5;
+  --lh-relaxed: 1.65;
+  --ls-tighter: -0.03em;
+  --ls-tight: -0.015em;
+  --ls-normal: 0em;
+  --ls-wide: 0.04em;
+  --ls-label: 0.18em;
+
+  /* ---- Spacing / radii / layout ------------------------------------ */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 48px;
+  --space-10: 64px;
+  --space-11: 80px;
+  --space-12: 96px;
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --radius-pill: 999px;
+  --container-max: 1280px;
+  --nav-height: 68px;
+  --bw-hairline: 1px;
+
+  /* ---- Effects: elevation, glow, glass, gradients, motion ---------- */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  --shadow-md: 0 8px 28px -10px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --shadow-lg: 0 24px 60px -18px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --shadow-pop: 0 40px 90px -24px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+
+  --glow-gold: 0 0 0 1px rgba(201, 168, 92, 0.25), 0 10px 40px -12px rgba(201, 168, 92, 0.35);
+  --glow-green: 0 0 0 1px rgba(52, 211, 153, 0.22), 0 8px 32px -12px rgba(52, 211, 153, 0.3);
+  --glow-red: 0 0 0 1px rgba(229, 72, 77, 0.22), 0 8px 32px -12px rgba(229, 72, 77, 0.3);
+  --glow-violet: 0 0 0 1px rgba(123, 124, 240, 0.25), 0 10px 40px -12px rgba(123, 124, 240, 0.35);
+
+  --grad-gold: linear-gradient(140deg, #e4d2a0 0%, #c9a85c 42%, #a6863e 100%);
+  --grad-gold-hover: linear-gradient(140deg, #f0e0b6 0%, #d4b468 42%, #b6964c 100%);
+  --grad-card: linear-gradient(165deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.012) 22%, rgba(255, 255, 255, 0) 60%);
+  --grad-page: radial-gradient(120% 80% at 50% -10%, rgba(201, 168, 92, 0.06) 0%, transparent 55%),
+    radial-gradient(80% 60% at 85% 5%, rgba(123, 124, 240, 0.04) 0%, transparent 50%), var(--qw-ink-900);
+  --grad-text-gold: linear-gradient(100deg, #f6eccf 0%, #c9a85c 55%, #a6863e 100%);
+  --grad-chart-up: linear-gradient(180deg, rgba(52, 211, 153, 0.28) 0%, rgba(52, 211, 153, 0.02) 100%);
+  --grad-chart-gold: linear-gradient(180deg, rgba(201, 168, 92, 0.26) 0%, rgba(201, 168, 92, 0.01) 100%);
+
+  --glass-bg: linear-gradient(165deg, rgba(244, 241, 233, 0.05), rgba(10, 11, 13, 0.55));
+  --glass-blur: blur(16px) saturate(120%);
+  --glass-border: 1px solid rgba(244, 241, 233, 0.1);
+
+  --grid-texture: linear-gradient(rgba(244, 241, 233, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(244, 241, 233, 0.025) 1px, transparent 1px);
+  --grid-size: 48px 48px;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.4, 1);
+  --dur-fast: 160ms;
+  --dur-base: 280ms;
+  --dur-slow: 480ms;
+  --dur-reveal: 720ms;
+}
+
+/* ---- Page foundation ----------------------------------------------- */
+[data-theme="luxury"] body {
+  background: var(--surface-page);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "ss01", "cv01";
+}
+[data-theme="luxury"] ::selection {
+  background: rgba(201, 168, 92, 0.28);
+  color: var(--text-primary);
+}
+[data-theme="luxury"] ::-webkit-scrollbar { width: 8px; height: 8px; }
+[data-theme="luxury"] ::-webkit-scrollbar-track { background: transparent; }
+[data-theme="luxury"] ::-webkit-scrollbar-thumb {
+  background: var(--qw-charcoal-650);
+  border-radius: var(--radius-pill);
+}
+[data-theme="luxury"] ::-webkit-scrollbar-thumb:hover { background: var(--qw-slate-600); }
+
+/* ---- Editorial / figure utilities ---------------------------------- */
+[data-theme="luxury"] .lux-label {
+  font-family: var(--font-sans);
+  font-size: var(--text-label);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+[data-theme="luxury"] .lux-display {
+  font-family: var(--font-display);
+  font-weight: var(--fw-regular);
+  letter-spacing: var(--ls-tighter);
+  line-height: var(--lh-tight);
+  color: var(--text-primary);
+}
+[data-theme="luxury"] .lux-display em { font-style: italic; color: var(--brand-gold); }
+[data-theme="luxury"] .lux-figure {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--ls-tight);
+  font-weight: var(--fw-medium);
+}
+[data-theme="luxury"] .lux-up { color: var(--market-up); }
+[data-theme="luxury"] .lux-down { color: var(--market-down); }
+[data-theme="luxury"] .lux-gold-text {
+  background: var(--grad-text-gold);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ---- Surfaces ------------------------------------------------------ */
+[data-theme="luxury"] .lux-card {
+  position: relative;
+  background: var(--surface-card);
+  border: var(--bw-hairline) solid var(--border-line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+[data-theme="luxury"] .lux-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--grad-card);
+  pointer-events: none;
+}
+[data-theme="luxury"] .lux-glass {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: var(--glass-border);
+  border-radius: var(--radius-lg);
+}
+[data-theme="luxury"] .lux-page-bg { background: var(--grad-page); }
+[data-theme="luxury"] .lux-grid-bg {
+  background-image: var(--grid-texture);
+  background-size: var(--grid-size);
+}
+[data-theme="luxury"] .lux-divider { height: 1px; background: var(--border-hairline); border: 0; }
+[data-theme="luxury"] .lux-gold-border { border-color: var(--border-gold) !important; }
+[data-theme="luxury"] .lux-glow-gold { box-shadow: var(--glow-gold); }
+
+/* ---- Interactions -------------------------------------------------- */
+[data-theme="luxury"] .lux-lift {
+  transition: transform var(--dur-base) var(--ease-out-expo),
+    border-color var(--dur-base) var(--ease-out-expo),
+    box-shadow var(--dur-base) var(--ease-out-expo);
+}
+[data-theme="luxury"] .lux-lift:hover {
+  transform: translateY(-3px);
+  border-color: var(--border-gold);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ---- Brushed-gold primary button ----------------------------------- */
+[data-theme="luxury"] .lux-btn-gold {
+  background: var(--grad-gold);
+  color: var(--text-on-gold);
+  font-family: var(--font-sans);
+  font-weight: var(--fw-semibold);
+  border: none;
+  border-radius: var(--radius-md);
+  transition: background var(--dur-fast) var(--ease-out-expo),
+    box-shadow var(--dur-base) var(--ease-out-expo),
+    transform var(--dur-fast) var(--ease-out-expo);
+}
+[data-theme="luxury"] .lux-btn-gold:hover { background: var(--grad-gold-hover); box-shadow: var(--glow-gold); }
+[data-theme="luxury"] .lux-btn-gold:active { transform: scale(0.98); }
+[data-theme="luxury"] .lux-btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-line);
+  border-radius: var(--radius-md);
+  transition: all var(--dur-fast) var(--ease-out-expo);
+}
+[data-theme="luxury"] .lux-btn-ghost:hover { color: var(--text-primary); border-color: var(--border-strong); background: var(--surface-hover); }
+
+/* ---- Focus ring ---------------------------------------------------- */
+[data-theme="luxury"] a:focus-visible,
+[data-theme="luxury"] button:focus-visible,
+[data-theme="luxury"] [tabindex]:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ---- Motion / feedback --------------------------------------------- */
+@keyframes lux-reveal { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+[data-theme="luxury"] .lux-reveal { animation: lux-reveal var(--dur-reveal) var(--ease-out-expo) both; }
+
+@keyframes lux-shimmer { 0% { background-position: -180% 0; } 100% { background-position: 180% 0; } }
+[data-theme="luxury"] .lux-skeleton {
+  background: linear-gradient(100deg, var(--qw-graphite-750) 30%, var(--qw-charcoal-650) 50%, var(--qw-graphite-750) 70%);
+  background-size: 200% 100%;
+  animation: lux-shimmer 1.8s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+[data-theme="luxury"] .lux-pulse {
+  position: relative;
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: var(--radius-pill);
+  background: var(--market-up);
+}
+[data-theme="luxury"] .lux-pulse::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--market-up);
+  animation: lux-ping 1.8s var(--ease-out-expo) infinite;
+}
+@keyframes lux-ping { 70%, 100% { transform: scale(2.6); opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="luxury"] .lux-skeleton,
+  [data-theme="luxury"] .lux-pulse::after,
+  [data-theme="luxury"] .lux-reveal { animation: none; }
+  [data-theme="luxury"] .lux-lift:hover { transform: none; }
+}
+
+/* ---- Wallet adapter button → brushed gold (overrides the purple default) -- */
+[data-theme="luxury"] .wallet-adapter-button-trigger {
+  background: var(--grad-gold) !important;
+  color: var(--text-on-gold) !important;
+  border: none !important;
+  border-radius: var(--radius-md) !important;
+  height: 44px !important;
+  padding: 0 22px !important;
+  font-family: var(--font-sans) !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  letter-spacing: 0.01em !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+[data-theme="luxury"] .wallet-adapter-button-trigger:hover {
+  background: var(--grad-gold-hover) !important;
+  box-shadow: var(--glow-gold) !important;
+  transform: none !important;
+}
+[data-theme="luxury"] .wallet-adapter-modal-content {
+  background: var(--surface-card) !important;
+  border: 1px solid var(--border-gold) !important;
+  box-shadow: var(--shadow-pop) !important;
+}
+[data-theme="luxury"] .wallet-adapter-modal-list .wallet-adapter-button:hover {
+  background: rgba(201, 168, 92, 0.1) !important;
+  border-color: var(--border-gold) !important;
+}
+
+/* ---- Luxury top nav (applied via conditional classes in Navbar) ---------- */
+[data-theme="luxury"] .lux-nav {
+  background: rgba(10, 11, 13, 0.62);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--border-hairline);
+}
+[data-theme="luxury"] .lux-nav-link {
+  color: var(--text-muted);
+  transition: color var(--dur-fast) var(--ease-out-expo);
+}
+[data-theme="luxury"] .lux-nav-link:hover,
+[data-theme="luxury"] .lux-nav-link:focus-visible {
+  color: var(--text-primary);
+  background: transparent;
+}

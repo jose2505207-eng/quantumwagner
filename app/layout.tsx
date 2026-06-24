@@ -6,10 +6,11 @@ import { Toaster } from "react-hot-toast";
 import RouteProgress from "./utils/hooks/routeProgress";
 import { SolanaProvider } from "./utils/SolanaProvider";
 import { WalletAuth } from "./utils/walletAuth";
-import { base, heading } from "@/constants/fonts";
+import { base, heading, newsreader, jetbrainsMono } from "@/constants/fonts";
 import { cn } from "@/lib/utils";
 import { XPToast } from "@/components/game";
 import { GameSync } from "@/components/game/GameSync";
+import { LUXURY_UI } from "@/lib/luxury";
 
 export const metadata: Metadata = {
   title: "Quantum Wager ",
@@ -26,11 +27,13 @@ export default function RootLayout({
 }>) {
  
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" data-theme={LUXURY_UI ? "luxury" : undefined}>
       <body className={cn(
           "relative bg-[#050505] text-white min-h-screen flex flex-col font-base antialiased",
           base.variable,
-          heading.variable
+          heading.variable,
+          newsreader.variable,
+          jetbrainsMono.variable
         )}>
         <RouteProgress />
         <SolanaProvider>
