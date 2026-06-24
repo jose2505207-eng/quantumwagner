@@ -16,6 +16,7 @@ import {
   WalletModalProvider
 } from "@solana/wallet-adapter-react-ui";
 import { clusterApiUrl } from "@solana/web3.js";
+import { SOLANA_RPC_URL } from "@/lib/solana";
 import "@solana/wallet-adapter-react-ui/styles.css";
 
 interface SolanaProviderProps {
@@ -25,7 +26,9 @@ interface SolanaProviderProps {
 export const SolanaProvider: FC<SolanaProviderProps> = ({ children }) => {
   const network = WalletAdapterNetwork.Devnet;
 
-  const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+  // Prefer the configured RPC (NEXT_PUBLIC_SOLANA_RPC_URL); fall back to the
+  // public Devnet cluster. Keeps a single source of truth via lib/solana.
+  const endpoint = useMemo(() => SOLANA_RPC_URL || clusterApiUrl(network), [network]);
 
   const wallets = useMemo(
     () => [
