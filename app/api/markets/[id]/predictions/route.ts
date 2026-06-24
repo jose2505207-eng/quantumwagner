@@ -5,6 +5,7 @@ import { placePredictionSchema } from "@/server/validators";
 import { completeLevelServer, awardXp } from "@/server/xp";
 import { LEVEL_BY_ID } from "@/lib/game/levels";
 import { logAudit } from "@/server/audit";
+import { verifySignature, REQUIRE_ONCHAIN } from "@/server/solana";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -34,6 +35,25 @@ export const POST = handler(
     if (market.status !== "ACTIVE") return fail("market is not active", 409);
     if (market.endTime.getTime() < Date.now()) return fail("market has ended", 409);
 
+    // ---- On-chain confirmation gate (Devnet) -------------------------------
+    // Never record a "placed" prediction unless its Devnet tx confirmed.
+    // - a provided signature is verified on-chain (reject if it didn't confirm)
+    // - with no signature: required in devnet/prod, allowed (unconfirmed) in demo
+    const verification = await verifySignature(body.txSignature);
+    if (body.txSignature && !verification.confirmed) {
+      return fail(
+        `Prediction not recorded — Devnet transaction not confirmed (${verification.reason}).`,
+        409
+      );
+    }
+    if (!body.txSignature && REQUIRE_ONCHAIN) {
+      return fail(
+        "An on-chain (Devnet) transaction signature is required to place a prediction.",
+        400
+      );
+    }
+    const txStatus = verification.confirmed ? "confirmed" : "local-unconfirmed";
+
     const isFirst =
       (await prisma.prediction.count({ where: { userId: claims.sub } })) === 0;
 
@@ -43,7 +63,8 @@ export const POST = handler(
         userId: claims.sub,
         side: body.side,
         amount: body.amount,
-        txSignature: body.txSignature,
+        // only persist a signature we actually confirmed on-chain
+        txSignature: verification.confirmed ? body.txSignature : null,
       },
     });
 
@@ -60,7 +81,8 @@ export const POST = handler(
         userId: claims.sub,
         kind: "prediction",
         amount: body.amount,
-        signature: body.txSignature,
+        signature: verification.confirmed ? body.txSignature : null,
+        status: txStatus,
         refType: "prediction",
         refId: prediction.id,
       },
@@ -85,7 +107,28 @@ export const POST = handler(
       });
     }
 
-    await logAudit({ actorId: claims.sub, action: "prediction.place", target: prediction.id });
-    return ok({ prediction, firstPrediction: isFirst }, { status: 201 });
+    await logAudit({
+      actorId: claims.sub,
+      action: "prediction.place",
+      target: prediction.id,
+      meta: {
+        signature: body.txSignature ?? null,
+        confirmed: verification.confirmed,
+        slot: verification.slot ?? null,
+        status: verification.status ?? null,
+      },
+    });
+    return ok(
+      {
+        prediction,
+        firstPrediction: isFirst,
+        onchain: {
+          confirmed: verification.confirmed,
+          slot: verification.slot ?? null,
+          status: verification.status ?? null,
+        },
+      },
+      { status: 201 }
+    );
   }
 );
