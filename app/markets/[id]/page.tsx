@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import axios from "axios";
 import { BACKEND_URL } from "@/config";
+import { explorerTx } from "@/lib/solana";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import toast from "react-hot-toast";
@@ -319,6 +320,7 @@ export default function MarketDetailPage() {
   const { connection } = useConnection();
   const [selected, setSelected] = useState<"yes" | "no">("yes");
   const [amount, setAmount] = useState("");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- backend position payload
   const [betResult, setBetResult] = useState<any | null>(null);
   const { placeBet } = Methods();
   const [mounted, setMounted] = useState(false);
@@ -344,19 +346,21 @@ export default function MarketDetailPage() {
         return;
       }
 
-      if (market.id.startsWith("mock")) {
-        // Mock bet
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        toast.success("Mock bet placed successfully!");
-        setHasBet(true);
-        setAmount("");
+      // Demo/seed markets have no real on-chain account — be honest: no fake bet.
+      if (
+        market.id.startsWith("mock") ||
+        market.id.startsWith("demo") ||
+        !market.pda ||
+        market.pda.startsWith("mock") ||
+        market.pda.startsWith("demo")
+      ) {
+        toast.error(
+          "This is a demo market — live Devnet betting is disabled here. Open a real market to place an on-chain bet."
+        );
         return;
       }
 
-      if (!market.pda) {
-        window.location.reload();
-      }
-
+      // Real Devnet transaction via the Anchor program (wallet signs).
       const tx = await placeBet(
         new PublicKey(`${market.pda}`),
         userLamports,
@@ -389,6 +393,27 @@ export default function MarketDetailPage() {
       setBetResult(res.data.data);
       setHasBet(true);
       setAmount("");
+      // Surface the real Devnet signature with a Solana Explorer link.
+      toast.custom(
+        (t) => (
+          <div
+            className={`flex items-center gap-2 rounded-lg border border-green-500/30 bg-[#0d0f16] px-4 py-3 text-sm text-white ${
+              t.visible ? "" : "opacity-0"
+            }`}
+          >
+            <span>Bet confirmed on Devnet</span>
+            <a
+              href={explorerTx(tx)}
+              target="_blank"
+              rel="noreferrer"
+              className="font-semibold text-green-400 underline"
+            >
+              View on Explorer ↗
+            </a>
+          </div>
+        ),
+        { duration: 7000 }
+      );
     } catch (err) {
       toast.error(`${err}`);
     } finally {
