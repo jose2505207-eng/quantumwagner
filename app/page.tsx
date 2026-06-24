@@ -20,8 +20,16 @@ import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Flame, Target, ArrowRight } from "lucide-react";
+import { LUXURY_UI } from "@/lib/luxury";
+import LuxuryLanding from "@/components/landing/LuxuryLanding";
 
 export default function Home() {
+  // Feature-flagged: render the premium luxury landing, else the original arena.
+  if (LUXURY_UI) return <LuxuryLanding />;
+  return <LegacyHome />;
+}
+
+function LegacyHome() {
   const { markets, source, loading, error, reload } = useMarkets();
   const { setVisible } = useWalletModal();
 
