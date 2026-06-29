@@ -14,10 +14,10 @@ vercel            # preview
 vercel --prod     # production
 
 # Or any Node host
-npm run build
-npm run db:migrate:deploy   # apply migrations to the production database
-npm run db:seed             # optional: demo data
-npm run start
+pnpm build
+pnpm db:migrate:deploy   # apply migrations to the production database
+pnpm db:seed             # optional: demo data
+pnpm start
 ```
 
 ### Required production env
@@ -44,8 +44,8 @@ then re-run migrations. `Source: README.md`, `Source: prisma/schema.prisma`.
 ## 2. Database
 
 ```bash
-npm run db:migrate:deploy   # prisma migrate deploy (idempotent, CI/prod-safe)
-npm run db:seed             # optional DEMO data
+pnpm db:migrate:deploy   # prisma migrate deploy (idempotent, CI/prod-safe)
+pnpm db:seed             # optional DEMO data
 ```
 
 Migrations are committed under `prisma/migrations/`; the `.db` file is not.
@@ -101,10 +101,10 @@ flowchart LR
 
 ## Pre-deploy checklist
 
-- [ ] `npm run build` clean, `npm run typecheck` clean.
+- [ ] `pnpm build` clean, `pnpm typecheck` clean.
 - [ ] Strong `JWT_SECRET` and non-default `ADMIN_RESOLUTION_KEY` set.
 - [ ] `DATABASE_URL` → durable Postgres; Prisma `provider` switched.
-- [ ] `npm run db:migrate:deploy` run against the prod DB.
+- [ ] `pnpm db:migrate:deploy` run against the prod DB.
 - [ ] `NEXT_PUBLIC_APP_MODE=production` (demo off) unless intentionally demoing.
 - [ ] Reliable devnet RPC in `NEXT_PUBLIC_SOLANA_RPC_URL`.
 

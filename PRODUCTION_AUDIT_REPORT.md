@@ -54,10 +54,10 @@ and no security/economic/legal review has occurred.
 
 ## Test results
 
-- `npm test` (vitest): **25 passed / 25** — settlement math, ed25519 auth core, rank/level logic, server validators, rate limiter.
-- `npm run typecheck`: **0 errors**.
-- `npm run lint`: new code clean; pre-existing legacy warnings documented.
-- `npm run build`: **passes** (all routes + 30+ API handlers).
+- `pnpm test` (vitest): **25 passed / 25** — settlement math, ed25519 auth core, rank/level logic, server validators, rate limiter.
+- `pnpm typecheck`: **0 errors**.
+- `pnpm lint`: new code clean; pre-existing legacy warnings documented.
+- `pnpm build`: **passes** (all routes + 30+ API handlers).
 - DB: `prisma migrate deploy` + `db:seed` succeed.
 - Manual E2E (script): nonce → sign → verify (L1) → create market → first prediction (L2) → admin resolve → win settled → leaderboard updated. ✅
 

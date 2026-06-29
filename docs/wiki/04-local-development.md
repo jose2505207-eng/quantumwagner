@@ -14,18 +14,18 @@ page can't cite.
 ## First run (in-repo full stack)
 
 ```bash
-# 1. Install (dependency tree needs legacy peer resolution with npm)
-npm install --legacy-peer-deps     # postinstall runs `prisma generate`
+# 1. Install dependencies
+pnpm install                       # postinstall runs `prisma generate`
 
 # 2. Configure environment
 cp .env.example .env               # defaults work for local dev (SQLite + same-origin)
 
 # 3. Set up the database (Prisma + SQLite)
-npm run db:migrate                 # prisma migrate dev — creates dev.db + applies migrations
-npm run db:seed                    # load clearly-marked DEMO data (isDemo=true)
+pnpm db:migrate                    # prisma migrate dev — creates dev.db + applies migrations
+pnpm db:seed                       # load clearly-marked DEMO data (isDemo=true)
 
 # 4. Run the whole stack (frontend + in-repo API, one process)
-npm run dev                        # http://localhost:3000
+pnpm dev                           # http://localhost:3000
 ```
 
 `Source: README.md`, `Source: package.json` (scripts + `postinstall`),
@@ -44,29 +44,29 @@ curl localhost:3000/api/leaderboard   # seeded season standings
 `Source: README.md`, `Source: app/api/health/route.ts`,
 `Source: app/api/leaderboard/route.ts`.
 
-## All npm scripts
+## All pnpm scripts
 
 `Source: package.json`:
 
 | Script | Command | Use |
 | --- | --- | --- |
-| `npm run dev` | `next dev` | Local dev server |
-| `npm run build` | `next build` | Production build |
-| `npm run start` | `next start` | Serve the build (needs a strong `JWT_SECRET`) |
-| `npm run lint` | `eslint` | Lint (config: `eslint.config.mjs`) |
-| `npm run typecheck` | `tsc --noEmit` | Type-check only |
-| `npm run db:generate` | `prisma generate` | Regenerate Prisma client |
-| `npm run db:migrate` | `prisma migrate dev` | Create/apply a dev migration |
-| `npm run db:migrate:deploy` | `prisma migrate deploy` | Apply migrations in CI/prod |
-| `npm run db:seed` | `tsx prisma/seed.ts` | Seed DEMO data |
-| `npm run db:reset` | `prisma migrate reset --force` | **Destructive** drop+recreate+reseed |
-| `npm run db:studio` | `prisma studio` | Browse data in a GUI |
+| `pnpm dev` | `next dev` | Local dev server |
+| `pnpm build` | `next build` | Production build |
+| `pnpm start` | `next start` | Serve the build (needs a strong `JWT_SECRET`) |
+| `pnpm lint` | `eslint` | Lint (config: `eslint.config.mjs`) |
+| `pnpm typecheck` | `tsc --noEmit` | Type-check only |
+| `pnpm db:generate` | `prisma generate` | Regenerate Prisma client |
+| `pnpm db:migrate` | `prisma migrate dev` | Create/apply a dev migration |
+| `pnpm db:migrate:deploy` | `prisma migrate deploy` | Apply migrations in CI/prod |
+| `pnpm db:seed` | `tsx prisma/seed.ts` | Seed DEMO data |
+| `pnpm db:reset` | `prisma migrate reset --force` | **Destructive** drop+recreate+reseed |
+| `pnpm db:studio` | `prisma studio` | Browse data in a GUI |
 
 ## Production build locally
 
 ```bash
-npm run build
-npm run start          # refuses to boot in prod with the insecure default JWT_SECRET
+pnpm build
+pnpm start             # refuses to boot in prod with the insecure default JWT_SECRET
 ```
 
 `server/env.ts` throws if `NODE_ENV=production` and `JWT_SECRET` is still the dev
@@ -90,8 +90,8 @@ is **not** vendored — install it yourself. See [09-deployment](./09-deployment
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
 | `npm install` peer-dep errors | Solana/Anchor peer ranges | use `--legacy-peer-deps` (`Source: README.md`) |
-| `prisma` client missing at runtime | client not generated | `npm run db:migrate` or `npm run db:generate` (postinstall normally handles it) |
-| `npm run start` throws on boot | prod + insecure `JWT_SECRET` | set a strong `JWT_SECRET` (`Source: server/env.ts`) |
+| `prisma` client missing at runtime | client not generated | `pnpm db:migrate` or `pnpm db:generate` (postinstall normally handles it) |
+| `pnpm start` throws on boot | prod + insecure `JWT_SECRET` | set a strong `JWT_SECRET` (`Source: server/env.ts`) |
 | API 401 on writes | missing/expired JWT | reconnect wallet to re-run sign-in (`Source: app/utils/walletAuth.tsx`) |
 | Data is empty but badged "DEMO" | live source empty + `DEMO_MODE` on | expected; seed data or point at a live backend (`Source: lib/useMarkets.ts`) |
 | SQLite data lost on serverless | local file not durable | use Postgres in prod (`Source: README.md`) |

@@ -42,8 +42,8 @@ Running log of the autonomous build. Newest entries at the bottom of each loop.
   (nonce/verify-wallet/me + legacy verify/profile), player
   (profile/progress/quests/claim), markets (+predictions/resolve/positions),
   fast-bets, battles, launchpad, leaderboard, oracle (webhook/resolutions).
-- Verified: `npm run db:migrate`, `npm run db:seed` (4 users/3 markets/4 lb
-  entries/4 quests), `npm run build` (all routes), `tsc` clean.
+- Verified: `pnpm db:migrate`, `pnpm db:seed` (4 users/3 markets/4 lb
+  entries/4 quests), `pnpm build` (all routes), `tsc` clean.
 
 ## Loop 13 — Oracle Resolution (DONE)
 

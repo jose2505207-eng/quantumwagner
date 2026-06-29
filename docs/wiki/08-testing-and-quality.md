@@ -6,10 +6,10 @@ on-chain test suite** rather than an application test pyramid.
 ## What exists
 
 ### Static quality gates
-- **TypeScript** — `npm run typecheck` (`tsc --noEmit`). The build log notes the
+- **TypeScript** — `pnpm typecheck` (`tsc --noEmit`). The build log notes the
   app reached "0 tsc errors" with `ignoreBuildErrors` removed.
   `Source: package.json`, `Source: docs/BUILD_PROGRESS.md`.
-- **ESLint** — `npm run lint` (`eslint`), extending `next/core-web-vitals` and
+- **ESLint** — `pnpm lint` (`eslint`), extending `next/core-web-vitals` and
   `next/typescript`. Ignores `node_modules`, `.next`, `out`, `build`,
   `next-env.d.ts`. `Source: package.json`, `Source: eslint.config.mjs`.
 - **Zod runtime validation** — every API request body is validated server-side;
@@ -56,9 +56,9 @@ It exercises the reference escrow program's instruction flow
 ## Manual verification you can run today
 
 ```bash
-npm run typecheck                       # type safety
-npm run lint                            # lint
-npm run dev                             # then:
+pnpm typecheck                          # type safety
+pnpm lint                               # lint
+pnpm dev                                # then:
 curl localhost:3000/api/health          # DB ping
 curl localhost:3000/api/leaderboard     # seeded standings
 ```

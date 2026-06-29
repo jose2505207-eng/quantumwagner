@@ -8,18 +8,18 @@ code that produces the behaviour.
 | Symptom | Cause | Fix |
 | --- | --- | --- |
 | `npm install` ERESOLVE peer conflicts | `react-native`/Solana peers pull React 19; project is React 18 | `npm install --legacy-peer-deps` (`Source: README.md`, `docs/BUILD_PROGRESS.md`) |
-| `@prisma/client` not found at runtime | Prisma client not generated | `npm run db:generate` (normally `postinstall` runs it) (`Source: package.json`) |
+| `@prisma/client` not found at runtime | Prisma client not generated | `pnpm db:generate` (normally `postinstall` runs it) (`Source: package.json`) |
 | `next build` fails on env | Confused build vs runtime env validation | `server/env.ts` already guards this via `NEXT_PHASE`; ensure you didn't remove it (`Source: server/env.ts`) |
 
 ## Runtime / API
 
 | Symptom | Cause | Fix |
 | --- | --- | --- |
-| `npm run start` throws on boot in prod | `JWT_SECRET` still the insecure dev default | set a strong `JWT_SECRET` (`Source: server/env.ts`) |
+| `pnpm start` throws on boot in prod | `JWT_SECRET` still the insecure dev default | set a strong `JWT_SECRET` (`Source: server/env.ts`) |
 | `401 Unauthorized` on writes | missing/expired/invalid Bearer JWT | reconnect wallet to re-run sign-in (7-day TTL) (`Source: server/auth.ts`, `app/utils/walletAuth.tsx`) |
 | `422 Validation failed` | request body fails a Zod schema | check `server/validators.ts` for the exact shape (`Source: server/http.ts`) |
 | Sign-in loops / "Wallet login failed" | nonce expired (5-min TTL), already used, or wallet mismatch | retry; `verifySignedMessage` requires a fresh, unused nonce for that wallet (`Source: server/auth.ts`) |
-| `/api/health` not healthy | DB unreachable / migrations not applied | run `npm run db:migrate` (`Source: app/api/health/route.ts`, `README.md`) |
+| `/api/health` not healthy | DB unreachable / migrations not applied | run `pnpm db:migrate` (`Source: app/api/health/route.ts`, `README.md`) |
 | `market already resolved` error on resolve | resolving a `RESOLVED` market | expected guard; markets resolve once (`Source: server/oracle.ts`) |
 | `invalid admin resolution key` | wrong/missing `adminKey` for the admin resolver | pass the configured `ADMIN_RESOLUTION_KEY` (`Source: server/oracle.ts`) |
 
