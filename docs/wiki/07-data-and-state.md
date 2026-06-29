@@ -58,8 +58,17 @@ prod. The server is the source of truth for XP, wins, and resolution.
   `Source: server/audit.ts`.
 - `isDemo` exists on user-facing content models so seed data is filterable and
   badge-able. `Source: prisma/schema.prisma`, `Source: prisma/seed.ts`.
-- `completedLevels` is a JSON string (SQLite has no native arrays) — parse it
+- `completedLevels` is a JSON string (stored as a string field) — parse it
   when reading. `Source: server/xp.ts` (`completeLevelServer`).
+- **`PlayerProfile.wins` is a derived counter** incremented exactly once per
+  winning settled record by `awardXp({ win: true })`, and the active-season
+  `LeaderboardEntry.wins` is **set** to that authoritative `profile.wins`. Because
+  the live path is increment-only, a historical bug (a first-win that didn't pass
+  `win:true`) can leave a player permanently under-counted. `scripts/backfill-wins.ts`
+  reconciles this idempotently: it **recounts** the ledger (settled winning
+  FastBet/Prediction/MemeBattle records) and SETS `wins` to the true count
+  (`--dry-run` by default; `--apply` to write). `Source: scripts/backfill-wins.ts`,
+  `Source: server/xp.ts`.
 
 ### Migrations & seed
 - Migrations are committed under `prisma/migrations/` (the SQLite `.db` file is

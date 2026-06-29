@@ -35,6 +35,15 @@ pnpm start
 | `ADMIN_RESOLUTION_KEY` | resolver/oracle key — change it |
 | `ORACLE_MODE` | `dev`/`admin`/`provider` |
 
+**Optional production hardening** (all default to safe no-ops if unset):
+- `RATE_LIMIT_ENABLED="true"` + `RATE_LIMIT_REDIS_URL`/`RATE_LIMIT_REDIS_TOKEN`
+  — switch the limiter to a shared Upstash Redis window across instances
+  (needed when running more than one serverless instance; in-memory windows
+  don't span them). `Source: server/rateLimit.ts`, `Source: .env.example`.
+- `MONITORING_DSN` (+ optional `MONITORING_ENABLED`) — POST unhandled 5xx to an
+  HTTP collector. `Source: server/monitoring.ts`, `Source: .env.example`.
+Confirm both via `GET /api/health` (`limiter`/`monitoring` fields).
+
 ### The serverless / SQLite caveat
 SQLite's local file is **not durable** on serverless hosts (e.g. Vercel). For
 production, point `DATABASE_URL` at managed **Postgres** and change the Prisma
@@ -86,6 +95,16 @@ Verify a deployed program:
 solana program show C8SAQXW3qhWTT1uGdpSegU466qTQAKQs3JB15TQ8toSc --url devnet
 ```
 `Source: docs/DEVNET_DEPLOYMENT.md`.
+
+For an end-to-end liveness check against the deployed program (real account
+reads + a real signed self-transfer), run the devnet harness with a funded
+keypair:
+```bash
+pnpm e2e        # tsx test/e2e/devnet-e2e.ts — fails loud at 0 SOL
+```
+It is intentionally **not** part of CI. `Source: test/e2e/devnet-e2e.ts`,
+`Source: test/e2e/README.md`. Funding is currently pending (see
+[12-roadmap](./12-roadmap-and-open-questions.md)).
 
 ## Deployment topology
 

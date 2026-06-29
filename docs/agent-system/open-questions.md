@@ -16,6 +16,18 @@ with how to verify. Do NOT guess these in code or docs. (Sourced from
    `contracts/quantum_wager/` is a minimal escrow scaffold with a placeholder id.
    `docs/DEVNET_DEPLOYMENT.md` says the Anchor source is "a separate workspace."
    *Verify:* locate that workspace/repo and link it here.
+   *Status (Loop 7) — recon done, STILL OPEN (external):* a full sweep of all
+   branches, remotes (incl. `copilot/*`, `docs/*`), and `git log --all` history
+   found the deployed Rust source **nowhere in this repo**. `git log --all
+   --diff-filter=A` lists exactly one `.rs` path — the 4-instruction
+   `contracts/quantum_wager/.../lib.rs` scaffold (placeholder id
+   `Quantum111…`), which is categorically NOT the 18-instruction deployed program.
+   No `target/`, no `*.so`, no upgrade keypair; the IDL embeds no source. So the
+   program is consumed **IDL-only**: it cannot be audited or rebuilt/redeployed
+   from here, and the IDL is trusted blind. Recovery is external only — `anchor
+   idl fetch` (interface check), `solana program show … --url devnet` to find the
+   upgrade authority and request the source, or the original (likely private)
+   Anchor workspace. Do NOT fabricate a source location.
 
 3. **Are the on-chain `methods.tsx` flows exercised end-to-end on devnet today?**
    No in-repo automated proof. *Verify:* run the flows against devnet with a
@@ -24,6 +36,13 @@ with how to verify. Do NOT guess these in code or docs. (Sourced from
    being requested from the team). `.gitignore` now excludes `.devnet/` so a local
    keypair can be dropped in for the E2E run without risk of committing it. Do NOT
    fabricate signatures; this stays open until a real run is captured.
+   *Status (Loop 7) — harness BUILT, still blocked on creds:* the E2E harness now
+   exists — `test/e2e/devnet-e2e.ts` + `pnpm e2e` (excluded from CI via
+   `vitest.config.ts`). It does real read-only account reads + a 0-lamport
+   self-transfer for a real signature, and **fails LOUD at 0 SOL** (no skip-as-pass,
+   no fake signature). It turns green only once a funded keypair is at `.devnet/id.json`
+   (pubkey `EBJjWqRqR6qidwo9qNNpaDvveX6A5PRD1avtxvDkVphA`) and an authenticated
+   `ANCHOR_PROVIDER_URL` is set. Still OPEN until a real signature is captured.
 
 4. **Is `RATE_LIMIT_ENABLED` actually enforced anywhere?**
    *RESOLVED (Loop 2):* Yes. `server/rateLimit.ts` gates on
@@ -33,6 +52,12 @@ with how to verify. Do NOT guess these in code or docs. (Sourced from
    throws `HttpError(…, 429)`, which `server/http.ts`'s `handler()` maps to a 429
    response — confirmed end-to-end. (The earlier "dead code" read was a stale grep
    for `RATE_LIMIT`, which misses lowercase `rateLimit(` call sites.)
+   *Extended (Loop 7):* the limiter is now backed by a pluggable `RateLimitStore`
+   (`server/rateLimit.ts`) — `MemoryStore` default, opt-in `RedisStore` (Upstash
+   REST via `fetch`, gated by `RATE_LIMIT_REDIS_URL`+`RATE_LIMIT_REDIS_TOKEN`) for
+   multi-instance deploys. `rateLimit()` is now async (call sites `await`), and
+   **fails open** if the backend is unreachable. Zero behavior change without the
+   new env.
 
 5. **Does `test/setup.ts` exist and does `pnpm test` currently pass?**
    *RESOLVED (Loop 1):* `test/setup.ts` exists and provisions a real Postgres

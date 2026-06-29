@@ -79,6 +79,13 @@ Each `app/api/**/route.ts` is a thin handler that delegates to `server/*.ts`:
   settlement in `applyResolution`.
 - `server/xp.ts` — `awardXp` (the single XP path) + `completeLevelServer`.
 - `server/validators.ts` — Zod schemas for every request body.
+- `server/rateLimit.ts` — async fixed-window limiter behind a `RateLimitStore`
+  interface: `MemoryStore` (default) or `RedisStore` (Upstash REST, opt-in). Used
+  by the auth routes; **fails open** if the backend is down. `Source: server/rateLimit.ts`.
+- `server/monitoring.ts` — provider-agnostic `captureException`/`captureMessage`.
+  No-op unless `MONITORING_DSN` is set; wired fire-and-forget into `http.ts`'s
+  500 path so a 5xx is reported without ever altering the response.
+  `Source: server/monitoring.ts`, `Source: server/http.ts`.
 - `server/db.ts`, `server/env.ts`, `server/users.ts`, `server/quests.ts`,
   `server/markets.ts`, `server/audit.ts`.
 

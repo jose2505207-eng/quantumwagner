@@ -38,7 +38,8 @@ For future AI agents and engineers changing this repo. Read this before editing.
 ```bash
 git status                 # know the working-tree state
 pnpm typecheck             # baseline must be clean
-pnpm lint                  # baseline lint
+pnpm lint                  # baseline lint (non-blocking debt, ~143 warnings)
+pnpm test                  # baseline: both Vitest projects (needs Postgres env)
 ```
 
 **While editing — match the existing pattern for the area:**
@@ -57,17 +58,29 @@ pnpm lint                  # baseline lint
 ```bash
 pnpm typecheck
 pnpm lint
-pnpm dev   # smoke test the touched flow
+pnpm test   # node authority (real Postgres) + jsdom component projects
+pnpm dev    # smoke test the touched flow
 curl localhost:3000/api/health
 ```
-For contract changes: `cd contracts/quantum_wager && anchor build && anchor test`.
+Touching a React component? Add/extend a spec under `test/component/**` (jsdom,
+DB-free). Touching the authority layer? Add to `test/unit/**` or
+`test/integration/**` (node, real Postgres `quantum_test` schema). For contract
+changes: `cd contracts/quantum_wager && anchor build && anchor test`. The live
+devnet harness (`pnpm e2e`) needs a funded wallet and is not part of CI.
 
 ## Common traps
 
-- **Two RPC sources.** `app/utils/useProgram.ts` hardcodes the devnet RPC,
-  independent of `NEXT_PUBLIC_SOLANA_RPC_URL` used by `SolanaProvider`. Change
-  both if you switch RPC. `Source: app/utils/useProgram.ts`,
+- **One RPC source — keep it that way.** Both `SolanaProvider` and
+  `useProgram()` read `SOLANA_RPC_URL` from `lib/solana.ts`. Don't reintroduce a
+  hardcoded `new Connection(...)` URL — change the env/`lib/solana` only.
+  `Source: lib/solana.ts`, `Source: app/utils/useProgram.ts`,
   `Source: app/utils/SolanaProvider.tsx`.
+- **Coerce decoded IDL values at the UI edge.** Anchor decodes accounts as
+  `PublicKey`/`BN`/`null`; the battle/portfolio pages convert these
+  (`PublicKey`→base58 via `.toString()`, `BN`→string, option→`undefined`) before
+  passing to props. Don't feed raw decoded objects into string/`number` props.
+  `Source: app/utils/methods.tsx`, `Source: app/battlearena/[pda]/page.tsx`,
+  `Source: components/battlearena/battle-card.tsx`.
 - **Two program perspectives.** The deployed program (`C8SAQXW3…toSc`, full
   features) is **not** the same as the reference scaffold in `contracts/`
   (minimal escrow, placeholder id). Don't assume the Rust source matches the

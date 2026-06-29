@@ -41,11 +41,32 @@ So demo data is **on by default** and only fully off when
 | `WALLET_AUTH_MESSAGE` | `Sign this message to login to Quantum: ` | Prefix of the message wallets sign |
 | `ORACLE_MODE` | `admin` | `dev` \| `admin` \| `provider` resolution mode |
 | `ADMIN_RESOLUTION_KEY` | `dev-admin-key-change-me` | Required to resolve markets/fast-bets/battles + oracle webhook |
-| `RATE_LIMIT_ENABLED` | `false` | Optional rate limiting toggle |
+| `RATE_LIMIT_ENABLED` | `false` | Optional rate limiting toggle (`"true"` enables) |
+| `RATE_LIMIT_REDIS_URL` | unset | Optional Upstash Redis REST URL — distributed limiter backend |
+| `RATE_LIMIT_REDIS_TOKEN` | unset | Optional Upstash REST token (paired with the URL) |
+| `MONITORING_DSN` | unset | Optional error-monitoring endpoint; unset = no-op |
+| `MONITORING_ENABLED` | unset | `"false"` forces monitoring off even if a DSN is set |
 | `SOLANA_NETWORK` | `devnet` | Backend Solana network |
 | `SOLANA_RPC_URL` | `https://api.devnet.solana.com` | Backend Solana RPC |
 
 `Source: .env.example`, `Source: server/env.ts`.
+
+**Rate-limit backend (opt-in).** `RATE_LIMIT_ENABLED="true"` turns on a
+fixed-window limiter (used by the auth routes). By default it counts in-memory
+(`MemoryStore`, single-node). Set **both** `RATE_LIMIT_REDIS_URL` and
+`RATE_LIMIT_REDIS_TOKEN` to switch to a shared `RedisStore` (Upstash REST via
+plain `fetch`, no SDK) so the window spans serverless instances. If the Redis
+backend is unreachable the limiter **fails open** (logs + allows) — a down
+limiter never hard-fails a request. The active backend is reported by
+`GET /api/health` as `"disabled" | "memory" | "redis"`. `Source: server/rateLimit.ts`,
+`Source: app/api/health/route.ts`.
+
+**Monitoring (opt-in, no-op by default).** Leave `MONITORING_DSN` unset and the
+app behaves exactly as before — nothing is sent. When set (and not forced off by
+`MONITORING_ENABLED="false"`), unhandled 5xx errors are POSTed as a minimal JSON
+event to that endpoint via `fetch` (provider-agnostic, no npm dependency).
+Capturing is fire-and-forget and never alters a response. `Source: server/monitoring.ts`,
+`Source: server/http.ts`.
 
 **Validation & fail-fast:** `server/env.ts` parses these with Zod and:
 - provides safe (clearly-insecure) defaults in development;
@@ -89,14 +110,15 @@ parameters. `Source: config.ts`:
 These values describe the **deployed** program's economic surface; the reference
 scaffold in `contracts/` does not implement all of them.
 
-## A subtle RPC inconsistency
+## RPC endpoint: one source of truth
 
-The wallet `ConnectionProvider` uses `clusterApiUrl(Devnet)`
-(`Source: app/utils/SolanaProvider.tsx`), while `useProgram()` builds its own
-`new Connection("https://api.devnet.solana.com")` independent of
-`NEXT_PUBLIC_SOLANA_RPC_URL` (`Source: app/utils/useProgram.ts`). If you switch
-RPCs, update **both** — `useProgram.ts` is hardcoded. Logged in
-[12-roadmap](./12-roadmap-and-open-questions.md).
+`lib/solana.ts` exports `SOLANA_RPC_URL` (`NEXT_PUBLIC_SOLANA_RPC_URL`, devnet
+fallback) as the single RPC source. Both the wallet `ConnectionProvider`
+(`SolanaProvider`) and the Anchor program (`useProgram()`) now read that same
+constant, so switching RPCs is a one-line/one-env change and the two can no
+longer drift onto different endpoints. `Source: lib/solana.ts`,
+`Source: app/utils/SolanaProvider.tsx`, `Source: app/utils/useProgram.ts`.
+(Loop 7 removed the previously-hardcoded RPC in `useProgram.ts`.)
 
 ## Local vs production
 

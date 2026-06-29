@@ -57,6 +57,10 @@ Key facts:
 - The JWT (`{ sub: userId, wallet }`, 7-day TTL) is signed with `JWT_SECRET`.
   Every subsequent request carries it via the axios interceptor.
   `Source: server/auth.ts` (`signToken`), `Source: lib/api.ts`.
+- The `nonce` and `verify` handlers first `await rateLimit(...)` (30/min and
+  20/min respectively) to blunt nonce spam / brute force. It is a no-op unless
+  `RATE_LIMIT_ENABLED="true"` and fails open if its backend is down.
+  `Source: app/api/auth/nonce/route.ts`, `Source: server/rateLimit.ts`.
 
 > Note: `walletAuth.tsx` posts to `/api/auth/verify` (a legacy alias) and reads
 > `res.data.user.wallet_address`. The REST docs list `verify-wallet` as the
@@ -156,12 +160,17 @@ leaderboard reads server-side `LeaderboardEntry`, the HUD reads `useGameStore`.
 The deployed program is consumed in the browser, not the server.
 
 1. `useProgram()` builds an Anchor `Program` from `idl/prediction_market.json`
-   using `useAnchorWallet()` and a devnet `Connection`.
-   `Source: app/utils/useProgram.ts`.
+   using `useAnchorWallet()` and a `Connection` to `SOLANA_RPC_URL` from
+   `lib/solana` (the same endpoint `SolanaProvider` uses — no RPC drift).
+   `Source: app/utils/useProgram.ts`, `Source: lib/solana.ts`.
 2. `app/utils/methods.tsx` composes instructions using the constants in
    `config.ts` (fees, min/max bet, durations, bonding-curve params) and the
-   `treasury`/`battlePoolVault` pubkeys. `Source: app/utils/methods.tsx`,
-   `Source: config.ts`.
+   `treasury`/`battlePoolVault` pubkeys. Decoded account fetchers are now typed
+   against the IDL (`IdlAccounts<PredictionMarket>`), and the battle/portfolio UI
+   coerces decoded values at the edge (PublicKey→base58, BN→string,
+   option→`undefined`) instead of assuming hand-written shapes.
+   `Source: app/utils/methods.tsx`, `Source: app/battlearena/[pda]/page.tsx`,
+   `Source: app/portfolio/battle/[pda]/page.tsx`, `Source: config.ts`.
 
 The **reference** program (`contracts/quantum_wager`) shows the canonical escrow
 shape this mirrors: `initialize_market → place_bet (escrow into vault PDA) →

@@ -273,3 +273,33 @@ of bogus errors) and Vitest's default glob collects the worktree's DUPLICATE
 Fix applied: `/.claude/` added to `.gitignore` AND `exclude:[…"**/.claude/**"]` in
 `vitest.config.ts`. PROCESS RULE: after integrating a worktree agent's files,
 `git worktree remove <path> --force && git worktree prune` BEFORE measuring the gate.
+
+## Loop 7 — lint-green is NOT build-green (the methods.tsx trap)
+The Loop-6 backlog deferred tightening the 3 container `any`s in `methods.tsx`
+because doing so "cascaded type errors into UI consumers." Loop 7 found that the
+tightening had **already been staged** in the working tree — and it silently
+**broke `pnpm build`**: the decode now returns real IDL types (`PublicKey[]`,
+`BN`, `string|null`) that the hand-written consumer types (`SideCard`,
+`battle-card`'s `BattleData`) reject (10 `tsc` errors). Because `next build` fails
+on TS errors but `pnpm lint` is not build-gating, the tree was "lint 0 / build
+RED" at the same time. RULE: when you tighten a decode/return type, **typecheck +
+build**, never just lint — and check every consumer. RESOLUTION (gap #5): coerce
+at the consuming EDGE, not in the fragile `methods.tsx` — `PublicKey`→`.toString()`
+(base58), `BN`→`.toString()`, `null`→`?? undefined`, in `app/battlearena/[pda]`,
+`app/battlearena/page.tsx` (via `battle-card`), `app/portfolio/battle/[pda]`. This
+also fixed two LATENT runtime bugs the `any` had masked: `Number(BN)` → `NaN` for
+battle pools, and `new Date(BN)` → Invalid Date for end times. The `any` wasn't
+just type debt — it hid real wrong-at-runtime code.
+
+## Loop 7 — component tests need their OWN Vitest project
+The node authority suite (`vitest.config.ts`, `environment:"node"`) provisions a
+real Postgres `quantum_test` schema in `test/setup.ts#beforeAll`. You CANNOT flip
+the global env to `jsdom` for React tests — it would drag the DB-provisioning
+setup (and node-only server imports) into client specs. Fix: a SECOND project,
+`vitest.component.config.ts` (`jsdom` + `@vitejs/plugin-react@^4` to match vite 5,
+`@testing-library/react`, DB-free `test/component/setup.ts`), tied via
+`vitest.workspace.ts`; the node project `exclude`s `test/component/**`. `pnpm test`
+then runs both. GOTCHA: `@vitejs/plugin-react@6` wants vite 8 — Vitest 2.1 ships
+vite 5, so pin plugin-react to v4. Internal (non-exported) components like the
+battlearena `TokenSelector` are testable through their page without a refactor by
+mocking `methods`/`useAllTokens`/wallet/`axios` via `vi.mock`.
