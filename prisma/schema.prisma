@@ -185,6 +185,15 @@ model FastBet {
   pool        Float    @default(0)
   startTime   DateTime @default(now())
   endTime     DateTime
+  // Baseline price (from the price-feed provider) captured at round creation, so
+  // an "is SYMBOL higher in Nm?" round can be auto-resolved HONESTLY by comparing
+  // the live price at expiry to this start price. Null when no provider price was
+  // available at creation -> such a round is NOT auto-resolvable (admin only).
+  startPrice  Float?
+  // Source recorded when a round is settled, e.g. "provider:pyth" (auto-resolve)
+  // or "admin" (manual). Honesty boundary: outcomes are never invented; the
+  // settling path is always attributable.
+  resolutionSource String?
   isDemo      Boolean  @default(false)
   createdAt   DateTime @default(now())
   entries     FastBetEntry[]

@@ -209,7 +209,72 @@ function parseFeedIds(raw?: string): Record<string, string> {
  */
 const DEFAULT_FEED_IDS: Record<string, string> = {
   "SOL/USD": "ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d",
+  // BTC/USD + ETH/USD verified byte-for-byte against the LIVE Hermes catalog
+  // (GET /v2/price_feeds) AND the live price endpoint (GET
+  // /v2/updates/price/latest?ids[]=<id>) — both return a non-empty parsed price
+  // (expo -8). Stored as bare hex (no 0x), matching the SOL/USD entry style.
+  "BTC/USD": "e62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43",
+  "ETH/USD": "ff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace",
 };
+
+/**
+ * Short TTL for the in-memory price cache. The enriched GET /api/fast-bets and
+ * the resolve path can be hit many times per second; without a cache each call
+ * round-trips Hermes. 5s is short enough that a resolved market still reads a
+ * fresh-enough price (Pyth publishes sub-second) while collapsing a burst of
+ * reads into one upstream fetch.
+ */
+const PRICE_CACHE_TTL_MS = 5000;
+
+/**
+ * Module-level cache shared by every CachingPriceFeedProvider. Keyed by
+ * `provider.name + ":" + UPPER(symbol)` so different providers/symbols never
+ * collide. NOTE: this lives per-process (per-lambda/per-instance) — it is a
+ * hot-path fetch reducer for a 5s window, NOT a correctness or consistency
+ * mechanism. Cold instances simply miss and re-fetch.
+ */
+const priceCache = new Map<
+  string,
+  { value: Awaited<ReturnType<PriceFeedProvider["getPrice"]>>; expiresAt: number }
+>();
+
+/**
+ * Transparent caching wrapper around any PriceFeedProvider.
+ *
+ * Honesty doctrine preserved: ONLY successful getPrice() results are cached. A
+ * throw (unconfigured / unmapped symbol / non-200 / empty parsed) propagates
+ * unchanged and is NEVER stored — so the next caller still gets the loud
+ * failure rather than a stale or fabricated price. The inner provider's
+ * scaling/confidence semantics are untouched; we just memoise its return value
+ * for PRICE_CACHE_TTL_MS.
+ */
+export class CachingPriceFeedProvider implements PriceFeedProvider {
+  name: string;
+  private inner: PriceFeedProvider;
+  private ttlMs: number;
+
+  constructor(inner: PriceFeedProvider, ttlMs = PRICE_CACHE_TTL_MS) {
+    this.inner = inner;
+    // Mirror the inner provider's name so the cache key and the reported
+    // `source` stay consistent with the underlying adapter ("pyth"/"stub").
+    this.name = inner.name;
+    this.ttlMs = ttlMs;
+  }
+
+  async getPrice(symbol: string) {
+    const key = `${this.inner.name}:${symbol.toUpperCase()}`;
+    const now = Date.now();
+
+    const hit = priceCache.get(key);
+    if (hit && hit.expiresAt > now) return hit.value;
+
+    // Await OUTSIDE the cache write: if getPrice throws, we never reach the set,
+    // so failures are never cached (honesty preserved).
+    const value = await this.inner.getPrice(symbol);
+    priceCache.set(key, { value, expiresAt: now + this.ttlMs });
+    return value;
+  }
+}
 
 /**
  * Factory the markets resolve route (and fast-bets feed) call to obtain a price
@@ -219,6 +284,11 @@ const DEFAULT_FEED_IDS: Record<string, string> = {
  *    PythHermesProvider pointed at PYTH_HERMES_URL with the parsed feed map.
  *  - Otherwise return the existing loud StubPriceFeedProvider, preserving the
  *    dev/admin modes (unconfigured -> throws, surfaced as a 400).
+ *
+ * The chosen provider is wrapped in CachingPriceFeedProvider so ALL callers
+ * transparently share the short-TTL cache. Unit tests construct
+ * PythHermesProvider/StubPriceFeedProvider directly (uncached) and are
+ * unaffected by this wrapping.
  */
 export function getPriceFeedProvider(): PriceFeedProvider {
   const usePyth =
@@ -226,11 +296,13 @@ export function getPriceFeedProvider(): PriceFeedProvider {
 
   if (usePyth) {
     const feedIds = { ...DEFAULT_FEED_IDS, ...parseFeedIds(env.PYTH_FEED_IDS) };
-    return new PythHermesProvider({
-      baseUrl: env.PYTH_HERMES_URL,
-      feedIds,
-    });
+    return new CachingPriceFeedProvider(
+      new PythHermesProvider({
+        baseUrl: env.PYTH_HERMES_URL,
+        feedIds,
+      })
+    );
   }
 
-  return new StubPriceFeedProvider();
+  return new CachingPriceFeedProvider(new StubPriceFeedProvider());
 }

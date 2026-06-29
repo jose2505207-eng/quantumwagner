@@ -20,6 +20,10 @@ with how to verify. Do NOT guess these in code or docs. (Sourced from
 3. **Are the on-chain `methods.tsx` flows exercised end-to-end on devnet today?**
    No in-repo automated proof. *Verify:* run the flows against devnet with a
    funded wallet and inspect tx signatures; ideally add an E2E harness.
+   *Status (Loop 3):* DEFERRED — blocked on a funded devnet keypair (credential
+   being requested from the team). `.gitignore` now excludes `.devnet/` so a local
+   keypair can be dropped in for the E2E run without risk of committing it. Do NOT
+   fabricate signatures; this stays open until a real run is captured.
 
 4. **Is `RATE_LIMIT_ENABLED` actually enforced anywhere?**
    *RESOLVED (Loop 2):* Yes. `server/rateLimit.ts` gates on
@@ -47,3 +51,12 @@ with how to verify. Do NOT guess these in code or docs. (Sourced from
      already exists, default devnet).
    *Verify/Decide:* which provider + which symbols/feed ids; then add a real
    `implements PriceFeedProvider` adapter and env wiring. Do NOT fabricate ids.
+   *RESOLVED + extended (Loops 2–3):* **Pyth Hermes** is the provider (public,
+   keyless). Verified built-in feed ids: SOL/USD, **BTC/USD**
+   (`e62df6c8…415b43`), **ETH/USD** (`ff61491a…fd0ace`) — all confirmed live
+   against the Hermes catalog + price endpoint. Loop 3 added a 5s in-memory price
+   cache (`CachingPriceFeedProvider`), an admin-guarded ops probe
+   `GET /api/oracle/price?symbol=`, and closed the live-feed loop end-to-end
+   (baseline `startPrice` capture + `/api/fast-bets/auto-resolve` settling expired
+   rounds via the feed, scheduled by `vercel.json` + a GitHub Actions workflow).
+   Add more symbols via `PYTH_FEED_IDS`; an unmapped symbol still throws (honest).

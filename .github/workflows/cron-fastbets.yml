@@ -1,0 +1,39 @@
+# Belt-and-suspenders scheduler for FastBet rounds.
+#
+# Vercel Cron (vercel.json) is the primary driver; this workflow is a fallback
+# that hits the same endpoints from GitHub Actions. Both authorize with
+# `Authorization: Bearer <CRON_SECRET>`.
+#
+# Required repo secrets:
+#   APP_BASE_URL  - deployed app origin, e.g. https://quantumwagner.vercel.app
+#   CRON_SECRET   - must match the CRON_SECRET env var on the deployment
+name: cron-fastbets
+
+on:
+  # GitHub's smallest interval is 5 minutes (and runs are best-effort).
+  schedule:
+    - cron: "*/5 * * * *"
+  # Allow manual runs from the Actions tab.
+  workflow_dispatch:
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    steps:
+      # generate authorizes cron via its GET handler (its POST stays admin-only,
+      # requiring a JWT + ADMIN_RESOLUTION_KEY), so the cron tick uses GET.
+      - name: Generate fresh rounds
+        run: |
+          curl -fsS -X GET "${APP_BASE_URL}/api/fast-bets/generate" \
+            -H "Authorization: Bearer ${CRON_SECRET}"
+        env:
+          APP_BASE_URL: ${{ secrets.APP_BASE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+
+      - name: Auto-resolve expired rounds
+        run: |
+          curl -fsS -X POST "${APP_BASE_URL}/api/fast-bets/auto-resolve" \
+            -H "Authorization: Bearer ${CRON_SECRET}"
+        env:
+          APP_BASE_URL: ${{ secrets.APP_BASE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}

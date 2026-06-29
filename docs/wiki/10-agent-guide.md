@@ -37,8 +37,8 @@ For future AI agents and engineers changing this repo. Read this before editing.
 **Before editing:**
 ```bash
 git status                 # know the working-tree state
-npm run typecheck          # baseline must be clean
-npm run lint               # baseline lint
+pnpm typecheck             # baseline must be clean
+pnpm lint                  # baseline lint
 ```
 
 **While editing — match the existing pattern for the area:**
@@ -47,7 +47,7 @@ npm run lint               # baseline lint
   the body with a Zod schema in `server/validators.ts`, return `ok(...)`/`fail(...)`.
   Mirror `app/api/markets/route.ts`.
 - Granting XP? Call `awardXp` — never write `PlayerProfile.xp` directly.
-- New data field? Edit `prisma/schema.prisma`, then `npm run db:migrate` (creates
+- New data field? Edit `prisma/schema.prisma`, then `pnpm db:migrate` (creates
   a committed migration). Don't hand-edit migration SQL.
 - New on-chain call? Add it to `app/utils/methods.tsx`, pull params from
   `config.ts`, build the program via `useProgram()`.
@@ -55,9 +55,9 @@ npm run lint               # baseline lint
 
 **After editing:**
 ```bash
-npm run typecheck
-npm run lint
-npm run dev   # smoke test the touched flow
+pnpm typecheck
+pnpm lint
+pnpm dev   # smoke test the touched flow
 curl localhost:3000/api/health
 ```
 For contract changes: `cd contracts/quantum_wager && anchor build && anchor test`.

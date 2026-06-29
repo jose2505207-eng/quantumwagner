@@ -27,6 +27,9 @@ const schema = z.object({
   PYTH_HERMES_URL: z.string().default("https://hermes.pyth.network"),
   PYTH_FEED_IDS: z.string().optional(),
   ORACLE_PROVIDER: z.string().optional(),
+  // Shared secret for scheduled (cron) invocations. When unset, cron GET auth
+  // never authorizes — admin POST (ADMIN_RESOLUTION_KEY) still works.
+  CRON_SECRET: z.string().optional(),
 });
 
 const parsed = schema.safeParse(process.env);

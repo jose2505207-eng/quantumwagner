@@ -48,8 +48,12 @@ underlying code/config changes.
 
 ## Known situations
 
-- **Two lockfiles:** `package-lock.json` (npm) and `pnpm-lock.yaml` both
-  committed; recent commits use pnpm. Canonical manager = open question.
+- **Package manager = pnpm (canonical).** `package-lock.json` is no longer tracked;
+  only `pnpm-lock.yaml`. Use `pnpm <script>` (not `npm run`).
+- **Supabase migrations:** `pnpm prisma migrate dev` FAILS (`app_user` can't create
+  the shadow DB, `P3014`). Use `migrate diff` → write `migration.sql` → `db execute`
+  → `migrate resolve --applied` → `generate`. See
+  `.agent-system/skills/database-migration-safety.md`.
 - The wiki lives on `origin/docs/repo-wiki` and was **restored onto this branch**
   into `docs/wiki/`; it is NOT on `main`. Keep it current with
   `node scripts/update-wiki.mjs`.
