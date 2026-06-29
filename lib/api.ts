@@ -61,6 +61,34 @@ export async function getMarket(id: string): Promise<Market | null> {
 }
 
 // ----------------------------------------------------------------------------
+// Fast bets (live REST: GET /api/fast-bets)
+// ----------------------------------------------------------------------------
+
+/** Shape of a fast-bet row as returned by GET /api/fast-bets. */
+export interface ApiFastBet {
+  id: string;
+  question: string;
+  symbol: string;
+  status: string; // upcoming | live | closing-soon | resolving | resolved
+  outcome: string | null; // YES | NO
+  pool: number;
+  startTime: string;
+  endTime: string;
+  isDemo: boolean;
+  _count?: { entries: number };
+}
+
+export async function getFastBets(): Promise<ApiFastBet[]> {
+  try {
+    const res = await api.get(`/api/fast-bets`);
+    const rows = res.data?.data?.fastBets;
+    return Array.isArray(rows) ? (rows as ApiFastBet[]) : [];
+  } catch (err) {
+    throw toApiError(err, "Failed to load fast bets");
+  }
+}
+
+// ----------------------------------------------------------------------------
 // Auth / profile (live REST)
 // ----------------------------------------------------------------------------
 

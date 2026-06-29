@@ -3,6 +3,7 @@ import { env } from "./env";
 import { awardXp } from "./xp";
 import { logAudit } from "./audit";
 import { computePayout } from "./settlement";
+import type { PriceFeedProvider } from "./oracleProviders";
 
 /**
  * Oracle resolution architecture.
@@ -58,6 +59,41 @@ export function adminResolver(adminKey: string): OracleAdapter {
       }
       if (!outcome) throw new Error("admin resolver requires an outcome");
       return { marketId, outcome, confidence: 1, source: "admin", raw };
+    },
+  };
+}
+
+/**
+ * Provider resolver: derives an outcome from a real price feed.
+ *
+ * It fetches the price for `symbol`, then compares it to `threshold`:
+ *   - comparator "gte": price >= threshold -> YES, else NO
+ *   - comparator "lte": price <= threshold -> YES, else NO
+ * The outcome is ALWAYS derived from the feed (never hardcoded), the source is
+ * `provider:<name>`, confidence is carried from the feed, and the full feed
+ * payload is stored as raw for auditability. If the provider is unconfigured it
+ * throws (StubPriceFeedProvider), which surfaces as a 400 — never a fake result.
+ */
+export function providerResolver(
+  provider: PriceFeedProvider,
+  opts: { symbol: string; comparator: "gte" | "lte"; threshold: number }
+): OracleAdapter {
+  return {
+    name: `provider:${provider.name}`,
+    async propose({ marketId }) {
+      const feed = await provider.getPrice(opts.symbol);
+      const hit =
+        opts.comparator === "gte"
+          ? feed.price >= opts.threshold
+          : feed.price <= opts.threshold;
+      const outcome: Outcome = hit ? "YES" : "NO";
+      return {
+        marketId,
+        outcome,
+        confidence: feed.confidence,
+        source: `provider:${provider.name}`,
+        raw: feed,
+      };
     },
   };
 }

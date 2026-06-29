@@ -1,7 +1,13 @@
 import { handler, ok, fail } from "@/server/http";
 import { requireAuth } from "@/server/auth";
 import { resolveMarketSchema } from "@/server/validators";
-import { devResolver, adminResolver, applyResolution } from "@/server/oracle";
+import {
+  devResolver,
+  adminResolver,
+  providerResolver,
+  applyResolution,
+} from "@/server/oracle";
+import { StubPriceFeedProvider } from "@/server/oracleProviders";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,8 +23,23 @@ export const POST = handler(
     const { id } = await ctx.params;
     const body = resolveMarketSchema.parse(await req.json());
 
-    const resolver =
-      body.source === "admin" ? adminResolver(body.adminKey || "") : devResolver;
+    // Provider mode derives the outcome from a price feed instead of trusting a
+    // caller-supplied outcome. We construct the resolver with an UNCONFIGURED
+    // StubPriceFeedProvider: with no real feed wired, propose() throws the
+    // explicit "not configured" error, which the catch below turns into a 400.
+    // That is the honest behavior — provider mode never fabricates a result.
+    let resolver;
+    if (body.source === "provider") {
+      resolver = providerResolver(new StubPriceFeedProvider(), {
+        symbol: body.symbol || "",
+        comparator: body.comparator || "gte",
+        threshold: body.threshold ?? 0,
+      });
+    } else if (body.source === "admin") {
+      resolver = adminResolver(body.adminKey || "");
+    } else {
+      resolver = devResolver;
+    }
 
     try {
       const proposal = await resolver.propose({ marketId: id, outcome: body.outcome });

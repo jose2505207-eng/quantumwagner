@@ -26,5 +26,19 @@ with how to verify. Do NOT guess these in code or docs. (Sourced from
    handler/middleware reads it.
 
 5. **Does `test/setup.ts` exist and does `pnpm test` currently pass?**
-   `vitest.config.ts` references `./test/setup.ts`. *Verify:* `ls test/` and run
-   `pnpm test`. (Tests are being added now — this may be in flight.)
+   *RESOLVED (Loop 1):* `test/setup.ts` exists and provisions a real Postgres
+   `quantum_test` schema (Supabase) via `prisma db push`. `pnpm test` passes —
+   **47/47** as of `feat/product-loop-1`.
+
+6. **What live price-feed credential should the oracle `provider` mode use?**
+   Loop 1 implemented `ORACLE_MODE="provider"` behind `PriceFeedProvider`
+   (`server/oracleProviders.ts`) with a `StubPriceFeedProvider` that FAILS LOUDLY
+   when unconfigured (never invents a price). A real adapter needs an external
+   endpoint that is *not* in the repo:
+   - **Pyth Hermes:** base URL `https://hermes.pyth.network` + a per-symbol 32-byte
+     hex price-feed id (read via `GET /v2/updates/price/latest?ids[]=<feedId>`).
+     Suggested env: `PYTH_HERMES_URL` + a per-symbol feed-id map.
+   - **Switchboard On-Demand (alt):** a feed pubkey + Solana RPC (`SOLANA_RPC_URL`
+     already exists, default devnet).
+   *Verify/Decide:* which provider + which symbols/feed ids; then add a real
+   `implements PriceFeedProvider` adapter and env wiring. Do NOT fabricate ids.

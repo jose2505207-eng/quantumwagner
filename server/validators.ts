@@ -26,8 +26,13 @@ export const placePredictionSchema = z.object({
 
 export const resolveMarketSchema = z.object({
   outcome: z.enum(["YES", "NO"]),
-  source: z.enum(["dev", "admin"]).default("admin"),
+  source: z.enum(["dev", "admin", "provider"]).default("admin"),
   adminKey: z.string().optional(),
+  // Provider-mode fields: the price feed comparison that derives the outcome.
+  // Required only when source === "provider"; ignored for dev/admin.
+  symbol: z.string().max(40).optional(),
+  comparator: z.enum(["gte", "lte"]).optional(),
+  threshold: z.coerce.number().optional(),
 });
 
 export const claimQuestSchema = z.object({});

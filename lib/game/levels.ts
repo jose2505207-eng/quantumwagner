@@ -70,6 +70,22 @@ export const FIRST_LEVEL = LEVELS[0];
 export const LAST_LEVEL = LEVELS[LEVELS.length - 1];
 
 /**
+ * Honesty boundary: levels whose REAL action is genuinely "visiting" a screen,
+ * and may therefore be completed server-side from a mount/visit signal.
+ *
+ * Action milestones (first-prediction, win-fast-bet, join-meme-battle,
+ * launch-token) and connect-wallet are deliberately NOT here — they are
+ * completed only from their real on-chain/action success handlers, so a visit
+ * can never fake them. The visit-complete endpoint allowlists against this.
+ */
+export const VISIT_LEVEL_IDS: LevelId[] = ["enter-leaderboard"];
+
+/** True only for levels that may legitimately be completed by a visit. */
+export function isVisitLevel(id: string): boolean {
+  return VISIT_LEVEL_IDS.includes(id as LevelId);
+}
+
+/**
  * The current "active" level = the first not-yet-completed milestone.
  * A level is locked until every level before it is complete.
  */

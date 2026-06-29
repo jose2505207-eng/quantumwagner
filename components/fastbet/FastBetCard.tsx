@@ -5,16 +5,22 @@ import { Clock, TrendingUp, TrendingDown, Users, ArrowRight, Zap, Trophy, Activi
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-interface FastBetCardProps {
-  id: number;
+export interface FastBetCardProps {
+  /** number for demo seed rows, string (cuid) for live backend rows. */
+  id: string | number;
   question: string;
-  currentPrice: number;
-  yesPercentage: number;
-  noPercentage: number;
+  /** Optional: not exposed by the fast-bets list endpoint, so omitted for live. */
+  currentPrice?: number;
+  /** YES/NO split. Omitted for live (list endpoint has no per-side breakdown). */
+  yesPercentage?: number;
+  noPercentage?: number;
   totalPool: number;
   timeRemaining: string;
   status: "live" | "closing-soon" | "upcoming" | "resolving" | "resolved";
   riskLevel?: "low" | "medium" | "high";
+  /** Live extras used when price/percentage are unknown. */
+  symbol?: string;
+  entries?: number;
   index?: number;
 }
 
@@ -28,10 +34,13 @@ export default function FastBetCard({
   timeRemaining,
   status,
   riskLevel = "medium",
+  symbol,
+  entries,
   index = 0,
 }: FastBetCardProps) {
-  
-  const isLive = status === "live" || status === "closing-soon";
+
+  const hasSplit =
+    typeof yesPercentage === "number" && typeof noPercentage === "number";
 
   return (
     <motion.div
@@ -85,7 +94,11 @@ export default function FastBetCard({
             <div className="flex items-center gap-3 text-sm">
               <div className="flex items-center gap-1.5 text-white/60 bg-white/[0.02] px-2 py-1 rounded-lg border border-white/5">
                 <Activity className="w-3.5 h-3.5 text-blue-400" />
-                <span>Price: <span className="text-white font-mono">${currentPrice}</span></span>
+                {typeof currentPrice === "number" ? (
+                  <span>Price: <span className="text-white font-mono">${currentPrice}</span></span>
+                ) : (
+                  <span>{symbol ? <span className="text-white font-mono">{symbol}</span> : "Live"}</span>
+                )}
               </div>
               <div className="flex items-center gap-1.5 text-white/60 bg-white/[0.02] px-2 py-1 rounded-lg border border-white/5">
                 <Trophy className="w-3.5 h-3.5 text-yellow-400" />
@@ -95,30 +108,43 @@ export default function FastBetCard({
           </div>
 
           {/* Visual Stats Bar */}
-          <div className="mb-6 space-y-2">
-            <div className="flex justify-between text-xs font-bold tracking-wider">
-              <span className="text-green-400 flex items-center gap-1">
-                <TrendingUp className="w-3 h-3" /> {yesPercentage}% YES
-              </span>
-              <span className="text-red-400 flex items-center gap-1">
-                {noPercentage}% NO <TrendingDown className="w-3 h-3" />
-              </span>
+          {hasSplit ? (
+            <div className="mb-6 space-y-2">
+              <div className="flex justify-between text-xs font-bold tracking-wider">
+                <span className="text-green-400 flex items-center gap-1">
+                  <TrendingUp className="w-3 h-3" /> {yesPercentage}% YES
+                </span>
+                <span className="text-red-400 flex items-center gap-1">
+                  {noPercentage}% NO <TrendingDown className="w-3 h-3" />
+                </span>
+              </div>
+              <div className="h-3 w-full bg-white/5 rounded-full overflow-hidden flex relative">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${yesPercentage}%` }}
+                  transition={{ duration: 1, ease: "easeOut" }}
+                  className="h-full bg-gradient-to-r from-green-600 to-green-400 shadow-[0_0_15px_rgba(34,197,94,0.5)]"
+                />
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${noPercentage}%` }}
+                  transition={{ duration: 1, ease: "easeOut" }}
+                  className="h-full bg-gradient-to-l from-red-600 to-red-400 ml-auto shadow-[0_0_15px_rgba(239,68,68,0.5)]"
+                />
+              </div>
             </div>
-            <div className="h-3 w-full bg-white/5 rounded-full overflow-hidden flex relative">
-              <motion.div 
-                initial={{ width: 0 }}
-                animate={{ width: `${yesPercentage}%` }}
-                transition={{ duration: 1, ease: "easeOut" }}
-                className="h-full bg-gradient-to-r from-green-600 to-green-400 shadow-[0_0_15px_rgba(34,197,94,0.5)]" 
-              />
-              <motion.div 
-                initial={{ width: 0 }}
-                animate={{ width: `${noPercentage}%` }}
-                transition={{ duration: 1, ease: "easeOut" }}
-                className="h-full bg-gradient-to-l from-red-600 to-red-400 ml-auto shadow-[0_0_15px_rgba(239,68,68,0.5)]" 
-              />
+          ) : (
+            <div className="mb-6 space-y-2">
+              <div className="flex items-center justify-between text-xs font-semibold tracking-wider text-white/50">
+                <span className="flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-purple-400" />
+                  {typeof entries === "number" ? `${entries} ${entries === 1 ? "entry" : "entries"}` : "Open for bets"}
+                </span>
+                <span className="text-white/30">Pick a side below</span>
+              </div>
+              <div className="h-3 w-full bg-white/5 rounded-full overflow-hidden" />
             </div>
-          </div>
+          )}
 
           {/* Action Buttons */}
           <div className="grid grid-cols-2 gap-3 mt-auto">
