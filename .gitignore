@@ -47,3 +47,6 @@ next-env.d.ts
 
 # reference repo
 reference-frontend/
+
+# Local devnet keypair (E2E only — never commit)
+.devnet/
