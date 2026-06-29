@@ -75,6 +75,8 @@ export interface ApiFastBet {
   yesPool: number; // sum of FastBetEntry.amount on the YES side
   noPool: number; // sum of FastBetEntry.amount on the NO side
   currentPrice: number | null; // live oracle price for live/closing-soon bets; null if unknown
+  startPrice?: number | null; // oracle price captured at round start; null if unknown
+  resolutionSource?: string | null; // how it settled, e.g. "provider:pyth" | "admin"; null if unknown
   startTime: string;
   endTime: string;
   isDemo: boolean;

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Clock, TrendingUp, TrendingDown, Users, ArrowRight, Zap, Trophy, Activity } from "lucide-react";
+import { Clock, TrendingUp, TrendingDown, Users, ArrowRight, Zap, Trophy, Activity, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +21,12 @@ export interface FastBetCardProps {
   /** Live extras used when price/percentage are unknown. */
   symbol?: string;
   entries?: number;
+  /** Oracle price captured at round start; enables an honest live delta. */
+  startPrice?: number;
+  /** How the round settled, e.g. "provider:pyth" | "admin". Omitted when unknown. */
+  resolutionSource?: string;
+  /** Recorded winning side ("YES" | "NO"); omitted when unknown. */
+  outcome?: string;
   index?: number;
 }
 
@@ -36,11 +42,38 @@ export default function FastBetCard({
   riskLevel = "medium",
   symbol,
   entries,
+  startPrice,
+  resolutionSource,
+  outcome,
   index = 0,
 }: FastBetCardProps) {
 
   const hasSplit =
     typeof yesPercentage === "number" && typeof noPercentage === "number";
+
+  // Honest live delta: only when the round is in play AND we have BOTH a real
+  // current price and a real start price. Anything missing -> render nothing.
+  const isInPlay = status === "live" || status === "closing-soon";
+  const hasDelta =
+    isInPlay &&
+    Number.isFinite(currentPrice) &&
+    Number.isFinite(startPrice) &&
+    (startPrice as number) !== 0;
+  const priceDelta = hasDelta ? (currentPrice as number) - (startPrice as number) : 0;
+  const pctDelta = hasDelta ? (priceDelta / (startPrice as number)) * 100 : 0;
+  const deltaUp = priceDelta >= 0;
+
+  // Auto-settled badge: derive the labelled source from the recorded value only.
+  const isResolved = status === "resolved";
+  const isOracle = typeof resolutionSource === "string" && resolutionSource.startsWith("provider:");
+  const oracleName = isOracle ? resolutionSource!.slice("provider:".length) : "";
+  const settledLabel = isOracle
+    ? "Auto-settled (oracle)"
+    : resolutionSource === "admin"
+      ? "Settled (admin)"
+      : "Settled";
+  const winningSide =
+    typeof outcome === "string" && (outcome === "YES" || outcome === "NO") ? outcome : undefined;
 
   return (
     <motion.div
@@ -104,6 +137,21 @@ export default function FastBetCard({
                 <Trophy className="w-3.5 h-3.5 text-yellow-400" />
                 <span>Pool: <span className="text-white font-mono">${(totalPool / 1000).toFixed(1)}k</span></span>
               </div>
+              {hasDelta && (
+                <div
+                  className={cn(
+                    "flex items-center gap-1 px-2 py-1 rounded-lg border font-mono font-semibold",
+                    deltaUp
+                      ? "text-green-400 bg-green-500/10 border-green-500/20"
+                      : "text-red-400 bg-red-500/10 border-red-500/20"
+                  )}
+                  title="Change since round start"
+                >
+                  {deltaUp ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                  <span>{deltaUp ? "+" : "−"}${Math.abs(priceDelta).toLocaleString(undefined, { maximumFractionDigits: 6 })}</span>
+                  <span className="text-white/40">({deltaUp ? "+" : "−"}{Math.abs(pctDelta).toFixed(2)}%)</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -143,6 +191,32 @@ export default function FastBetCard({
                 <span className="text-white/30">Pick a side below</span>
               </div>
               <div className="h-3 w-full bg-white/5 rounded-full overflow-hidden" />
+            </div>
+          )}
+
+          {/* Auto-settled indicator — labelled, sourced from a recorded value. */}
+          {isResolved && (
+            <div className="mb-6 flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-bold text-white/60">
+                <ShieldCheck className="w-3.5 h-3.5 text-purple-400" />
+                <span>{settledLabel}</span>
+                {isOracle && oracleName && (
+                  <span className="font-mono uppercase tracking-wider text-white/40">{oracleName}</span>
+                )}
+              </div>
+              {winningSide && (
+                <div
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border",
+                    winningSide === "YES"
+                      ? "bg-green-500/10 text-green-400 border-green-500/20"
+                      : "bg-red-500/10 text-red-400 border-red-500/20"
+                  )}
+                >
+                  {winningSide === "YES" ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                  {winningSide} won
+                </div>
+              )}
             </div>
           )}
 

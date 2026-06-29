@@ -89,6 +89,11 @@ function toRow(bet: ApiFastBet): FastBetRow {
     // Only a real, finite price from the feed — null/undefined is omitted so the
     // card never shows a fabricated price.
     currentPrice: bet.currentPrice ?? undefined,
+    // Real recorded settlement signals only — null is collapsed to undefined so
+    // the card renders nothing rather than guessing a delta, source, or outcome.
+    startPrice: bet.startPrice ?? undefined,
+    resolutionSource: bet.resolutionSource ?? undefined,
+    outcome: bet.outcome ?? undefined,
   };
 }
 
