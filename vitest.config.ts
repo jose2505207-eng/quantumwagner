@@ -36,6 +36,10 @@ export default defineConfig({
     environment: "node",
     globals: true,
     setupFiles: ["./test/setup.ts"],
+    // Never collect tests from agent worktrees (.claude/worktrees/**) or build
+    // output — an isolated subagent's worktree carries duplicate *.test.ts copies
+    // that pollute the count and load-fail if the worktree is removed mid-run.
+    exclude: ["**/node_modules/**", "**/dist/**", "**/.next/**", "**/.claude/**"],
     // Forward the resolved DB URLs to the worker explicitly (belt-and-braces
     // alongside process.env inheritance).
     env: {

@@ -19,14 +19,25 @@ Verified against the real repo. Each entry: the fact, where it lives, the impact
   longer tracked, only `pnpm-lock.yaml`. Residual `npm run` command refs in docs
   were scrubbed to pnpm in Loop 3 (two npm-only `--legacy-peer-deps`
   troubleshooting rows intentionally kept — that flag doesn't exist under pnpm).
-- **ESLint errors as tech debt (burn-down started Loop 5).** ESLint is NOT
+- **ESLint errors as tech debt (burn-down Loops 5–6).** ESLint is NOT
   enforced at build time (`next.config.mjs eslint.ignoreDuringBuilds: true`)
   because the legacy codebase has pre-existing lint problems (mostly
   `@typescript-eslint/no-explicit-any` in on-chain/UI code + a few
-  `react/no-unescaped-entities`). Loop 5 began a real burn-down (no rule
-  mass-disabling). *Verify exact count:* `pnpm lint`. NOTE: `app/utils/methods.tsx`
-  (17 `any`s) is intentionally left untouched during burn-down — it is the
-  build-fragile on-chain composer where a wrong type blocks `pnpm build`.
+  `react/no-unescaped-entities`). Burn-down is real (no rule mass-disabling).
+  *Verify exact count:* `pnpm lint`. **Loop 6 took the error count 20 → 4** by
+  hardening `app/battlearena/new/page.tsx` (2) and `app/utils/methods.tsx` (17 → 3,
+  the bulk). The skill is now formalised: `.agent-system/skills/lint-burndown.md`.
+  The **4 remaining errors**: 3 in `methods.tsx` are container `any`s
+  (`BoughtToken.tokenData`, the two `getAllBattles`/`getUserBattles` `data` arrays)
+  that CANNOT be tightened to the precise Anchor-decoded IDL type without cascading
+  type errors into UI consumers (`app/battlearena/*`, `app/portfolio/battle/*`,
+  `app/portfolio/token/*`) whose hand-written `BattleData`/token shapes diverge
+  from the IDL (`PublicKey` vs `string`, `null` vs `undefined`) — see Loop 7 backlog;
+  the 4th is `contracts/quantum_wager/tests/quantum_wager.ts:51` (a test-scaffold
+  `any`, out of the product burn-down scope). NOTE: `methods.tsx` is still the
+  build-fragile on-chain composer — type it in small batches with `pnpm typecheck`
+  + `pnpm build` after EACH batch (Loop 6 confirmed catch-narrowing + Anchor enum
+  types are safe; tightening the container account types is NOT, until UI types align).
 - **Prisma config moved to `prisma.config.ts` (Loop 5, Prisma 7 prep).** The
   deprecated `package.json#prisma` block was removed and replaced by
   `prisma.config.ts` (`migrations.seed`). TRAP: with a Prisma config file present,

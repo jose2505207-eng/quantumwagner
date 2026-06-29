@@ -13,6 +13,7 @@ and real file paths.
 | `test-generation.md` | Add Vitest specs for the server authority layer under the single-fork SQLite config. | testing-agent |
 | `security-review.md` | Honesty-boundary review: demo-only fallback, local-progression labelling, server-only value, never-invented outcomes, auth/secrets. | security-agent, code-reviewer-agent |
 | `documentation-update.md` | Update docs/wiki after a code change via `node scripts/update-wiki.mjs` and the manifest. | documentation-agent |
+| `lint-burndown.md` | Drive the ESLint ERROR count down on a disjoint file set without breaking the build — fix types honestly (no rule disabling), keep `pnpm typecheck` at 0, exclude the build-fragile `methods.tsx`. | code-reviewer-agent, frontend-agent |
 
 To add a skill: copy `.agent-system/skills/skill-template.md`, fill every
 section with repo-specific detail and real commands, then add a row here and in

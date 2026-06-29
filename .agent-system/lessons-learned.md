@@ -219,3 +219,57 @@ fastbetSettlement.ts, package.json, lockfile) were edited ONLY by the orchestrat
 the ESLint burn-down ran as ONE background agent on a DISJOINT file set with an
 explicit exclusion list (incl. the build-fragile `methods.tsx`) and a
 "keep typecheck 0" guard, then integrated centrally.
+
+## Loop 6: lint burndown 20→4 + settleMethod analytics + PublicKey/string bug
+**Gate:** `pnpm typecheck` 0 · `pnpm test` 78/78 (14 files, +4 new) · `pnpm build`
+exit 0 · `pnpm lint` 20 → 4 errors, against the real `quantum_test` Supabase
+schema. No schema change → no new migration.
+
+**A — `app/battlearena/new/page.tsx` PublicKey/string bug (FIXED):** the token
+selector stored a `PublicKey` into `string` state (`setSelected(t.account.tokenMint)`)
+and compared `string === PublicKey`, which never matched. Fix: normalise to base58
+everywhere — `setSelected(t.account.tokenMint.toString())`, compare
+`t.account.tokenMint.toString() === selected`, and a precise props type
+(`TokenAccount = ReturnType<typeof useAllTokens>["tokens"][number]`) replacing
+the `: any`. Tightening the props type SURFACED a latent bug — `key={t.publicKey}`
+used a PublicKey object as a React key (was masked by `any`); fixed to
+`.toString()`. Cleared the 2 page errors. NOT unit-tested: it is a `"use client"`
+wallet component and the Vitest harness is node-only (no jsdom) — adding jsdom would
+touch the serialized `package.json`; validated by `pnpm typecheck` instead.
+
+**B — `app/utils/methods.tsx` type hardening 17 → 3 (the bulk), build-safe:** done
+in small batches with `pnpm typecheck` + `pnpm build` after EACH (it is the
+build-fragile composer). SAFE patterns: `catch (err: any)` → `catch (err)` + narrow
+(`err instanceof Error ? err.message : String(err)`, or a local
+`as { error?: { message?: string }; message?: string }` assertion where the code
+reads `.error.message`); Anchor unit-enum `{}` → a shared
+`type AnchorUnitVariant = Record<string, never>` (the bare `{}` type is the
+`no-empty-object-type` error). KEY GOTCHA: the `category` arg could NOT be a broad
+`Record<string, AnchorUnitVariant>` — Anchor types it as the EXACT decoded enum, so
+tsc requires the precise union `{price}|{events}|{social}|{other}`.
+UNSAFE (reverted): tightening the 3 container `any`s
+(`BoughtToken.tokenData`, the two `getAllBattles`/`getUserBattles` `data` arrays)
+to `IdlAccounts<PredictionMarket>["tokenLaunch"|"battle"]` cascaded type errors into
+UI consumers (`app/battlearena/*`, `app/portfolio/battle/*`, `app/portfolio/token/*`)
+whose hand-written `BattleData`/token shapes diverge from the IDL (`PublicKey` vs
+`string`, `null` vs `undefined`). Left as documented `any` (NO `eslint-disable` —
+honest debt over masking). These 3 + the contracts test scaffold `any` are the 4
+remaining errors → Loop 7 backlog (align UI types to the IDL first, then tighten).
+
+**C — settleMethod analytics + skill (built by an isolated worktree subagent):**
+new admin-gated `GET /api/oracle/settle-stats` (same `x-admin-key`/`?adminKey` gate
+as `/api/oracle/price`) returns `{totalResolved, byMethod:{asof,spot-fallback,spot,
+unrecorded}, bySource, asofShare}` via two `prisma.fastBet.groupBy` over RESOLVED
+rounds, so oracle-history reliability is quantifiable. Honesty boundary: null
+`settleMethod` → its own `unrecorded` bucket (never coerced); `asofShare` is `null`
+(not 0) when nothing resolved. Test `test/integration/settle-stats.test.ts` (4 cases).
+Skill `.agent-system/skills/lint-burndown.md` formalises the Loop-5 burndown pattern.
+
+**Worktree-isolation gotcha (NEW, cost me a polluted gate run):** a subagent
+launched with `isolation:"worktree"` checks out into `.claude/worktrees/<id>/`
+INSIDE the repo. `next lint` then scans that worktree's `.next/` output (thousands
+of bogus errors) and Vitest's default glob collects the worktree's DUPLICATE
+`*.test.ts` (inflates the count; load-fails if the worktree is removed mid-run).
+Fix applied: `/.claude/` added to `.gitignore` AND `exclude:[…"**/.claude/**"]` in
+`vitest.config.ts`. PROCESS RULE: after integrating a worktree agent's files,
+`git worktree remove <path> --force && git worktree prune` BEFORE measuring the gate.

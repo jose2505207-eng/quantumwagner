@@ -40,6 +40,8 @@ shapes; `backend-map.md` for server delegation.
 | GET | `/api/leaderboard/season` | no | Season leaderboard |
 | POST | `/api/oracle/webhook` | admin key | External resolution intake |
 | GET | `/api/oracle/resolutions/[id]` | no | Resolution record |
+| GET | `/api/oracle/price` | admin key (`x-admin-key`/`?adminKey`) | Live price ops probe (never fabricates; 502 on provider failure) |
+| GET | `/api/oracle/settle-stats` | admin key (`x-admin-key`/`?adminKey`) | FastBet `settleMethod` distribution among resolved rounds (asof/spot-fallback/spot/unrecorded) + `asofShare` reliability metric; real recorded values only |
 
 (HTTP method/auth specifics: confirm against each `route.ts` and `docs/API.md`
 before relying on them for a contract change.)

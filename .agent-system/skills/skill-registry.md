@@ -11,6 +11,7 @@ Canonical index of skills under `.agent-system/skills/`. Mirror:
 | `test-generation.md` | Add Vitest specs for the server authority layer under single-fork SQLite. | testing-agent |
 | `security-review.md` | Honesty-boundary review (demo fallback, local progression, server-only value, never-invent outcomes, auth/secrets). | security-agent, code-reviewer-agent |
 | `documentation-update.md` | Update docs/wiki after a code change via `node scripts/update-wiki.mjs` + manifest. | documentation-agent |
+| `lint-burndown.md` | Drive the ESLint ERROR count down on a disjoint file set without breaking the build — fix types honestly (no rule disabling), keep `pnpm typecheck` at 0, exclude the build-fragile `methods.tsx`. | code-reviewer-agent, frontend-agent |
 
 To add a skill: copy `skill-template.md`, fill every section with real
 commands/paths, add a row here and in the docs mirror.

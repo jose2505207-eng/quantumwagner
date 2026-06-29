@@ -22,11 +22,25 @@ import { cn } from "@/lib/utils";
 /* -------------------------------------------------------
    STYLED TOKEN SELECTOR
 ------------------------------------------------------- */
-function TokenSelector({ label, selected, setSelected, allToken, loading, side }: any) {
+// One decoded token account as returned by `useAllTokens()` (Anchor
+// `program.account.tokenLaunch.all()`). `account.tokenMint` is a PublicKey, so
+// every comparison below normalises it to its base58 string (see below).
+type TokenAccount = ReturnType<typeof useAllTokens>["tokens"][number];
+
+type TokenSelectorProps = {
+  label: string;
+  selected: string;
+  setSelected: (mint: string) => void;
+  allToken: TokenAccount[] | undefined;
+  loading: boolean;
+  side: "A" | "B";
+};
+
+function TokenSelector({ label, selected, setSelected, allToken, loading, side }: TokenSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
 
-  const selectedToken = allToken?.find((t) => t.account.tokenMint === selected);
+  const selectedToken = allToken?.find((t) => t.account.tokenMint.toString() === selected);
   const filteredTokens = allToken?.filter((t) =>
     t.account.name.toLowerCase().includes(search.toLowerCase()) || 
     t.account.symbol.toLowerCase().includes(search.toLowerCase())
@@ -94,9 +108,9 @@ function TokenSelector({ label, selected, setSelected, allToken, loading, side }
                 ) : (
                   filteredTokens?.map((t) => (
                     <button
-                      key={t.publicKey}
+                      key={t.publicKey.toString()}
                       onClick={() => {
-                        setSelected(t.account.tokenMint);
+                        setSelected(t.account.tokenMint.toString());
                         setIsOpen(false);
                       }}
                       className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors text-left group"
@@ -112,7 +126,7 @@ function TokenSelector({ label, selected, setSelected, allToken, loading, side }
                         </div>
                         <div className="text-xs text-white/40">{t.account.name}</div>
                       </div>
-                      {selected === t.account.tokenMint && (
+                      {selected === t.account.tokenMint.toString() && (
                         <CheckCircle2 className="w-4 h-4 text-green-500 ml-auto" />
                       )}
                     </button>
@@ -213,9 +227,10 @@ export default function CreateBattlePage() {
     }
   };
 
-  // Helper to get token details for preview
+  // Helper to get token details for preview. `mint` is the base58 string held in
+  // state; `t.account.tokenMint` is a PublicKey, so normalise it before comparing.
   const getTokenDetails = (mint: string) => {
-    return allToken?.find((t: any) => t.account.tokenMint === mint)?.account;
+    return allToken?.find((t) => t.account.tokenMint.toString() === mint)?.account;
   };
 
   if (createdBattle) {
