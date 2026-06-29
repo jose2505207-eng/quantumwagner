@@ -7,7 +7,7 @@ import {
   providerResolver,
   applyResolution,
 } from "@/server/oracle";
-import { StubPriceFeedProvider } from "@/server/oracleProviders";
+import { getPriceFeedProvider } from "@/server/oracleProviders";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,13 +24,14 @@ export const POST = handler(
     const body = resolveMarketSchema.parse(await req.json());
 
     // Provider mode derives the outcome from a price feed instead of trusting a
-    // caller-supplied outcome. We construct the resolver with an UNCONFIGURED
-    // StubPriceFeedProvider: with no real feed wired, propose() throws the
-    // explicit "not configured" error, which the catch below turns into a 400.
-    // That is the honest behavior — provider mode never fabricates a result.
+    // caller-supplied outcome. getPriceFeedProvider() returns a real Pyth Hermes
+    // provider when ORACLE_PROVIDER=pyth / PYTH_FEED_IDS is set, else the loud
+    // StubPriceFeedProvider. Either way, an unconfigured/unmapped symbol throws
+    // (e.g. "no feed id configured for SOL/USD"), which the catch below turns
+    // into a 400 — provider mode never fabricates a result.
     let resolver;
     if (body.source === "provider") {
-      resolver = providerResolver(new StubPriceFeedProvider(), {
+      resolver = providerResolver(getPriceFeedProvider(), {
         symbol: body.symbol || "",
         comparator: body.comparator || "gte",
         threshold: body.threshold ?? 0,
