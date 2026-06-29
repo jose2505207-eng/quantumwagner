@@ -4,9 +4,10 @@ import Container from "../global/container";
 import { Button } from "../ui/button";
 import MarketCard from "../marketing/MarketCard";
 import MarketCardSkeleton from "../marketing/MarketCardSkeleton";
+import type { Market } from "@/app/types";
 
 interface MarketsGridProps {
-  markets: any[];
+  markets: Market[];
   loading: boolean;
 }
 

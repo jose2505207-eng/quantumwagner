@@ -5,9 +5,13 @@ import { motion } from "framer-motion";
 import { Loader2, Wallet, ArrowRight, AlertCircle, Settings2, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import type { IdlAccounts } from "@coral-xyz/anchor";
+import type { PredictionMarket } from "@/idl/types";
+
+type TokenLaunch = IdlAccounts<PredictionMarket>["tokenLaunch"];
 
 interface BuyInterfaceProps {
-  token: any;
+  token: TokenLaunch;
   onBuy: (amount: number) => Promise<void>;
   loading: boolean;
   compact?: boolean;
@@ -18,7 +22,7 @@ export function BuyInterface({ token, onBuy, loading, compact = false }: BuyInte
   const [isFocused, setIsFocused] = useState(false);
 
   const numericAmount = parseFloat(amount) || 0;
-  const price = parseFloat(token.currentPrice) || 0;
+  const price = parseFloat(String(token.currentPrice)) || 0;
   const estimatedTokens = price > 0 ? (numericAmount / price).toFixed(2) : "0";
 
   const handleBuyClick = async () => {

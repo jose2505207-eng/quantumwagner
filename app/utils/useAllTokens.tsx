@@ -4,11 +4,13 @@ import toast from "react-hot-toast";
 import Methods from "./methods";
 
 export function useAllTokens() {
-  const [tokens, setTokens] = useState<any[]>([]);
+  const { getAllTokens } = Methods();
+  const [tokens, setTokens] = useState<
+    Awaited<ReturnType<typeof getAllTokens>>
+  >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const wallet = useAnchorWallet();
-  const { getAllTokens } = Methods();
 
   useEffect(() => {
     if (!wallet?.publicKey) return;
@@ -26,8 +28,9 @@ export function useAllTokens() {
             const acc = await getAllTokens();
             if (!cancelled) setTokens(acc || []);
             break;
-          } catch (err: any) {
-            if (err.message?.includes("Progrma not found")) {
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            if (message.includes("Progrma not found")) {
               attempts++;
               console.log(`⏳ Retrying getUserAllTokens (${attempts}/10)`);
               await new Promise((res) => setTimeout(res, 1000));

@@ -3,10 +3,25 @@
 import { motion } from "framer-motion";
 import { Swords, Trophy, Users, Timer, Zap, TrendingUp } from "lucide-react";
 import Link from "next/link";
+import type { PublicKey } from "@solana/web3.js";
 import { cn } from "@/lib/utils";
 
+interface BattleData {
+  status?: Record<string, unknown>;
+  sideAPool?: unknown;
+  sideBPool?: unknown;
+  totalPool?: unknown;
+  title?: string;
+  imageUrl?: string;
+  uniqueParticipants?: unknown;
+  endTime?: string | number;
+}
+
 interface BattleCardProps {
-  battle: any;
+  battle: {
+    pda: PublicKey | string;
+    data: BattleData;
+  };
   index: number;
 }
 
@@ -14,10 +29,9 @@ export function BattleCard({ battle, index }: BattleCardProps) {
   const d = battle.data;
   const status = Object.keys(d.status || {})[0] || "unknown";
   const isActive = status.toLowerCase() === "active";
-  
-  const safe = (v: any) => {
+
+  const safe = (v: unknown) => {
     if (v === null || v === undefined) return "0";
-    if (typeof v === "object" && v.toString) return v.toString();
     return String(v);
   };
 

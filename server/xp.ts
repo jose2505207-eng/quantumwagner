@@ -56,14 +56,22 @@ export async function awardXp(params: {
 /**
  * Mark a milestone level complete for a user (idempotent) and award its XP.
  * `levelXp` is provided by the caller from the shared LEVELS source of truth.
+ *
+ * `win` is an OPTIONAL win/loss flag forwarded to the underlying `awardXp` so a
+ * milestone that is ALSO a win (e.g. the Level-3 "win-fast-bet" milestone, granted
+ * on a player's FIRST fast-bet win) still increments `profile.wins` and the season
+ * leaderboard in the SAME XP event — instead of the win silently not counting.
+ * Omit it for non-competitive milestones (connect-wallet, visit-leaderboard, …)
+ * which are level completions but not wins.
  */
 export async function completeLevelServer(params: {
   userId: string;
   levelId: string;
   levelNumber: number;
   levelXp: number;
+  win?: boolean;
 }) {
-  const { userId, levelId, levelNumber, levelXp } = params;
+  const { userId, levelId, levelNumber, levelXp, win } = params;
   const profile = await prisma.playerProfile.upsert({
     where: { userId },
     update: {},
@@ -88,6 +96,7 @@ export async function completeLevelServer(params: {
     reason: `Level cleared: ${levelId}`,
     refType: "level",
     refId: levelId,
+    win,
   });
 
   return { alreadyDone: false };

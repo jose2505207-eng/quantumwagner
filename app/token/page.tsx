@@ -125,9 +125,10 @@ export default function LaunchPage() {
         setDeployedMint(result.tokenMint);
         toast.success("Token Deployed Successfully!");
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      toast.error(err.message || "Failed to deploy token");
+      const message = err instanceof Error ? err.message : "Failed to deploy token";
+      toast.error(message);
     } finally {
       setIsDeploying(false);
     }
@@ -262,7 +263,11 @@ export default function LaunchPage() {
               ].map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveSection(tab.id as any)}
+                  onClick={() =>
+                    setActiveSection(
+                      tab.id as "details" | "economics" | "socials"
+                    )
+                  }
                   className={cn(
                     "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all",
                     activeSection === tab.id 

@@ -52,7 +52,7 @@ export default function BattlePage() {
         </div>
         <h2 className="text-xl font-bold text-white mb-2">Battle Not Found</h2>
         <p className="text-muted-foreground">
-          We couldn't find a battle with this address.
+          We couldn&apos;t find a battle with this address.
         </p>
         <Link href="/battlearena" className="mt-6 text-blue-400 hover:text-blue-300 text-sm font-bold">
           Return to Arena
@@ -95,9 +95,9 @@ export default function BattlePage() {
       setAmount("");
       setSelectedSide(null);
       
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      const msg = err.toString();
+      const msg = String(err);
       if (msg.includes("Battle has ended")) toast.error("Battle has ended");
       else if (msg.includes("Battle has not started yet")) toast.error("Battle has not started yet");
       else toast.error("Failed to enter battle");
@@ -106,13 +106,12 @@ export default function BattlePage() {
     }
   };
 
-  const safe = (v: any) => {
+  const safe = (v: unknown) => {
     if (v === null || v === undefined) return "0";
-    if (typeof v === "object" && v.toString) return v.toString();
     return String(v);
   };
 
-  const formatTime = (unix: any) => {
+  const formatTime = (unix: unknown) => {
     if (!unix) return "—";
     const date = new Date(Number(unix) * 1000);
     return formatDistanceToNowStrict(date) + (date > new Date() ? " left" : " ago");
@@ -388,7 +387,18 @@ export default function BattlePage() {
   );
 }
 
-function SideCard({ side, name, participants, tokens, getToken, isOpen, onToggle, pool }: any) {
+interface SideCardProps {
+  side: "A" | "B";
+  name: string;
+  participants: number;
+  tokens: string[];
+  getToken: (mint: string) => { imageUri?: string; symbol?: string } | undefined;
+  isOpen: boolean;
+  onToggle: () => void;
+  pool: number | string;
+}
+
+function SideCard({ side, name, participants, tokens, getToken, isOpen, onToggle, pool }: SideCardProps) {
   const color = side === "A" ? "blue" : "rose";
   const borderColor = side === "A" ? "border-blue-500/20" : "border-rose-500/20";
   const textColor = side === "A" ? "text-blue-400" : "text-rose-400";
@@ -423,7 +433,7 @@ function SideCard({ side, name, participants, tokens, getToken, isOpen, onToggle
       </div>
 
       <div className="px-6 pb-6 space-y-3">
-        {tokens.length > 0 ? tokens.map((mint: any) => {
+        {tokens.length > 0 ? tokens.map((mint) => {
           const token = getToken(mint);
           const mintStr = String(mint);
           return (

@@ -21,7 +21,9 @@ export default function FastBetDetailPage() {
   const [amount, setAmount] = useState("");
   const [isResolved, setIsResolved] = useState(false);
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
-  const [chartData, setChartData] = useState<any[]>([]);
+  const [chartData, setChartData] = useState<{ time: number; price: number }[]>(
+    []
+  );
 
   // Mock Data
   const betData = {

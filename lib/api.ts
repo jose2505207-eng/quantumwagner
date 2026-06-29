@@ -77,6 +77,8 @@ export interface ApiFastBet {
   currentPrice: number | null; // live oracle price for live/closing-soon bets; null if unknown
   startPrice?: number | null; // oracle price captured at round start; null if unknown
   resolutionSource?: string | null; // how it settled, e.g. "provider:pyth" | "admin"; null if unknown
+  settlePrice?: number | null; // actual price the round settled on (auto-resolve); null if unknown/admin
+  settleMethod?: string | null; // how settlePrice was captured: "asof" | "spot-fallback" | "spot"; null if unknown
   startTime: string;
   endTime: string;
   isDemo: boolean;

@@ -3,9 +3,13 @@
 import { motion } from "framer-motion";
 import { Coins, BarChart3, Users, Activity } from "lucide-react";
 import { toDisplay } from "@/lib/format";
+import type { IdlAccounts } from "@coral-xyz/anchor";
+import type { PredictionMarket } from "@/idl/types";
+
+type TokenLaunch = IdlAccounts<PredictionMarket>["tokenLaunch"];
 
 interface TokenStatsProps {
-  token: any;
+  token: TokenLaunch;
 }
 
 export function TokenStats({ token }: TokenStatsProps) {

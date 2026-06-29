@@ -2,8 +2,18 @@
 
 import { Clock, Swords, Trophy, Users, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
+import type { ReactNode } from "react";
 
-function StatCard({ color, icon, label, value, tag, delay }: any) {
+interface StatCardProps {
+  color: string;
+  icon: ReactNode;
+  label: string;
+  value: string;
+  tag: string;
+  delay: number;
+}
+
+function StatCard({ color, icon, label, value, tag, delay }: StatCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}

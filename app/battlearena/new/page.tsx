@@ -26,8 +26,8 @@ function TokenSelector({ label, selected, setSelected, allToken, loading, side }
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
 
-  const selectedToken = allToken?.find((t: any) => t.account.tokenMint === selected);
-  const filteredTokens = allToken?.filter((t: any) => 
+  const selectedToken = allToken?.find((t) => t.account.tokenMint === selected);
+  const filteredTokens = allToken?.filter((t) =>
     t.account.name.toLowerCase().includes(search.toLowerCase()) || 
     t.account.symbol.toLowerCase().includes(search.toLowerCase())
   );
@@ -92,7 +92,7 @@ function TokenSelector({ label, selected, setSelected, allToken, loading, side }
                 ) : filteredTokens?.length === 0 ? (
                   <div className="p-4 text-center text-xs text-white/40">No tokens found</div>
                 ) : (
-                  filteredTokens?.map((t: any) => (
+                  filteredTokens?.map((t) => (
                     <button
                       key={t.publicKey}
                       onClick={() => {
@@ -203,9 +203,11 @@ export default function CreateBattlePage() {
 
       setCreatedBattle(battlePDA.toBase58());
       toast.success("Battle Created Successfully!");
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      toast.error(err.message || "Failed to create battle");
+      const message =
+        err instanceof Error ? err.message : "Failed to create battle";
+      toast.error(message);
     } finally {
       setIsCreating(false);
     }
@@ -332,7 +334,9 @@ export default function CreateBattlePage() {
               ].map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveSection(tab.id as any)}
+                  onClick={() =>
+                    setActiveSection(tab.id as "basics" | "sides" | "schedule")
+                  }
                   className={cn(
                     "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all",
                     activeSection === tab.id 

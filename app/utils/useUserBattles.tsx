@@ -4,11 +4,13 @@ import toast from "react-hot-toast";
 import Methods from "./methods";
 
 export function useUserBattles() {
-  const [battles, setBattles] = useState<any[]>([]);
+  const { getUserBattles } = Methods();
+  const [battles, setBattles] = useState<
+    Awaited<ReturnType<typeof getUserBattles>>
+  >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const wallet = useAnchorWallet();
-  const { getUserBattles } = Methods();
 
   useEffect(() => {
     if (!wallet?.publicKey) return;
@@ -26,8 +28,9 @@ export function useUserBattles() {
             const acc = await getUserBattles();
             if (!cancelled) setBattles(acc || []);
             break;
-          } catch (err: any) {
-            if (err.message?.includes("Progrma not found")) {
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            if (message.includes("Progrma not found")) {
               attempts++;
               console.log(`⏳ Retrying getUserAllbattles (${attempts}/10)`);
               await new Promise((res) => setTimeout(res, 1000));

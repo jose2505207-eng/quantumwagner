@@ -14,7 +14,7 @@ const TIME_RANGES = ["1H", "1D", "1W", "1M", "ALL"];
 
 export function PriceHistoryGraph({ currentProbability, color = "#10B981" }: PriceHistoryGraphProps) {
   const [timeRange, setTimeRange] = useState("1D");
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<{ date: number; value: number }[]>([]);
 
   useEffect(() => {
     const points: { date: number; value: number }[] = [];

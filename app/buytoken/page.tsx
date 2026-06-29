@@ -42,7 +42,7 @@ export default function BuyToken() {
         <div className="text-center space-y-2 animate-pulse">
           <h3 className="text-xl font-semibold text-white">Loading Tokens...</h3>
           <p className="text-muted-foreground text-sm">
-            Please connect your wallet if you haven't yet
+            Please connect your wallet if you haven&apos;t yet
           </p>
         </div>
       </div>

@@ -84,9 +84,10 @@ export default function AdminDashboard() {
         )
       );
       setEditingUser(null);
-    } catch (err: any) {
-      console.log(err.response?.data || err);
-      toast.error(`${err.response?.data?.message || "Unknown error"}`);
+    } catch (err) {
+      const error = err as { response?: { data?: { message?: string } } };
+      console.log(error.response?.data || err);
+      toast.error(`${error.response?.data?.message || "Unknown error"}`);
     } finally {
       setLoadingEdit(false);
     }
