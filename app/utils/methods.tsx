@@ -70,14 +70,33 @@ type BoughtToken = {
   mint: string;
   balance: number;
   ata: string;
-  tokenData: any; // You can make this more specific later with your TokenLaunch type
+  // NOTE: typing this as the precise Anchor-decoded tokenLaunch account cascades
+  // type errors into UI consumers (app/portfolio/token/*) whose hand-written
+  // shapes diverge from the IDL (PublicKey vs string, null vs undefined). Kept as
+  // `any` to preserve runtime + build stability; tracked as a Loop 7 backlog item
+  // (align UI consumer types to the IDL, then tighten this).
+  tokenData: any;
 };
 
+// Anchor enum args are encoded as a single-key object whose value is an empty
+// struct, e.g. `{ priceGain: {} }`. `Record<string, never>` is the lint-clean
+// spelling of that empty struct (the bare `{}` type is disallowed) and the
+// `{}` literal at the call sites remains assignable to it — runtime unchanged.
+type AnchorUnitVariant = Record<string, never>;
+
+// The on-chain market `category` enum (idl: price | events | social | other).
+// Matches the Anchor-decoded arg type for `initializeMarket`.
+type MarketCategory =
+  | { price: AnchorUnitVariant }
+  | { events: AnchorUnitVariant }
+  | { social: AnchorUnitVariant }
+  | { other: AnchorUnitVariant };
+
 type BattleMetric =
-  | { totalVolume: {} }
-  | { priceGain: {} }
-  | { holderGrowth: {} }
-  | { socialEngagement: {} };
+  | { totalVolume: AnchorUnitVariant }
+  | { priceGain: AnchorUnitVariant }
+  | { holderGrowth: AnchorUnitVariant }
+  | { socialEngagement: AnchorUnitVariant };
 
 export type CreateBattleArgs = {
   title: string;
@@ -95,7 +114,7 @@ export type CreateBattleArgs = {
 
 export type EnterBattleArgs = {
   battlePDA: PublicKey;
-  side: { a: {} } | { b: {} };
+  side: { a: AnchorUnitVariant } | { b: AnchorUnitVariant };
   amount: number;
 };
 
@@ -160,7 +179,7 @@ export default function Methods() {
     imageUrl,
   }: {
     questionId: string;
-    category?: any;
+    category?: MarketCategory;
     durationSeconds?: anchor.BN;
     minBetAmount?: anchor.BN;
     tags?: string[];
@@ -221,7 +240,7 @@ export default function Methods() {
 
       toast.success("Market created succssfully!");
       return marketPDA.toBase58();
-    } catch (err: any) {
+    } catch (err) {
       if (err instanceof anchor.AnchorError)
         toast.error(`AnchorError: ${err.error.errorMessage}`);
       else toast.error("Market creation failed");
@@ -271,8 +290,8 @@ export default function Methods() {
       // Real on-chain action → completes the "first prediction" milestone.
       useGameStore.getState().completeLevel("first-prediction");
       return tx;
-    } catch (err: any) {
-      const msg = err?.message || "Unknown error";
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
       toast.error(`Error placing bet: ${msg}`);
       throw err;
     }
@@ -772,8 +791,10 @@ export default function Methods() {
         .rpc();
 
       toast.success("Token claimed successfully!");
-    } catch (e: any) {
-      const message = e?.error?.message || e?.message || String(e);
+    } catch (e) {
+      // Anchor surfaces program errors either as `e.error.message` or `e.message`.
+      const anchorErr = e as { error?: { message?: string }; message?: string };
+      const message = anchorErr?.error?.message || anchorErr?.message || String(e);
       if (message.includes("No tokens available to claim")) {
         toast.success("Already Claimed!");
         return;
@@ -865,8 +886,8 @@ export default function Methods() {
               tokenData: token.account,
             });
           }
-        } catch (err: any) {
-          const msg = err?.message ?? String(err);
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
           if (!msg.includes("could not find account")) {
             console.warn("Skipping mint:", mintAddress, msg);
           }
@@ -924,8 +945,8 @@ export default function Methods() {
       toast.dismiss();
       toast.success("Royalties withdrawn successfully!");
       return tx;
-    } catch (err: any) {
-      const errMsg = err?.message || err?.toString() || "";
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err ?? "");
 
       if (errMsg.includes("NoRoyaltiesToWithdraw")) {
         toast.dismiss();
@@ -1016,6 +1037,10 @@ export default function Methods() {
     const battles: Array<{
       id: number;
       pda: PublicKey;
+      // NOTE: kept `any` (not the precise IDL battle type) — see BoughtToken.tokenData
+      // above. The decoded battle shape cascades type errors into the battle UI pages
+      // (app/battlearena/*, app/portfolio/battle/*) whose local BattleData types
+      // diverge from the IDL. Loop 7 backlog: align those, then tighten this.
       data: any;
     }> = [];
 
@@ -1035,8 +1060,8 @@ export default function Methods() {
           pda: battlePDA,
           data: battleData,
         });
-      } catch (err: any) {
-        console.warn(`Skipping battle ${id}:`, err.message);
+      } catch (err) {
+        console.warn(`Skipping battle ${id}:`, err instanceof Error ? err.message : String(err));
       }
     }
 
@@ -1060,6 +1085,10 @@ export default function Methods() {
     const battles: Array<{
       id: number;
       pda: PublicKey;
+      // NOTE: kept `any` (not the precise IDL battle type) — see BoughtToken.tokenData
+      // above. The decoded battle shape cascades type errors into the battle UI pages
+      // (app/battlearena/*, app/portfolio/battle/*) whose local BattleData types
+      // diverge from the IDL. Loop 7 backlog: align those, then tighten this.
       data: any;
     }> = [];
 
@@ -1081,8 +1110,8 @@ export default function Methods() {
             data: battleData,
           });
         }
-      } catch (err: any) {
-        console.warn(`Skipping battle ${id}:`, err.message);
+      } catch (err) {
+        console.warn(`Skipping battle ${id}:`, err instanceof Error ? err.message : String(err));
       }
     }
 
