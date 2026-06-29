@@ -135,3 +135,44 @@ Hermes catalog + price endpoint, expo -8). NEW admin-guarded
 `GET /api/oracle/price?symbol=` (x-admin-key / ?adminKey) returns
 `{price,confidence,publishTime,source}` or a 502 with the loud error — ops probe,
 never a fake price.
+
+## Loop 4: verification catch-up (gate ON) + as-of-endTime settlement
+**Gate result:** typecheck 0 errors · `pnpm test` 71/71 (was 56) · `pnpm build`
+exit 0 — all green against the real `quantum_test` Supabase schema. No new
+migration this loop.
+
+**The only Loops 1–3 breakage found:** `app/api/fast-bets/generate/route.ts` had
+`const fastBets = []` inferred as `never[]`, so `prisma.fastBet.create(...)`
+push failed `tsc`. Fixed by typing the accumulator `FastBet[]`. Test + build
+were otherwise green; Loop 3 was structurally sound, just one type error.
+
+**Loop-3 test gap (now closed):** `settleFastBet` + `runAutoResolve` had ZERO
+tests. Added `test/integration/fastbet-settlement.test.ts` (pro-rata split,
+milestone, already-resolved guard, audit context) and
+`fastbet-autoresolve.test.ts` (derivation, as-of-endTime, spot-fallback, skip,
+expiry gate, idempotency), plus `getPriceAt` unit tests.
+
+**Pyth oracle endpoints (verified live, keyless):** TWAP
+(`/v2/updates/twap/{w}/latest`) is DEPRECATED — returns "The TWAP endpoint has
+been deprecated and is no longer available." Do NOT build on it. The Benchmarks
+endpoint `GET /v2/updates/price/{unixSeconds}?ids[]=<id>` IS live and returns the
+SAME `parsed[].price` shape (`{price,conf,expo,publish_time}`) as
+`/latest` — it serves the price as of that second. This is the basis of the
+as-of-endTime settle path.
+
+**Fairness fix (auto-resolve):** settlement now prefers the price AS OF the
+round's `endTime` (`PriceFeedProvider.getPriceAt`, optional/capability-detected)
+over the cron-tick spot. `captureSettlementPrice` records method honestly:
+`asof` | `spot-fallback` (getPriceAt threw) | `spot` (no history capability). The
+price/method/drift go into the audit-log meta via `settleFastBet`'s new optional
+`context` arg; `resolutionSource` stays the stable `provider:<name>` attribution
+(method is NOT crammed into it, so the UI badge renders a clean oracle name).
+`runAutoResolve` moved to `server/fastbetAutoResolve.ts` — Next route modules may
+only export handlers + config; the move also makes it injectable (provider/now)
+for tests.
+
+**Suspected Loop-3 bug (flagged for Loop 5, NOT fixed in catch-up):** the
+`priorWins === 0` branch of `settleFastBet` grants the win-fast-bet milestone via
+`completeLevelServer` but passes NO `win:true`, so a player's FIRST fast-bet win
+never increments `profile.wins` — the wins stat (and season leaderboard wins)
+lags actual wins by one. Pinned as real behavior in the settlement test.

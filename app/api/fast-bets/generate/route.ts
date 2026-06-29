@@ -1,3 +1,4 @@
+import type { FastBet } from "@prisma/client";
 import { handler, ok, fail } from "@/server/http";
 import { requireAuth } from "@/server/auth";
 import { prisma } from "@/server/db";
@@ -48,7 +49,7 @@ async function createRounds(
   // One baseline price for the whole batch (never invented; may be null).
   const startPrice = await captureStartPrice(symbol);
 
-  const fastBets = [];
+  const fastBets: FastBet[] = [];
   for (let i = 0; i < count; i++) {
     const fastBet = await prisma.fastBet.create({
       data: {

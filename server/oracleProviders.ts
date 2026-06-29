@@ -28,19 +28,34 @@
 
 import { env } from "./env";
 
+/** A single resolved price reading from a feed. */
+export interface PricePoint {
+  price: number;
+  confidence: number;
+  publishTime: number; // UNIX seconds (matches oracle.ts' provider contract)
+}
+
 export interface PriceFeedProvider {
   name: string;
-  getPrice(symbol: string): Promise<{
-    price: number;
-    confidence: number;
-    publishTime: number;
-  }>;
+  getPrice(symbol: string): Promise<PricePoint>;
+  /**
+   * OPTIONAL — price AS OF a historical UNIX-seconds timestamp (Pyth Benchmarks:
+   * GET /v2/updates/price/{ts}). Used by fast-bet auto-resolve to settle on the
+   * price at the round's `endTime` rather than the jittery cron-tick spot price.
+   * Providers that cannot serve history omit this; callers must detect its
+   * absence (`typeof provider.getPriceAt === "function"`) and fall back to
+   * getPrice(). Honesty boundary unchanged: it THROWS rather than invents.
+   */
+  getPriceAt?(symbol: string, atUnixSeconds: number): Promise<PricePoint>;
 }
 
 /** A fetcher injected into the stub so tests drive prices deterministically. */
-export type PriceFetcher = (
-  symbol: string
-) => Promise<{ price: number; confidence: number; publishTime: number }>;
+export type PriceFetcher = (symbol: string) => Promise<PricePoint>;
+/** Historical fetcher injected into the stub for getPriceAt testing. */
+export type PriceAtFetcher = (
+  symbol: string,
+  atUnixSeconds: number
+) => Promise<PricePoint>;
 
 /**
  * A concrete, honest provider that NEVER invents a price.
@@ -52,10 +67,19 @@ export type PriceFetcher = (
 export class StubPriceFeedProvider implements PriceFeedProvider {
   name: string;
   private fetcher?: PriceFetcher;
+  // Optional historical fetcher: when supplied, the stub exposes getPriceAt (see
+  // constructor) so tests can exercise the price-as-of-endTime settle path.
+  getPriceAt?: (symbol: string, atUnixSeconds: number) => Promise<PricePoint>;
 
-  constructor(fetcher?: PriceFetcher, name = "stub") {
+  constructor(fetcher?: PriceFetcher, name = "stub", atFetcher?: PriceAtFetcher) {
     this.fetcher = fetcher;
     this.name = name;
+    // Only advertise the capability when an at-fetcher is provided, mirroring the
+    // real adapter's "absent => caller falls back to spot" contract.
+    if (atFetcher) {
+      this.getPriceAt = (symbol: string, atUnixSeconds: number) =>
+        atFetcher(symbol, atUnixSeconds);
+    }
   }
 
   async getPrice(symbol: string) {
@@ -114,18 +138,27 @@ export class PythHermesProvider implements PriceFeedProvider {
     this.fetchImpl = opts.fetchImpl ?? fetch;
   }
 
-  async getPrice(symbol: string) {
+  /** Look up the feed id for a symbol or THROW loudly (never invent a price). */
+  private requireFeedId(symbol: string): string {
     const feedId = this.feedIds[symbol.toUpperCase()];
     if (!feedId) {
-      // Never fall back to a fake price — name the symbol and fail loudly.
       throw new Error(
         `pyth: no feed id configured for symbol "${symbol}". ` +
           `Set PYTH_FEED_IDS (e.g. "${symbol}=0x<64-hex feed id>"); ` +
           `find ids at https://pyth.network/developers/price-feed-ids`
       );
     }
+    return feedId;
+  }
 
-    const url = `${this.baseUrl}/v2/updates/price/latest?ids[]=${feedId}`;
+  /**
+   * Fetch + parse a Hermes price-update document at `url` into a PricePoint.
+   * Shared by getPrice (latest) and getPriceAt (Benchmarks at a timestamp) —
+   * both endpoints return the identical `parsed[].price` shape. THROWS on a
+   * non-200 or an empty `parsed` array so a price outage never settles a market
+   * off a fabricated value.
+   */
+  private async fetchPricePoint(url: string, symbol: string): Promise<PricePoint> {
     const res = await this.fetchImpl(url);
     if (!res.ok) {
       throw new Error(
@@ -152,9 +185,7 @@ export class PythHermesProvider implements PriceFeedProvider {
     // A tight band (conf << price) -> confidence ~1; a wide/uncertain band -> ~0.
     // Guard divide-by-zero: a zero price carries no information -> confidence 0.
     const confidence =
-      priceValue === 0
-        ? 0
-        : clamp01(1 - confInPrice / Math.abs(priceValue));
+      priceValue === 0 ? 0 : clamp01(1 - confInPrice / Math.abs(priceValue));
 
     return {
       price: priceValue,
@@ -163,6 +194,27 @@ export class PythHermesProvider implements PriceFeedProvider {
       // provider contract used by oracle.ts (no ms conversion anywhere downstream).
       publishTime: publish_time,
     };
+  }
+
+  async getPrice(symbol: string): Promise<PricePoint> {
+    const feedId = this.requireFeedId(symbol);
+    const url = `${this.baseUrl}/v2/updates/price/latest?ids[]=${feedId}`;
+    return this.fetchPricePoint(url, symbol);
+  }
+
+  /**
+   * Price AS OF a historical timestamp via the Pyth Benchmarks endpoint
+   * (GET /v2/updates/price/{unixSeconds}). Hermes returns the price update
+   * published at-or-just-before that second, with the SAME parsed shape as the
+   * latest endpoint. The returned `publishTime` reveals exactly how close to the
+   * requested instant the served price actually is (auditable settlement). Same
+   * honesty doctrine: unmapped symbol / non-200 / empty parsed all THROW.
+   */
+  async getPriceAt(symbol: string, atUnixSeconds: number): Promise<PricePoint> {
+    const feedId = this.requireFeedId(symbol);
+    const ts = Math.floor(atUnixSeconds);
+    const url = `${this.baseUrl}/v2/updates/price/${ts}?ids[]=${feedId}`;
+    return this.fetchPricePoint(url, symbol);
   }
 }
 
@@ -252,6 +304,10 @@ export class CachingPriceFeedProvider implements PriceFeedProvider {
   name: string;
   private inner: PriceFeedProvider;
   private ttlMs: number;
+  // Only advertised when the inner provider supports history, so callers can
+  // capability-detect (`typeof provider.getPriceAt === "function"`) and fall
+  // back to spot when it is absent.
+  getPriceAt?: (symbol: string, atUnixSeconds: number) => Promise<PricePoint>;
 
   constructor(inner: PriceFeedProvider, ttlMs = PRICE_CACHE_TTL_MS) {
     this.inner = inner;
@@ -259,6 +315,22 @@ export class CachingPriceFeedProvider implements PriceFeedProvider {
     // `source` stay consistent with the underlying adapter ("pyth"/"stub").
     this.name = inner.name;
     this.ttlMs = ttlMs;
+
+    if (typeof inner.getPriceAt === "function") {
+      const innerAt = inner.getPriceAt.bind(inner);
+      this.getPriceAt = async (symbol: string, atUnixSeconds: number) => {
+        const ts = Math.floor(atUnixSeconds);
+        // A historical price for a PAST second is immutable, so it can be cached
+        // indefinitely; key by timestamp so it never collides with the live read.
+        const key = `${this.inner.name}:${symbol.toUpperCase()}@${ts}`;
+        const hit = priceCache.get(key);
+        if (hit && hit.expiresAt > Date.now()) return hit.value;
+        // Await OUTSIDE the set: a throw is never cached (honesty preserved).
+        const value = await innerAt(symbol, ts);
+        priceCache.set(key, { value, expiresAt: Date.now() + this.ttlMs });
+        return value;
+      };
+    }
   }
 
   async getPrice(symbol: string) {
