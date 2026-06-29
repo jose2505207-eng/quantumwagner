@@ -14,10 +14,14 @@ the authority writes or the append-only ledgers.
 
 ## Steps
 1. Read `prisma/schema.prisma` and `docs/agent-system/database-map.md`.
-2. Edit the schema. Remember SQLite specifics: statuses are plain strings (no
-   native enums), and `PlayerProfile.completedLevels` is a JSON **string**.
-3. Generate the migration with the CLI — never hand-write SQL:
-   `pnpm db:migrate` (creates a committed migration dir under `prisma/migrations`).
+2. Edit the schema. DB is **PostgreSQL on Supabase** (not SQLite): statuses are
+   plain strings (no native enums), and `PlayerProfile.completedLevels` is a JSON
+   **string**.
+3. Generate + apply the migration. **`pnpm db:migrate` (migrate dev) FAILS on
+   Supabase** — the `app_user` role can't create the shadow database (`P3014 /
+   permission denied to create database`). Use the verified workaround instead
+   (see Commands below): `migrate diff` → write `migration.sql` → `db execute`
+   (applies to live DB) → `migrate resolve --applied` (records history).
 4. Regenerate the client: `pnpm db:generate`.
 5. Keep `XPEvent` and `AuditLog` insert-only; keep authority fields written only
    by `awardXp`/`applyResolution`.
@@ -28,12 +32,19 @@ the authority writes or the append-only ledgers.
 
 ## Commands To Run
 ```bash
-pnpm db:migrate          # prisma migrate dev (creates migration)
-pnpm db:generate         # prisma generate
+# Supabase migration workflow (migrate dev fails — no shadow-DB permission):
+pnpm prisma migrate diff \
+  --from-schema-datasource prisma/schema.prisma \
+  --to-schema-datamodel  prisma/schema.prisma --script    # -> the DDL
+# Save the DDL to prisma/migrations/<UTC YYYYMMDDHHMMSS>_<name>/migration.sql, then:
+pnpm prisma db execute --file prisma/migrations/<dir>/migration.sql \
+  --schema prisma/schema.prisma                           # applies to LIVE DB
+pnpm prisma migrate resolve --applied <migration_name>     # records in _prisma_migrations
+pnpm prisma generate                                       # regen client
+pnpm prisma migrate status                                 # expect "up to date!"
 pnpm db:seed             # if seed changed
-pnpm test                # authority-layer specs
-# deploy environments:
-pnpm db:migrate:deploy   # applies existing migrations (no new migration)
+# deploy environments / CI (ephemeral Postgres has shadow-DB perms):
+pnpm db:migrate:deploy   # replays committed migrations (no new migration)
 ```
 
 ## Files To Inspect

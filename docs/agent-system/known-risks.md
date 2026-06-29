@@ -15,16 +15,18 @@ Verified against the real repo. Each entry: the fact, where it lives, the impact
 
 ## Tech debt
 
-- **Two committed lockfiles.** Both `package-lock.json` (npm) and `pnpm-lock.yaml`
-  exist at root. Recent commits use pnpm (`dd367fe fix: sync pnpm lockfile`), but
-  `README.md` documents npm `--legacy-peer-deps`. Risk: dependency drift / "works
-  on my machine". *Resolve:* pick one, delete the other (see `open-questions.md`).
+- **Lockfile RESOLVED (Loop 2):** pnpm is canonical; `package-lock.json` is no
+  longer tracked, only `pnpm-lock.yaml`. Residual `npm run` command refs in docs
+  were scrubbed to pnpm in Loop 3 (two npm-only `--legacy-peer-deps`
+  troubleshooting rows intentionally kept — that flag doesn't exist under pnpm).
 - **~62 ESLint errors as tech debt.** ESLint is NOT enforced at build time
   (`next.config.mjs eslint.ignoreDuringBuilds: true`) precisely because the legacy
   codebase has pre-existing lint problems. *Verify exact count:* `pnpm lint`.
-- **No app-level tests / CI merged yet.** Vitest config + scripts are present and
-  authority-layer tests are in progress, but `.github/` has no workflow on this
-  branch. *Verify:* `ls .github/workflows test/`.
+- **CI exists** (`.github/workflows/ci.yml`: generate → migrate deploy → typecheck
+  → build → test against an ephemeral Postgres; lint non-blocking). NOTE: Loops 1–3
+  product work runs under a **max-throughput directive that SKIPS typecheck/test/
+  build locally** — CI is the safety net, so a red CI run is expected until a
+  catch-up verification pass is done.
 
 ## Chain / program
 
@@ -46,6 +48,27 @@ Verified against the real repo. Each entry: the fact, where it lives, the impact
 - **The wiki was not merged to `main`.** It lives on `origin/docs/repo-wiki` and
   was **restored onto this branch** into `docs/wiki/`. `WIKI.md` at root was a
   dangling pointer until this restore. Until a merge lands, `main` lacks the wiki.
+
+## Scheduler / oracle (Loop 3)
+
+- **Auto-resolve uses the SPOT price at expiry vs the captured `startPrice`.** A
+  round is settled `YES` iff `currentPrice > startPrice` at the moment the cron
+  runs — there is jitter between `endTime` and the actual settle tick, and Pyth is
+  a spot read (no TWAP). For a high-stakes/mainnet context this is a fairness risk;
+  acceptable on devnet/demo. A round whose price can't be fetched is SKIPPED (left
+  unresolved), never invented — honest, but it can linger until a later run.
+- **`CRON_SECRET` must be set on the deployment** for any cron path to authorize
+  (Vercel injects `Authorization: Bearer ${CRON_SECRET}`; the GitHub workflow needs
+  repo secrets `CRON_SECRET` + `APP_BASE_URL`). When unset, cron silently 403s and
+  the feed stops refreshing/settling — admin POST still works. Not committed (env).
+- **Price cache is per-process/per-lambda** (`CachingPriceFeedProvider`, 5s TTL,
+  module-level Map). It is a hot-path round-trip reducer, NOT a correctness or
+  cross-instance consistency mechanism; two lambdas can hold prices up to 5s apart.
+  Failures are never cached (loud-failure honesty preserved).
+- **Vercel Cron is GET-only**, so `/api/fast-bets/generate` has a cron GET handler
+  that creates rounds from validator DEFAULTS (SOL/USD). Its admin POST (JWT +
+  `ADMIN_RESOLUTION_KEY`) is unchanged. Don't remove the GET path or the scheduler
+  breaks.
 
 ## Security boundary (must not regress)
 

@@ -94,3 +94,44 @@ provider failure — never invented, never 500s the feed). `POST /api/fast-bets/
 is the admin/cron endpoint (ADMIN_RESOLUTION_KEY) that spawns live rounds to keep
 the feed `live` not `demo`. The fast-bets UI polls every 15s via a quiet
 background reload (skips the spinner) with an in-flight ref guard.
+
+## Loop 3: Supabase migrations — `migrate dev` fails (no shadow DB); use diff + db execute + resolve
+The `app_user` role CANNOT create the shadow database, so `pnpm prisma migrate dev`
+dies with `P3014 / permission denied to create database`. The working pattern that
+keeps BOTH the live Supabase DB and Prisma's migration history in sync:
+  1. Edit `prisma/schema.prisma`.
+  2. `pnpm prisma migrate diff --from-schema-datasource prisma/schema.prisma \
+        --to-schema-datamodel prisma/schema.prisma --script`  → the DDL.
+  3. Write it to `prisma/migrations/<UTC-timestamp>_<name>/migration.sql`.
+  4. `pnpm prisma db execute --file <that file> --schema prisma/schema.prisma`  (applies to live DB).
+  5. `pnpm prisma migrate resolve --applied <migration_name>`  (records it in `_prisma_migrations`).
+  6. `pnpm prisma generate`.
+`pnpm prisma migrate status` then reports "Database schema is up to date!". CI's
+`prisma migrate deploy` (against its ephemeral Postgres) replays the same SQL.
+
+## Loop 3: live-feed loop is closed end-to-end (scheduler + auto-resolve)
+`FastBet` gained `startPrice Float?` (baseline captured at round creation) and
+`resolutionSource String?`. `POST/GET /api/fast-bets/generate` now stores a
+provider baseline (null if the feed throws — never invented). NEW
+`/api/fast-bets/auto-resolve` settles EXPIRED live rounds: outcome =
+`currentPrice > startPrice ? YES : NO` (source `provider:pyth`); a round whose
+price can't be fetched is SKIPPED, never invented. Settlement was extracted into
+`server/fastbetSettlement.ts` (`settleFastBet({fastBetId,outcome,source})`) shared
+by the admin resolve route (source `admin`) and auto-resolve. Schedulers:
+`vercel.json` crons (auto-resolve `* * * * *`, generate `*/5 * * * *`, Vercel sends
+GET + injects `Authorization: Bearer ${CRON_SECRET}`) and
+`.github/workflows/cron-fastbets.yml` (every 5m, curls with the same Bearer).
+Endpoints authorize via `CRON_SECRET` (cron) OR `ADMIN_RESOLUTION_KEY` (admin POST).
+
+## Loop 3: oracle hardening — short-TTL cache, BTC/ETH feeds, ops probe
+`server/oracleProviders.ts` now wraps the chosen provider in
+`CachingPriceFeedProvider` (5s TTL, module-level Map keyed `name:SYMBOL`) INSIDE
+`getPriceFeedProvider()` — collapses Hermes round-trips on the hot path WITHOUT
+changing `PriceFeedProvider` semantics. ONLY successes are cached (the `set`
+runs after the `await`, so a throw is never cached → loud-failure honesty intact;
+unit tests build providers directly = uncached). Verified built-in feed ids added:
+BTC/USD `e62df6c8…415b43`, ETH/USD `ff61491a…fd0ace` (both confirmed live against
+Hermes catalog + price endpoint, expo -8). NEW admin-guarded
+`GET /api/oracle/price?symbol=` (x-admin-key / ?adminKey) returns
+`{price,confidence,publishTime,source}` or a 502 with the loud error — ops probe,
+never a fake price.
