@@ -1,12 +1,53 @@
 import { defineConfig } from "vitest/config";
-import path from "path";
+import { fileURLToPath } from "node:url";
+
+/**
+ * Vitest config for the server authority layer tests.
+ *
+ * The tests run against a real Postgres database (the app's Supabase project),
+ * using a dedicated `quantum_test` schema so they never touch dev/prod data.
+ * Prisma + that schema must be driven by ONE process to avoid lock contention,
+ * so we force a single fork.
+ *
+ * `process.loadEnvFile()` (Node 20.12+) hydrates process.env from `.env` for
+ * LOCAL runs; the forked test worker inherits it. CI has no `.env` and sets
+ * DATABASE_URL / TEST_DATABASE_URL directly, so this is a harmless no-op there.
+ */
+try {
+  process.loadEnvFile();
+} catch {
+  // No .env file (e.g. CI) — env vars are provided by the environment instead.
+}
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      // Mirror the tsconfig `@/*` -> `./*` path alias.
+      "@": fileURLToPath(new URL("./", import.meta.url)),
+    },
+  },
+  // Node-only authority-layer tests never render components. Supplying an inline
+  // empty PostCSS config stops Vite from loading the project's Tailwind v4
+  // postcss.config.mjs (which fails to load outside the Next build pipeline).
+  css: {
+    postcss: { plugins: [] },
+  },
   test: {
     environment: "node",
-    include: ["tests/**/*.test.ts"],
-  },
-  resolve: {
-    alias: { "@": path.resolve(__dirname, ".") },
+    globals: true,
+    setupFiles: ["./test/setup.ts"],
+    // Forward the resolved DB URLs to the worker explicitly (belt-and-braces
+    // alongside process.env inheritance).
+    env: {
+      DATABASE_URL: process.env.DATABASE_URL ?? "",
+      TEST_DATABASE_URL: process.env.TEST_DATABASE_URL ?? "",
+    },
+    pool: "forks",
+    poolOptions: {
+      forks: {
+        singleFork: true,
+      },
+    },
+    testTimeout: 30000,
   },
 });

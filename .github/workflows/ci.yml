@@ -2,39 +2,94 @@ name: CI
 
 on:
   push:
-    branches: [main]
   pull_request:
 
+# Local test values only — NOT real secrets. Production/dev use Supabase
+# Postgres (see .env / docs); CI runs against an ephemeral Postgres service
+# container so no real credentials are ever exposed to the pipeline.
+env:
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/quantum?sslmode=disable
+  TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/quantum?sslmode=disable&schema=quantum_test
+  JWT_SECRET: ci-secret
+  WALLET_AUTH_MESSAGE: "Sign this message to login to Quantum: "
+  ORACLE_MODE: admin
+  ADMIN_RESOLUTION_KEY: ci-admin-key
+  SOLANA_NETWORK: devnet
+  SOLANA_RPC_URL: https://api.devnet.solana.com
+
 jobs:
-  build:
+  # Blocking pipeline: generate -> migrate -> typecheck -> build -> test.
+  build-and-test:
+    name: Build & Test
     runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: "file:./dev.db"
-      JWT_SECRET: "ci-test-secret-not-for-production"
-      NODE_ENV: test
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: quantum
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
+          cache: pnpm
 
-      - name: Install
-        run: npm ci --legacy-peer-deps || npm install --legacy-peer-deps
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-      - name: Prisma generate + migrate (sqlite)
-        run: |
-          npx prisma generate
-          npx prisma migrate deploy
+      - name: Prisma generate
+        run: pnpm prisma generate
 
-      - name: Typecheck
-        run: npm run typecheck
+      - name: Prisma migrate (provision schema on the service Postgres)
+        run: pnpm prisma migrate deploy
+
+      - name: Typecheck (blocking)
+        run: pnpm typecheck
+
+      - name: Build (blocking — next.config enforces TS, ignores ESLint)
+        run: pnpm build
+
+      - name: Test (blocking — real Postgres test schema)
+        run: pnpm test
+
+  # Non-blocking: the legacy codebase has ~62 pre-existing eslint errors
+  # (documented tech debt). Surface them without failing the pipeline yet.
+  lint:
+    name: Lint (non-blocking)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Lint
-        run: npm run lint || echo "lint warnings (non-blocking)"
-
-      - name: Unit tests
-        run: npm test
-
-      - name: Build
-        run: npm run build
+        run: pnpm lint

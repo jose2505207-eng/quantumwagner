@@ -81,12 +81,15 @@ export default function LaunchPage() {
     if (!imageUrl.trim() || !isValidUrl(imageUrl)) return "Valid Image URL is required";
     
     const supplyNum = Number(supply);
-    if (isNaN(supplyNum) || supplyNum < MIN_TOKEN_SUPPLY || supplyNum > MAX_TOKEN_SUPPLY) {
-      return `Supply must be between ${formatNumber(MIN_TOKEN_SUPPLY)} and ${formatNumber(MAX_TOKEN_SUPPLY)}`;
+    const minTokenSupply = MIN_TOKEN_SUPPLY.toNumber();
+    const maxTokenSupply = MAX_TOKEN_SUPPLY.toNumber();
+
+    if (isNaN(supplyNum) || supplyNum < minTokenSupply || supplyNum > maxTokenSupply) {
+      return `Supply must be between ${formatNumber(minTokenSupply)} and ${formatNumber(maxTokenSupply)}`;
     }
 
     const priceNum = Number(initialPrice);
-    if (isNaN(priceNum) || priceNum < MIN_INITIAL_PRICE) {
+    if (isNaN(priceNum) || priceNum < MIN_INITIAL_PRICE.toNumber()) {
       return "Initial Price is too low";
     }
 
@@ -349,7 +352,7 @@ export default function LaunchPage() {
                       <Coins className="absolute left-3 top-3.5 w-4 h-4 text-white/40" />
                     </div>
                     <p className="text-[10px] text-white/40">
-                      Min: {formatNumber(MIN_TOKEN_SUPPLY)} • Max: {formatNumber(MAX_TOKEN_SUPPLY)}
+                      Min: {formatNumber(MIN_TOKEN_SUPPLY.toNumber())} • Max: {formatNumber(MAX_TOKEN_SUPPLY.toNumber())}
                     </p>
                   </div>
 

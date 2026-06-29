@@ -1,9 +1,23 @@
 # Quantum Wager — Architecture
 
+> ⚠️ **PARTLY STALE — READ THIS FIRST.** This document predates the backend
+> migration and describes the backend as an **external Render service**. That is
+> no longer true: the backend now lives **in-repo** as Next.js Route Handlers
+> under `app/api/*` (e.g. `app/api/markets/route.ts`) delegating to `server/*.ts`,
+> backed by **Prisma + SQLite** (`prisma/schema.prisma`). The external backend is
+> still *optional* (set `NEXT_PUBLIC_API_URL` to override origin), but the default
+> is the same-origin in-repo API. The diagram below is kept for history only.
+>
+> **Current source of truth:** [`docs/wiki/01-architecture.md`](./wiki/01-architecture.md)
+> and the root `README.md`. The factual correction below has been applied in
+> place; the rest of this file may also drift — prefer the wiki.
+
 ## What lives where
 
-Quantum Wager is a **hybrid** system. This repository is the **frontend**. The
-backend and the smart contract are separate, already-deployed services.
+Quantum Wager is a **hybrid** system. This repository contains the **frontend
+and the in-repo backend** (Next.js Route Handlers under `app/api/*` →
+`server/*.ts` → Prisma/SQLite). The smart contract is a separately-deployed
+devnet program consumed via the IDL in `idl/`.
 
 ```
 ┌────────────────────────────────────────────────────────────┐
@@ -25,10 +39,12 @@ backend and the smart contract are separate, already-deployed services.
                 │ REST (JWT)             │ web3.js / Anchor
                 ▼                        ▼
    ┌──────────────────────┐   ┌──────────────────────────────┐
-   │ Backend (Render)     │   │ Solana devnet program        │
-   │ quantum-wager        │   │ C8SAQXW3...toSc              │
-   │ /api/auth /api/markets│   │ markets, battles, tokens,    │
-   │ /api/positions ...   │   │ bonding curves, reputation   │
+   │ In-repo API (default)│   │ Solana devnet program        │
+   │ app/api/* → server/* │   │ C8SAQXW3...toSc              │
+   │ Prisma + SQLite      │   │ markets, battles, tokens,    │
+   │ /api/auth /api/markets│   │ bonding curves, reputation   │
+   │ (external override via│   │                              │
+   │  NEXT_PUBLIC_API_URL) │   │                              │
    └──────────────────────┘   └──────────────────────────────┘
 ```
 
