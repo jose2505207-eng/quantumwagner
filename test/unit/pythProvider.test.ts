@@ -118,3 +118,52 @@ describe("PythHermesProvider", () => {
     await expect(provider.getPrice("SOL/USD")).rejects.toThrow(/empty/);
   });
 });
+
+/**
+ * getPriceAt (Pyth Benchmarks) — price AS OF a timestamp, used by fast-bet
+ * auto-resolve to settle on the price at endTime rather than the cron-tick spot.
+ * It hits GET /v2/updates/price/{ts} (note: the timestamp is in the PATH, not a
+ * query param) and parses the SAME shape as the latest endpoint.
+ */
+describe("PythHermesProvider.getPriceAt", () => {
+  // A fetch that records the URL it was called with and returns a fixed payload.
+  function recordingFetch(parsed: unknown) {
+    const calls: string[] = [];
+    const impl = (async (url: string) => {
+      calls.push(url);
+      return { ok: true, status: 200, json: async () => ({ parsed }) } as unknown as Response;
+    }) as unknown as typeof fetch;
+    return { impl, calls };
+  }
+
+  it("requests the benchmark timestamp in the URL path and parses the price", async () => {
+    const { impl, calls } = recordingFetch([
+      {
+        id: SOL_FEED,
+        price: { price: "12000000000", conf: "1000000", expo: -8, publish_time: 1699999990 },
+      },
+    ]);
+    const provider = makeProvider(impl);
+
+    const feed = await provider.getPriceAt("SOL/USD", 1700000000);
+    expect(feed.price).toBeCloseTo(120, 6);
+    expect(feed.publishTime).toBe(1699999990); // served price's own publish time
+    // The requested second is in the path: /v2/updates/price/1700000000
+    expect(calls[0]).toContain("/v2/updates/price/1700000000?ids[]=");
+    expect(calls[0]).not.toContain("/latest");
+  });
+
+  it("floors a fractional timestamp to whole seconds", async () => {
+    const { impl, calls } = recordingFetch([
+      { id: SOL_FEED, price: { price: "1", conf: "0", expo: 0, publish_time: 1 } },
+    ]);
+    const provider = makeProvider(impl);
+    await provider.getPriceAt("SOL/USD", 1700000000.987);
+    expect(calls[0]).toContain("/v2/updates/price/1700000000?");
+  });
+
+  it("THROWS for an unmapped symbol — never invents a historical price", async () => {
+    const provider = makeProvider(fakeFetch([]));
+    await expect(provider.getPriceAt("DOGE/USD", 1700000000)).rejects.toThrow(/DOGE\/USD/);
+  });
+});

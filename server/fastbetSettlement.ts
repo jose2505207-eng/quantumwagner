@@ -21,8 +21,16 @@ export async function settleFastBet(params: {
   fastBetId: string;
   outcome: "YES" | "NO";
   source: string;
+  /**
+   * Optional settlement context merged into the audit log meta — e.g. the
+   * deriving price, the round's startPrice, the price's publishTime, and the
+   * capture method ("asof"/"spot"). Persisting WHY a round settled the way it
+   * did keeps auto-resolution auditable without a schema change. Pure metadata:
+   * it never affects the outcome (which the caller already derived).
+   */
+  context?: Record<string, unknown>;
 }): Promise<{ resolved: boolean; outcome: "YES" | "NO"; source: string }> {
-  const { fastBetId, outcome, source } = params;
+  const { fastBetId, outcome, source, context } = params;
 
   const fastBet = await prisma.fastBet.findUnique({
     where: { id: fastBetId },
@@ -70,7 +78,11 @@ export async function settleFastBet(params: {
     where: { id: fastBetId },
     data: { status: "resolved", outcome, resolutionSource: source },
   });
-  await logAudit({ action: "fastbet.resolve", target: fastBetId, meta: { outcome, source } });
+  await logAudit({
+    action: "fastbet.resolve",
+    target: fastBetId,
+    meta: { outcome, source, ...(context ?? {}) },
+  });
 
   return { resolved: true, outcome, source };
 }
