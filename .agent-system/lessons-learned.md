@@ -49,3 +49,22 @@ aliases. Don't remove them when refactoring auth.
 The wiki is on `origin/docs/repo-wiki`, restored onto this branch — not on
 `main`. After code changes, run `node scripts/update-wiki.mjs` and edit only the
 impacted pages; re-cite real files.
+
+## Levels 1-5 are already server-authoritative (don't re-wire them)
+The 6-level arena progression is wired to REAL server actions, not the local HUD:
+L1 connect-wallet (auth/verify-wallet), L2 first-prediction (markets predictions
++ positions/add), L3 win-fast-bet (fast-bets resolve), L4 join-meme-battle
+(battles join), L5 launch-token (launchpad tokens). All call
+`completeLevelServer` (idempotent, in `server/xp.ts`). Loop 1 closed the only gap:
+L6 enter-leaderboard, previously client-only, now has POST
+`/api/player/levels/[levelId]/complete` guarded by a strict allowlist
+(`VISIT_LEVEL_IDS`/`isVisitLevel` in `lib/game/levels.ts`) so only genuine VISIT
+levels can be completed that way — action levels are rejected, never fakeable.
+
+## Provider oracle mode fails loudly when unconfigured (by design)
+`ORACLE_MODE="provider"` is real but the concrete price feed is a stub
+(`server/oracleProviders.ts` `StubPriceFeedProvider`) that THROWS
+"not configured" rather than inventing a price. Resolving a market via
+`source:"provider"` therefore returns an honest 400 until a real
+`PriceFeedProvider` (Pyth Hermes / Switchboard) + its endpoint/feed-id is wired.
+This is correct honesty-boundary behavior, not a bug. See open-questions.md #6.
