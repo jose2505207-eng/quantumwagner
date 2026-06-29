@@ -24,9 +24,12 @@ Verified against the real repo. Each entry: the fact, where it lives, the impact
   codebase has pre-existing lint problems. *Verify exact count:* `pnpm lint`.
 - **CI exists** (`.github/workflows/ci.yml`: generate → migrate deploy → typecheck
   → build → test against an ephemeral Postgres; lint non-blocking). NOTE: Loops 1–3
-  product work runs under a **max-throughput directive that SKIPS typecheck/test/
-  build locally** — CI is the safety net, so a red CI run is expected until a
-  catch-up verification pass is done.
+  product work ran under a **max-throughput directive that SKIPPED typecheck/test/
+  build locally** — CI was the safety net, so a red CI run was expected until a
+  catch-up pass. *Resolved (Loop 4):* the validation gate is back ON and GREEN —
+  `pnpm typecheck` 0 errors, `pnpm test` 71/71, `pnpm build` exit 0 against the
+  real `quantum_test` Supabase schema. The only accumulated breakage was one
+  `never[]` inference in `app/api/fast-bets/generate/route.ts` (fixed).
 
 ## Chain / program
 
@@ -51,12 +54,28 @@ Verified against the real repo. Each entry: the fact, where it lives, the impact
 
 ## Scheduler / oracle (Loop 3)
 
-- **Auto-resolve uses the SPOT price at expiry vs the captured `startPrice`.** A
-  round is settled `YES` iff `currentPrice > startPrice` at the moment the cron
-  runs — there is jitter between `endTime` and the actual settle tick, and Pyth is
-  a spot read (no TWAP). For a high-stakes/mainnet context this is a fairness risk;
-  acceptable on devnet/demo. A round whose price can't be fetched is SKIPPED (left
-  unresolved), never invented — honest, but it can linger until a later run.
+- **Auto-resolve settlement price (IMPROVED Loop 4; residual risk noted).** Loop 3
+  settled `YES` iff `currentPrice > startPrice` using the SPOT price at the jittery
+  cron tick. Loop 4 now settles on the price AS OF the round's `endTime` via the
+  Pyth Benchmarks endpoint (`GET /v2/updates/price/{unixSeconds}`, verified live)
+  through `PriceFeedProvider.getPriceAt` — see `server/fastbetAutoResolve.ts`
+  `captureSettlementPrice`. The method is recorded honestly in the audit-log meta
+  (`asof` | `spot-fallback` when Benchmarks throws | `spot` when the provider has
+  no history capability), alongside `settlePrice`/`publishTime`/`driftSec`.
+  *Residual:* it is still a single point read (no TWAP — the Hermes TWAP endpoint
+  is DEPRECATED), and a `spot-fallback` reintroduces cron-tick jitter for that
+  round. A round whose price can't be fetched is still SKIPPED (left unresolved),
+  never invented — honest, but it can linger until a later run. The settle price
+  is recorded only in the audit log, NOT yet as a first-class FastBet column
+  (Loop 5 backlog).
+- **`profile.wins` undercounts the FIRST fast-bet win (suspected Loop-3 bug).**
+  In `server/fastbetSettlement.ts`, the `priorWins === 0` branch grants the
+  win-fast-bet milestone via `completeLevelServer` but does NOT pass `win:true`, so
+  a player's first fast-bet win never increments `profile.wins` (nor the season
+  leaderboard `wins`); only second+ wins count. Pinned as real behavior in
+  `test/integration/fastbet-settlement.test.ts`. Not a value/honesty violation
+  (nothing invented), but a stat-accuracy bug. Fix candidate for Loop 5: pass the
+  win flag on the milestone path (review leaderboard impact first).
 - **`CRON_SECRET` must be set on the deployment** for any cron path to authorize
   (Vercel injects `Authorization: Bearer ${CRON_SECRET}`; the GitHub workflow needs
   repo secrets `CRON_SECRET` + `APP_BASE_URL`). When unset, cron silently 403s and

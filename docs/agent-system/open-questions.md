@@ -37,7 +37,8 @@ with how to verify. Do NOT guess these in code or docs. (Sourced from
 5. **Does `test/setup.ts` exist and does `pnpm test` currently pass?**
    *RESOLVED (Loop 1):* `test/setup.ts` exists and provisions a real Postgres
    `quantum_test` schema (Supabase) via `prisma db push`. `pnpm test` passes —
-   **47/47** as of `feat/product-loop-1`.
+   **47/47** as of `feat/product-loop-1`; **71/71** as of `feat/product-loop-4`
+   (Loop 4 added settlement + auto-resolve + `getPriceAt` coverage).
 
 6. **What live price-feed credential should the oracle `provider` mode use?**
    Loop 1 implemented `ORACLE_MODE="provider"` behind `PriceFeedProvider`
@@ -60,3 +61,9 @@ with how to verify. Do NOT guess these in code or docs. (Sourced from
    (baseline `startPrice` capture + `/api/fast-bets/auto-resolve` settling expired
    rounds via the feed, scheduled by `vercel.json` + a GitHub Actions workflow).
    Add more symbols via `PYTH_FEED_IDS`; an unmapped symbol still throws (honest).
+   *Extended (Loop 4):* added `getPriceAt(symbol, unixSeconds)` on the provider,
+   backed by the Pyth **Benchmarks** endpoint `GET /v2/updates/price/{ts}` (verified
+   live, keyless, same parsed shape as `/latest`) so auto-resolve settles on the
+   price AS OF `endTime`. NOTE: the Pyth **TWAP** endpoint
+   (`/v2/updates/twap/{w}/latest`) is **DEPRECATED** and returns an error — do not
+   build on it; a single Benchmarks read at `endTime` is the honest substitute.
