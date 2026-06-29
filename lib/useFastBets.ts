@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getFastBets, type ApiFastBet } from "@/lib/api";
 import { DEMO_MODE } from "@/lib/game/config";
 import { DEMO_FAST_BETS } from "@/lib/demo/fastbets";
@@ -62,6 +62,19 @@ function timeRemaining(bet: ApiFastBet, now = Date.now()): string {
 
 /** Map a live API fast-bet row onto the card's props (honest: no faked split/price). */
 function toRow(bet: ApiFastBet): FastBetRow {
+  // Derive the YES/NO split from real pool sizes only. If both fields are absent
+  // or sum to 0 (no entries yet) we leave the split undefined so the card falls
+  // back to its honest "open for bets" layout instead of inventing a 50/50.
+  const yesPool = typeof bet.yesPool === "number" ? bet.yesPool : 0;
+  const noPool = typeof bet.noPool === "number" ? bet.noPool : 0;
+  const poolSum = yesPool + noPool;
+  let yesPercentage: number | undefined;
+  let noPercentage: number | undefined;
+  if (poolSum > 0) {
+    yesPercentage = Math.round((yesPool / poolSum) * 100);
+    noPercentage = 100 - yesPercentage;
+  }
+
   return {
     id: bet.id,
     question: bet.question,
@@ -70,10 +83,17 @@ function toRow(bet: ApiFastBet): FastBetRow {
     timeRemaining: timeRemaining(bet),
     status: normalizeStatus(bet.status),
     entries: bet._count?.entries,
-    // currentPrice + yes/no split are intentionally omitted: the list endpoint
-    // does not expose live price or a per-side breakdown, so we do not invent one.
+    // Real per-side split only (undefined when no entries / fields absent).
+    yesPercentage,
+    noPercentage,
+    // Only a real, finite price from the feed — null/undefined is omitted so the
+    // card never shows a fabricated price.
+    currentPrice: bet.currentPrice ?? undefined,
   };
 }
+
+/** Background refresh cadence for live countdowns / pool updates. */
+const POLL_INTERVAL_MS = 15000;
 
 /**
  * Loads fast-bet rounds from the live backend. The honesty contract:
@@ -89,9 +109,16 @@ export function useFastBets(): UseFastBetsResult {
   const [source, setSource] = useState<DataSource>("empty");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Guards against overlapping requests so the 15s poll never stacks on top of
+  // an in-flight load (or a manual retry).
+  const inFlight = useRef(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async ({ background = false }: { background?: boolean } = {}) => {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    // Background refreshes stay quiet — no spinner flash every 15s. Only the
+    // initial load (and explicit retries) flip `loading`.
+    if (!background) setLoading(true);
     setError(null);
     try {
       const live = await getFastBets();
@@ -118,13 +145,26 @@ export function useFastBets(): UseFastBetsResult {
         setSource("empty");
       }
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
+      inFlight.current = false;
     }
   }, []);
 
   useEffect(() => {
     load();
+    // Quietly refresh countdowns / pool splits on an interval without flashing
+    // the spinner. The in-flight guard inside `load` skips ticks that would
+    // overlap a pending request.
+    const id = setInterval(() => {
+      load({ background: true });
+    }, POLL_INTERVAL_MS);
+    return () => clearInterval(id);
   }, [load]);
 
-  return { fastBets, source, loading, error, reload: load };
+  // `reload` is the manual retry path — show the spinner, like the initial load.
+  const reload = useCallback(() => {
+    load();
+  }, [load]);
+
+  return { fastBets, source, loading, error, reload };
 }
