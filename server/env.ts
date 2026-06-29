@@ -19,6 +19,14 @@ const schema = z.object({
   ORACLE_MODE: z.enum(["dev", "admin", "provider"]).default("admin"),
   ADMIN_RESOLUTION_KEY: z.string().default("dev-admin-key-change-me"),
   RATE_LIMIT_ENABLED: z.string().optional(),
+  // Optional distributed limiter backend (Upstash Redis REST). When BOTH are set
+  // the limiter uses Redis instead of in-memory; absence keeps memory behavior.
+  RATE_LIMIT_REDIS_URL: z.string().optional(),
+  RATE_LIMIT_REDIS_TOKEN: z.string().optional(),
+  // Optional monitoring sink. MONITORING_DSN set -> unhandled 5xx are POSTed as
+  // JSON; unset (or MONITORING_ENABLED="false") -> no-op. Provider-agnostic.
+  MONITORING_ENABLED: z.string().optional(),
+  MONITORING_DSN: z.string().optional(),
   SOLANA_NETWORK: z.string().default("devnet"),
   SOLANA_RPC_URL: z.string().default("https://api.devnet.solana.com"),
   // Pyth Hermes price oracle (public, keyless). PYTH_HERMES_URL has a safe

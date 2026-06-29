@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { HttpError } from "./errors";
+import { captureException } from "./monitoring";
 
 /** Standard JSON success envelope. */
 export function ok<T>(data: T, init?: ResponseInit) {
@@ -30,6 +31,9 @@ export function handler<A extends unknown[]>(
         return fail(err.message, err.status);
       }
       console.error("API error:", err);
+      // Capture unhandled 5xx for monitoring (no-op unless configured); never
+      // block or alter the response — fire-and-forget, self-contained, no throw.
+      void captureException(err, { kind: "unhandled", status: 500 });
       return fail("Internal server error", 500);
     }
   };
