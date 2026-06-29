@@ -90,11 +90,10 @@ describe("fast-bet settlement (integration, real db)", () => {
     let profile = await prisma.playerProfile.findUnique({ where: { userId: u1.id } });
     expect(profile?.xp).toBe(250); // win-fast-bet level xp
     expect(JSON.parse(profile?.completedLevels ?? "[]")).toContain("win-fast-bet");
-    // KNOWN QUIRK (Loop 3, flagged for Loop 5): the milestone branch in
-    // settleFastBet awards XP via completeLevelServer WITHOUT win:true, so a
-    // player's FIRST fast-bet win does NOT increment profile.wins — the wins
-    // stat lags actual wins by one. Pinned here as real behavior, not endorsed.
-    expect(profile?.wins).toBe(0);
+    // Loop 5 FIX: the FIRST fast-bet win now grants the Level-3 milestone AND
+    // counts the win — completeLevelServer forwards win:true to awardXp, so
+    // profile.wins increments on the first win instead of lagging by one.
+    expect(profile?.wins).toBe(1);
 
     // Second win -> NOT the milestone again; a flat 60-XP win award.
     const bet2 = await prisma.fastBet.create({
@@ -111,12 +110,80 @@ describe("fast-bet settlement (integration, real db)", () => {
 
     profile = await prisma.playerProfile.findUnique({ where: { userId: u1.id } });
     expect(profile?.xp).toBe(310); // 250 + 60
-    // Per the quirk above, only the SECOND win (the awardXp win:true branch) is
-    // counted -> wins=1 after two actual wins.
-    expect(profile?.wins).toBe(1);
+    // Both wins now count -> wins=2 after two actual wins.
+    expect(profile?.wins).toBe(2);
     // The milestone is recorded exactly once.
     const completed = JSON.parse(profile?.completedLevels ?? "[]") as string[];
     expect(completed.filter((l) => l === "win-fast-bet")).toHaveLength(1);
+  });
+
+  it("reconciles the season leaderboard wins with profile.wins from the FIRST win", async () => {
+    const u1 = await createUser();
+    const bet = await prisma.fastBet.create({
+      data: {
+        question: "first win leaderboard",
+        symbol: "SOL/USD",
+        status: "live",
+        endTime: new Date(Date.now() - 1_000),
+        pool: 100,
+        entries: { create: [{ userId: u1.id, side: "YES", amount: 100 }] },
+      },
+    });
+    await settleFastBet({ fastBetId: bet.id, outcome: "YES", source: "admin" });
+
+    const profile = await prisma.playerProfile.findUnique({ where: { userId: u1.id } });
+    // The active-season leaderboard entry must mirror the authoritative profile
+    // wins — the bug previously left BOTH at 0 after a first win.
+    const entry = await prisma.leaderboardEntry.findFirst({ where: { userId: u1.id } });
+    expect(profile?.wins).toBe(1);
+    expect(entry?.wins).toBe(1);
+  });
+
+  it("persists settlePrice + settleMethod columns from the settlement context", async () => {
+    const u1 = await createUser();
+    const bet = await prisma.fastBet.create({
+      data: {
+        question: "settle price columns",
+        symbol: "SOL/USD",
+        status: "live",
+        endTime: new Date(Date.now() - 1_000),
+        pool: 100,
+        entries: { create: [{ userId: u1.id, side: "YES", amount: 100 }] },
+      },
+    });
+
+    // Auto-resolve-style settle: the price/method live in context and are promoted
+    // to first-class columns (never invented — only the recorded number/string).
+    await settleFastBet({
+      fastBetId: bet.id,
+      outcome: "YES",
+      source: "provider:pyth",
+      context: { method: "asof", settlePrice: 152.5, startPrice: 100 },
+    });
+
+    const settled = await prisma.fastBet.findUnique({ where: { id: bet.id } });
+    expect(settled?.settlePrice).toBe(152.5);
+    expect(settled?.settleMethod).toBe("asof");
+  });
+
+  it("leaves settlePrice/settleMethod null when the admin path supplies no price", async () => {
+    const u1 = await createUser();
+    const bet = await prisma.fastBet.create({
+      data: {
+        question: "admin settle no price",
+        symbol: "SOL/USD",
+        status: "live",
+        endTime: new Date(Date.now() - 1_000),
+        pool: 100,
+        entries: { create: [{ userId: u1.id, side: "YES", amount: 100 }] },
+      },
+    });
+
+    await settleFastBet({ fastBetId: bet.id, outcome: "YES", source: "admin" });
+
+    const settled = await prisma.fastBet.findUnique({ where: { id: bet.id } });
+    expect(settled?.settlePrice).toBeNull();
+    expect(settled?.settleMethod).toBeNull();
   });
 
   it("refuses to settle an already-resolved round (no double payout)", async () => {

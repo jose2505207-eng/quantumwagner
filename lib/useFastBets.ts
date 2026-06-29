@@ -94,6 +94,10 @@ function toRow(bet: ApiFastBet): FastBetRow {
     startPrice: bet.startPrice ?? undefined,
     resolutionSource: bet.resolutionSource ?? undefined,
     outcome: bet.outcome ?? undefined,
+    // Real recorded settle price/method only — null collapses to undefined so the
+    // card shows nothing rather than a fabricated settlement price.
+    settlePrice: bet.settlePrice ?? undefined,
+    settleMethod: bet.settleMethod ?? undefined,
   };
 }
 

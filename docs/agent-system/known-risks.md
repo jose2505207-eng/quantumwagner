@@ -19,9 +19,22 @@ Verified against the real repo. Each entry: the fact, where it lives, the impact
   longer tracked, only `pnpm-lock.yaml`. Residual `npm run` command refs in docs
   were scrubbed to pnpm in Loop 3 (two npm-only `--legacy-peer-deps`
   troubleshooting rows intentionally kept — that flag doesn't exist under pnpm).
-- **~62 ESLint errors as tech debt.** ESLint is NOT enforced at build time
-  (`next.config.mjs eslint.ignoreDuringBuilds: true`) precisely because the legacy
-  codebase has pre-existing lint problems. *Verify exact count:* `pnpm lint`.
+- **ESLint errors as tech debt (burn-down started Loop 5).** ESLint is NOT
+  enforced at build time (`next.config.mjs eslint.ignoreDuringBuilds: true`)
+  because the legacy codebase has pre-existing lint problems (mostly
+  `@typescript-eslint/no-explicit-any` in on-chain/UI code + a few
+  `react/no-unescaped-entities`). Loop 5 began a real burn-down (no rule
+  mass-disabling). *Verify exact count:* `pnpm lint`. NOTE: `app/utils/methods.tsx`
+  (17 `any`s) is intentionally left untouched during burn-down — it is the
+  build-fragile on-chain composer where a wrong type blocks `pnpm build`.
+- **Prisma config moved to `prisma.config.ts` (Loop 5, Prisma 7 prep).** The
+  deprecated `package.json#prisma` block was removed and replaced by
+  `prisma.config.ts` (`migrations.seed`). TRAP: with a Prisma config file present,
+  the CLI/`prisma db push` STOPS auto-loading `.env` ("Prisma config detected,
+  skipping environment variable loading"). `prisma.config.ts` therefore loads
+  `.env`/`.env.local` itself with a tiny zero-dep loader so DATABASE_URL /
+  TEST_DATABASE_URL stay available to migrate/generate/db push (test setup) and
+  `db:seed`. Do NOT delete that loader or the test DB connection + migrations break.
 - **CI exists** (`.github/workflows/ci.yml`: generate → migrate deploy → typecheck
   → build → test against an ephemeral Postgres; lint non-blocking). NOTE: Loops 1–3
   product work ran under a **max-throughput directive that SKIPPED typecheck/test/
@@ -65,17 +78,24 @@ Verified against the real repo. Each entry: the fact, where it lives, the impact
   *Residual:* it is still a single point read (no TWAP — the Hermes TWAP endpoint
   is DEPRECATED), and a `spot-fallback` reintroduces cron-tick jitter for that
   round. A round whose price can't be fetched is still SKIPPED (left unresolved),
-  never invented — honest, but it can linger until a later run. The settle price
-  is recorded only in the audit log, NOT yet as a first-class FastBet column
-  (Loop 5 backlog).
-- **`profile.wins` undercounts the FIRST fast-bet win (suspected Loop-3 bug).**
-  In `server/fastbetSettlement.ts`, the `priorWins === 0` branch grants the
-  win-fast-bet milestone via `completeLevelServer` but does NOT pass `win:true`, so
-  a player's first fast-bet win never increments `profile.wins` (nor the season
-  leaderboard `wins`); only second+ wins count. Pinned as real behavior in
-  `test/integration/fastbet-settlement.test.ts`. Not a value/honesty violation
-  (nothing invented), but a stat-accuracy bug. Fix candidate for Loop 5: pass the
-  win flag on the milestone path (review leaderboard impact first).
+  never invented — honest, but it can linger until a later run.
+  *Loop 5:* the settle price + capture method are now FIRST-CLASS FastBet columns
+  (`settlePrice Float?`, `settleMethod String?`), promoted out of the audit-log
+  meta by `settleFastBet` (derived from the same settlement `context`) and
+  surfaced on resolved fast-bet cards (honest: only a real recorded number/string;
+  null on the admin path). Migration `20260629070918_fastbet_settle_price_and_method`.
+- **`profile.wins` undercount on the FIRST fast-bet win — RESOLVED (Loop 5).**
+  Was: `server/fastbetSettlement.ts` `priorWins === 0` branch granted the
+  win-fast-bet milestone via `completeLevelServer` WITHOUT `win:true`, so a
+  player's first win never incremented `profile.wins` nor the season leaderboard.
+  Fix: `completeLevelServer` now takes an optional `win?: boolean` forwarded to
+  `awardXp`, and the first-win branch passes `win: true`. Because `awardXp`
+  sets the season `LeaderboardEntry.wins` to the authoritative `profile.wins`,
+  the leaderboard reconciles automatically. The Loop-4 test that pinned the buggy
+  behavior was flipped, and a leaderboard-reconciliation test added
+  (`test/integration/fastbet-settlement.test.ts`). NOTE: this fix is forward-only
+  — historical rows that under-counted before Loop 5 are NOT backfilled (Loop 6
+  backlog: a one-shot reconcile if pre-Loop-5 wins matter).
 - **`CRON_SECRET` must be set on the deployment** for any cron path to authorize
   (Vercel injects `Authorization: Bearer ${CRON_SECRET}`; the GitHub workflow needs
   repo secrets `CRON_SECRET` + `APP_BASE_URL`). When unset, cron silently 403s and

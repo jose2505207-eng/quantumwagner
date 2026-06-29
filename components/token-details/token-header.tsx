@@ -5,9 +5,13 @@ import { Globe, Send, Twitter, ExternalLink, Copy, CheckCircle2 } from "lucide-r
 import { Badge } from "@/components/ui/badge";
 import { toDisplay } from "@/lib/format";
 import { useState } from "react";
+import type { IdlAccounts } from "@coral-xyz/anchor";
+import type { PredictionMarket } from "@/idl/types";
+
+type TokenLaunch = IdlAccounts<PredictionMarket>["tokenLaunch"];
 
 interface TokenHeaderProps {
-  token: any;
+  token: TokenLaunch;
   status: string;
 }
 

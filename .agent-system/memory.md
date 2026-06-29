@@ -57,3 +57,14 @@ underlying code/config changes.
 - The wiki lives on `origin/docs/repo-wiki` and was **restored onto this branch**
   into `docs/wiki/`; it is NOT on `main`. Keep it current with
   `node scripts/update-wiki.mjs`.
+- **Prisma config = `prisma.config.ts`** (Loop 5; the `package.json#prisma` block
+  was removed for Prisma 7). A config file makes Prisma SKIP `.env` auto-loading
+  ("Prisma config detected, skipping environment variable loading"), so
+  `prisma.config.ts` loads `.env`/`.env.local` itself — don't delete that loader or
+  `prisma db push`/migrate/generate lose DATABASE_URL / TEST_DATABASE_URL.
+- **Fast-bet settlement value path (`server/fastbetSettlement.ts`):** first win
+  grants the Level-3 milestone AND counts the win (Loop 5 fix — `completeLevelServer`
+  takes `win?:boolean`); `awardXp` sets season `LeaderboardEntry.wins` to the
+  authoritative `profile.wins`, so wins + leaderboard stay reconciled from one
+  write. Settle price/method are first-class `FastBet.settlePrice`/`settleMethod`
+  columns, derived from the settlement `context` (null on the admin path).

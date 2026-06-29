@@ -7,9 +7,14 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import type { PublicKey } from "@solana/web3.js";
+import type { IdlAccounts } from "@coral-xyz/anchor";
+import type { PredictionMarket } from "@/idl/types";
+
+type TokenLaunch = IdlAccounts<PredictionMarket>["tokenLaunch"];
 
 interface TokenCardProps {
-  token: any; // Using any for now to match the existing data structure
+  token: { publicKey: PublicKey; account: TokenLaunch };
   index: number;
 }
 

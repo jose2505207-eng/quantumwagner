@@ -55,11 +55,15 @@ export async function settleFastBet(params: {
       });
       if (priorWins === 0) {
         const lvl = LEVEL_BY_ID["win-fast-bet"];
+        // A player's FIRST fast-bet win grants the Level-3 milestone AND is still a
+        // win — pass win:true so profile.wins (and the season leaderboard, synced
+        // inside awardXp) increments on the first win, not only on second+ wins.
         await completeLevelServer({
           userId: e.userId,
           levelId: lvl.id,
           levelNumber: lvl.level,
           levelXp: lvl.xp,
+          win: true,
         });
       } else {
         await awardXp({
@@ -74,9 +78,22 @@ export async function settleFastBet(params: {
     }
   }
 
+  // Promote the settlement price + capture method out of the audit-log meta into
+  // first-class FastBet columns so the actual price a round settled on is a
+  // queryable, UI-renderable value — not just a buried audit detail. Derived from
+  // the same `context` the caller already supplies (auto-resolve passes
+  // settlePrice/method from captureSettlementPrice); the admin path supplies no
+  // price, so both stay null. Honesty boundary: ONLY a real recorded number/string
+  // is persisted — anything else is null, never an invented price.
+  const settlePrice =
+    typeof context?.settlePrice === "number" && Number.isFinite(context.settlePrice)
+      ? context.settlePrice
+      : null;
+  const settleMethod = typeof context?.method === "string" ? context.method : null;
+
   await prisma.fastBet.update({
     where: { id: fastBetId },
-    data: { status: "resolved", outcome, resolutionSource: source },
+    data: { status: "resolved", outcome, resolutionSource: source, settlePrice, settleMethod },
   });
   await logAudit({
     action: "fastbet.resolve",

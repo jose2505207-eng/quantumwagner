@@ -4,9 +4,10 @@ import Container from "../global/container";
 import { Button } from "../ui/button";
 import MarketCard from "./MarketCard";
 import Link from "next/link";
+import type { Market } from "@/app/types";
 
 interface PopularMarketsProps {
-  markets: any[];
+  markets: Market[];
 }
 
 const PopularMarkets = ({ markets }: PopularMarketsProps) => {

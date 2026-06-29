@@ -27,6 +27,10 @@ export interface FastBetCardProps {
   resolutionSource?: string;
   /** Recorded winning side ("YES" | "NO"); omitted when unknown. */
   outcome?: string;
+  /** Real price the round settled on (auto-resolve only); omitted when unknown. */
+  settlePrice?: number;
+  /** How settlePrice was captured: "asof" | "spot-fallback" | "spot"; omitted when unknown. */
+  settleMethod?: string;
   index?: number;
 }
 
@@ -45,6 +49,8 @@ export default function FastBetCard({
   startPrice,
   resolutionSource,
   outcome,
+  settlePrice,
+  settleMethod,
   index = 0,
 }: FastBetCardProps) {
 
@@ -74,6 +80,19 @@ export default function FastBetCard({
       : "Settled";
   const winningSide =
     typeof outcome === "string" && (outcome === "YES" || outcome === "NO") ? outcome : undefined;
+
+  // Real recorded settlement price only (a finite number) — never a fabricated
+  // value. The capture method is labelled honestly so a spot-fallback round isn't
+  // presented as an exact as-of-endTime settle.
+  const hasSettlePrice = isResolved && Number.isFinite(settlePrice);
+  const settleMethodLabel =
+    settleMethod === "asof"
+      ? "as of close"
+      : settleMethod === "spot-fallback"
+        ? "spot (fallback)"
+        : settleMethod === "spot"
+          ? "spot"
+          : "";
 
   return (
     <motion.div
@@ -215,6 +234,23 @@ export default function FastBetCard({
                 >
                   {winningSide === "YES" ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                   {winningSide} won
+                </div>
+              )}
+              {hasSettlePrice && (
+                <div
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-bold text-white/60"
+                  title={`Real settlement price recorded by the oracle${settleMethodLabel ? ` (${settleMethodLabel})` : ""}`}
+                >
+                  <Activity className="w-3.5 h-3.5 text-blue-400" />
+                  <span>
+                    Settled at{" "}
+                    <span className="text-white font-mono">
+                      ${(settlePrice as number).toLocaleString(undefined, { maximumFractionDigits: 6 })}
+                    </span>
+                  </span>
+                  {settleMethodLabel && (
+                    <span className="font-mono uppercase tracking-wider text-white/40">{settleMethodLabel}</span>
+                  )}
                 </div>
               )}
             </div>

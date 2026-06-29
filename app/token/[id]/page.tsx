@@ -40,7 +40,7 @@ export default function TokenBuyPage() {
         </div>
         <h2 className="text-xl font-bold text-white mb-2">Token Not Found</h2>
         <p className="text-muted-foreground">
-          We couldn't find a token with this mint address.
+          We couldn&apos;t find a token with this mint address.
         </p>
       </div>
     );
@@ -53,7 +53,7 @@ export default function TokenBuyPage() {
   const handleBuy = async (amount: number) => {
     try {
       setBuying(true);
-      await buyToken(launchId, amount);
+      await buyToken(Number(launchId), amount);
     } catch (err) {
       console.error(err);
     } finally {

@@ -20,7 +20,7 @@ import { Hammer } from "lucide-react";
 import toast from "react-hot-toast";
 import { BN } from "@coral-xyz/anchor";
 
-const formatTimeline = (key: string, val: any) => {
+const formatTimeline = (key: string, val: unknown) => {
   return toDisplayDate(val);
 };
 

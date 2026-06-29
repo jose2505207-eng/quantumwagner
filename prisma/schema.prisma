@@ -194,6 +194,15 @@ model FastBet {
   // or "admin" (manual). Honesty boundary: outcomes are never invented; the
   // settling path is always attributable.
   resolutionSource String?
+  // The actual price the round settled on (auto-resolve only; null for admin/
+  // unresolved). Promoted from the audit-log meta to a first-class column so the
+  // settle price is queryable + UI-renderable. ONLY a real recorded value is
+  // stored — never an invented price.
+  settlePrice Float?
+  // How the settle price was captured: "asof" (price as of endTime) | "spot-fallback"
+  // (Benchmarks unavailable, used latest spot) | "spot" (no history capability).
+  // Null for admin/unresolved rounds.
+  settleMethod String?
   isDemo      Boolean  @default(false)
   createdAt   DateTime @default(now())
   entries     FastBetEntry[]

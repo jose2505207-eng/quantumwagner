@@ -176,3 +176,46 @@ for tests.
 `completeLevelServer` but passes NO `win:true`, so a player's FIRST fast-bet win
 never increments `profile.wins` — the wins stat (and season leaderboard wins)
 lags actual wins by one. Pinned as real behavior in the settlement test.
+
+## Loop 5: first-win `wins` bug FIXED + settle price columns + Prisma 7 prep
+**Gate:** typecheck 0 · `pnpm test` GREEN (settlement spec 4→7) · `pnpm build` exit 0,
+against the real `quantum_test` Supabase schema. One new migration (applied to Supabase).
+
+**Wins fix (A):** `completeLevelServer` gained an optional `win?: boolean`
+forwarded to `awardXp`; `settleFastBet`'s first-win (`priorWins === 0`) branch now
+passes `win: true`. KEY INSIGHT for leaderboard reconciliation: `awardXp` already
+sets the season `LeaderboardEntry.wins` to the recomputed authoritative
+`profile.wins` (not an increment) — so fixing `profile.wins` reconciles the
+leaderboard for free, no extra write. The fix is FORWARD-ONLY: pre-Loop-5 rows that
+under-counted are not backfilled. `win` is omitted for non-competitive milestones
+(connect-wallet / visit-leaderboard) so those stay level-completions, not wins.
+
+**Settle columns (B):** `FastBet.settlePrice Float?` + `settleMethod String?` added.
+SMALLEST-CHANGE TRICK: `settleFastBet` DERIVES the column values from the existing
+settlement `context` (`context.settlePrice` / `context.method`) it already
+receives — so `runAutoResolve` and the admin resolve route needed ZERO changes,
+and the audit-meta path is untouched (existing audit test stays green). Admin path
+(no context) → both null. Surfaced on resolved `FastBetCard`s ("Settled at $X" +
+method label), honest: only a finite recorded number renders.
+
+**Prisma config (C):** removed the deprecated `package.json#prisma` block; added
+`prisma.config.ts` with `migrations.seed`. CRITICAL TRAP (verified live): once a
+Prisma config file exists, Prisma PRINTS "Prisma config detected, skipping
+environment variable loading" and does NOT auto-load `.env` — the test setup's
+`prisma db push` against `TEST_DATABASE_URL` would break. Fix: `prisma.config.ts`
+loads `.env`/`.env.local` itself via a tiny inline zero-dep parser (no `dotenv` —
+it is not a hoisted/resolvable direct dep here). Verified: test setup connected to
+`quantum_test` after the change. The Prisma 7 deprecation warning is now gone.
+
+**Migration via the Supabase workaround (unchanged, reconfirmed):** edit schema →
+`prisma migrate diff --from-schema-datasource → --to-schema-datamodel --script` →
+write `prisma/migrations/<ts>_<name>/migration.sql` → `prisma db execute --file` →
+`prisma migrate resolve --applied <name>` → `pnpm db:generate`. `migrate status`
+then reads "up to date"; columns verified live via Supabase MCP `execute_sql`.
+Migration: `20260629070918_fastbet_settle_price_and_method`.
+
+**Parallel decomposition that worked:** serialized files (schema, xp.ts,
+fastbetSettlement.ts, package.json, lockfile) were edited ONLY by the orchestrator;
+the ESLint burn-down ran as ONE background agent on a DISJOINT file set with an
+explicit exclusion list (incl. the build-fragile `methods.tsx`) and a
+"keep typecheck 0" guard, then integrated centrally.

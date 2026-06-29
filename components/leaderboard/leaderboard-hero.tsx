@@ -27,7 +27,7 @@ const LeaderboardHero = () => {
         <Container delay={0.2}>
           <p className="text-sm md:text-lg font-normal text-center text-balance text-muted-foreground max-w-3xl mx-auto mt-4 px-4">
             Compete with the best traders, climb the rankings, and earn
-            exclusive rewards. Track your performance against the community's
+            exclusive rewards. Track your performance against the community&apos;s
             top predictors.
           </p>
         </Container>
