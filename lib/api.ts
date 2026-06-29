@@ -72,6 +72,9 @@ export interface ApiFastBet {
   status: string; // upcoming | live | closing-soon | resolving | resolved
   outcome: string | null; // YES | NO
   pool: number;
+  yesPool: number; // sum of FastBetEntry.amount on the YES side
+  noPool: number; // sum of FastBetEntry.amount on the NO side
+  currentPrice: number | null; // live oracle price for live/closing-soon bets; null if unknown
   startTime: string;
   endTime: string;
   isDemo: boolean;

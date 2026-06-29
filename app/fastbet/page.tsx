@@ -3,12 +3,12 @@
 import { Background } from "@/components/background";
 import FastBetHero from "@/components/fastbet/FastBetHero";
 import FastBetCard from "@/components/fastbet/FastBetCard";
-import { DemoBadge } from "@/components/game";
+import { DemoBadge, ErrorState } from "@/components/game";
 import { useFastBets } from "@/lib/useFastBets";
 import { motion } from "framer-motion";
 
 export default function FastBetsPage() {
-  const { fastBets, source, loading } = useFastBets();
+  const { fastBets, source, loading, error, reload } = useFastBets();
 
   const activeCount = fastBets.filter((b) => b.status === "live").length;
   const isDemo = source === "demo";
@@ -38,7 +38,12 @@ export default function FastBetsPage() {
             )}
           </div>
 
-          {loading ? (
+          {error && source !== "demo" ? (
+            <ErrorState
+              description={`We couldn't reach the fast-bets service. ${error}`}
+              onRetry={reload}
+            />
+          ) : loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
               {Array.from({ length: 3 }).map((_, i) => (
                 <div

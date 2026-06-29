@@ -5,10 +5,11 @@ with how to verify. Do NOT guess these in code or docs. (Sourced from
 `docs/wiki/12-roadmap-and-open-questions.md` and verified against the tree.)
 
 1. **What is the canonical package manager — npm or pnpm?**
-   Both `package-lock.json` and `pnpm-lock.yaml` are committed at root. `README.md`
-   documents npm `--legacy-peer-deps`; recent commits use pnpm (`dd367fe fix: sync
-   pnpm lockfile`). *Verify:* ask the team; check CI once it exists; whichever
-   lockfile CI installs from wins, then delete the other.
+   *RESOLVED (Loop 2):* **pnpm** is canonical. `package-lock.json` is no longer
+   git-tracked (only `pnpm-lock.yaml` remains) and no stray copy exists on disk.
+   `README.md` is already pnpm throughout (`pnpm install`, `pnpm <script>`); it
+   states "The package manager is pnpm only." (Some secondary docs under
+   `docs/wiki/*` + `PRODUCTION_*` still mention `npm run`; flagged for a doc-sweep.)
 
 2. **Where is the deployed (full) program's Rust source?**
    Only `idl/prediction_market.json` (18 instructions) is in this repo;
@@ -21,9 +22,13 @@ with how to verify. Do NOT guess these in code or docs. (Sourced from
    funded wallet and inspect tx signatures; ideally add an E2E harness.
 
 4. **Is `RATE_LIMIT_ENABLED` actually enforced anywhere?**
-   The env var exists (`.env.example`, default `"false"`) but enforcement is not
-   confirmed. *Verify:* `grep -rn RATE_LIMIT server/ app/` and trace whether any
-   handler/middleware reads it.
+   *RESOLVED (Loop 2):* Yes. `server/rateLimit.ts` gates on
+   `RATE_LIMIT_ENABLED === "true"` and is wired into the auth routes —
+   `app/api/auth/nonce/route.ts` (`rateLimit(req, "auth-nonce", 30, 60_000)`) and
+   `app/api/auth/verify-wallet/route.ts` (`"auth-verify", 20, 60_000`). The limiter
+   throws `HttpError(…, 429)`, which `server/http.ts`'s `handler()` maps to a 429
+   response — confirmed end-to-end. (The earlier "dead code" read was a stale grep
+   for `RATE_LIMIT`, which misses lowercase `rateLimit(` call sites.)
 
 5. **Does `test/setup.ts` exist and does `pnpm test` currently pass?**
    *RESOLVED (Loop 1):* `test/setup.ts` exists and provisions a real Postgres

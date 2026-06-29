@@ -21,6 +21,12 @@ const schema = z.object({
   RATE_LIMIT_ENABLED: z.string().optional(),
   SOLANA_NETWORK: z.string().default("devnet"),
   SOLANA_RPC_URL: z.string().default("https://api.devnet.solana.com"),
+  // Pyth Hermes price oracle (public, keyless). PYTH_HERMES_URL has a safe
+  // default; PYTH_FEED_IDS maps symbols to 32-byte feed ids (see .env.example).
+  // ORACLE_PROVIDER selects the real provider ("pyth") over the loud stub.
+  PYTH_HERMES_URL: z.string().default("https://hermes.pyth.network"),
+  PYTH_FEED_IDS: z.string().optional(),
+  ORACLE_PROVIDER: z.string().optional(),
 });
 
 const parsed = schema.safeParse(process.env);

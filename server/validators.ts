@@ -43,6 +43,13 @@ export const createFastBetSchema = z.object({
   endTime: z.coerce.date(),
 });
 
+export const generateFastBetsSchema = z.object({
+  adminKey: z.string(),
+  count: z.coerce.number().int().positive().max(20).optional().default(3),
+  symbol: z.string().max(20).optional().default("SOL/USD"),
+  durationSec: z.coerce.number().int().positive().max(86_400).optional().default(300),
+});
+
 export const enterFastBetSchema = z.object({
   side: z.enum(["YES", "NO"]),
   amount: z.coerce.number().positive().max(1_000_000),

@@ -94,7 +94,7 @@ export default function FastBetCard({
             <div className="flex items-center gap-3 text-sm">
               <div className="flex items-center gap-1.5 text-white/60 bg-white/[0.02] px-2 py-1 rounded-lg border border-white/5">
                 <Activity className="w-3.5 h-3.5 text-blue-400" />
-                {typeof currentPrice === "number" ? (
+                {Number.isFinite(currentPrice) ? (
                   <span>Price: <span className="text-white font-mono">${currentPrice}</span></span>
                 ) : (
                   <span>{symbol ? <span className="text-white font-mono">{symbol}</span> : "Live"}</span>
