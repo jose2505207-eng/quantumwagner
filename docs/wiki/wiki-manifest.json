@@ -1,0 +1,136 @@
+{
+  "repo": "quantumwagner",
+  "packageName": "buzz-frontend",
+  "description": "Gamified Solana devnet prediction arena (markets, fast bets, meme battles, token launchpad, leaderboard) with a local XP/level/quest progression loop. Full-stack Next.js app (UI + in-repo API + Prisma) plus an on-chain Anchor program.",
+  "generatedBy": "repo-wiki-cartographer",
+  "lastGenerated": "2026-06-28T00:00:00Z",
+  "stack": {
+    "framework": "Next.js 14.2 (App Router)",
+    "language": "TypeScript 5.6",
+    "ui": "React 18, Tailwind v4, shadcn/ui, framer-motion",
+    "state": "Zustand (persisted localStorage)",
+    "backend": "Next.js Route Handlers (app/api/*) + server/*.ts",
+    "database": "Prisma + SQLite (dev) / Postgres (prod)",
+    "chain": "Solana devnet, @coral-xyz/anchor, @solana/web3.js",
+    "auth": "wallet signed-message (ed25519 nonce) + JWT"
+  },
+  "entrypoints": [
+    "app/layout.tsx",
+    "app/page.tsx",
+    "app/api/markets/route.ts",
+    "config.ts",
+    "lib/game/config.ts",
+    "prisma/schema.prisma",
+    "app/utils/useProgram.ts",
+    "contracts/quantum_wager/programs/quantum_wager/src/lib.rs"
+  ],
+  "importantCommands": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:reset": "prisma migrate reset --force",
+    "db:studio": "prisma studio",
+    "contracts:test": "anchor test (in contracts/quantum_wager)",
+    "contracts:deploy": "anchor deploy --provider.cluster devnet"
+  },
+  "onChain": {
+    "deployedProgramId": "C8SAQXW3qhWTT1uGdpSegU466qTQAKQs3JB15TQ8toSc",
+    "network": "devnet",
+    "idl": "idl/prediction_market.json",
+    "referenceScaffold": "contracts/quantum_wager/ (placeholder id Quantum111...)"
+  },
+  "pages": [
+    {
+      "file": "index.md",
+      "title": "Wiki home / TOC",
+      "sources": ["docs/wiki/wiki-manifest.json"]
+    },
+    {
+      "file": "00-overview.md",
+      "title": "Overview",
+      "sources": ["README.md", "docs/GAME_LOOP.md", "docs/SECURITY_NOTES.md", "lib/game/config.ts", "server/xp.ts", "server/oracle.ts", "store/useGameStore.ts", "app/layout.tsx", "config.ts"]
+    },
+    {
+      "file": "01-architecture.md",
+      "title": "Architecture",
+      "sources": ["app/layout.tsx", "app/utils/SolanaProvider.tsx", "lib/api.ts", "lib/game/config.ts", "config.ts", "app/api/markets/route.ts", "server/http.ts", "server/auth.ts", "server/oracle.ts", "server/xp.ts", "server/validators.ts", "server/db.ts", "app/utils/useProgram.ts", "idl/prediction_market.json", "contracts/quantum_wager/programs/quantum_wager/src/lib.rs", "docs/ARCHITECTURE.md", "README.md", "prisma/schema.prisma"]
+    },
+    {
+      "file": "02-repo-map.md",
+      "title": "Repo Map",
+      "sources": ["app", "components", "lib", "server", "store", "prisma", "idl", "contracts", "config.ts", "constants", "app/utils", "lib/game", "prisma/schema.prisma"]
+    },
+    {
+      "file": "03-core-flows.md",
+      "title": "Core Flows",
+      "sources": ["app/layout.tsx", "app/utils/walletAuth.tsx", "server/auth.ts", "lib/api.ts", "server/validators.ts", "server/http.ts", "components/game/GameSync.tsx", "store/useGameStore.ts", "docs/GAME_LOOP.md", "server/oracle.ts", "server/xp.ts", "app/utils/useProgram.ts", "app/utils/methods.tsx", "contracts/quantum_wager/programs/quantum_wager/src/lib.rs", "lib/useMarkets.ts", "lib/demo/markets.ts", "app/api/markets/route.ts"]
+    },
+    {
+      "file": "04-local-development.md",
+      "title": "Local Development",
+      "sources": ["README.md", "package.json", "prisma/schema.prisma", "prisma/seed.ts", "server/env.ts", "app/api/health/route.ts", "app/api/leaderboard/route.ts", "eslint.config.mjs", "contracts/quantum_wager/Anchor.toml", "contracts/quantum_wager/package.json", "lib/useMarkets.ts"]
+    },
+    {
+      "file": "05-configuration.md",
+      "title": "Configuration",
+      "sources": [".env.example", ".gitignore", "lib/game/config.ts", "config.ts", "server/env.ts", "app/utils/SolanaProvider.tsx", "app/utils/useProgram.ts", "docs/DEVNET_DEPLOYMENT.md", "README.md"]
+    },
+    {
+      "file": "06-api-and-interfaces.md",
+      "title": "API & Interfaces",
+      "sources": ["app/api", "server/http.ts", "server/validators.ts", "server/auth.ts", "server/oracle.ts", "docs/API.md", "idl/prediction_market.json", "app/utils/useProgram.ts", "app/utils/methods.tsx", "contracts/quantum_wager/programs/quantum_wager/src/lib.rs", "lib/api.ts", "lib/useMarkets.ts", "lib/useLeaderboard.ts", "store/useGameStore.ts", "store/userInfo.ts", "store/usePositionStore.ts"]
+    },
+    {
+      "file": "07-data-and-state.md",
+      "title": "Data & State",
+      "sources": ["prisma/schema.prisma", "prisma/seed.ts", "prisma/migrations", ".gitignore", "store/useGameStore.ts", "server/xp.ts", "server/audit.ts", "server/oracle.ts", "lib/api.ts", "app/utils/walletAuth.tsx", "config.ts", "contracts/quantum_wager/programs/quantum_wager/src/lib.rs", "components/game/GameSync.tsx"]
+    },
+    {
+      "file": "08-testing-and-quality.md",
+      "title": "Testing & Quality",
+      "sources": ["package.json", "eslint.config.mjs", "server/validators.ts", "server/http.ts", "server/env.ts", "docs/BUILD_PROGRESS.md", "contracts/quantum_wager/Anchor.toml", "contracts/quantum_wager/package.json", "contracts/quantum_wager/tests/quantum_wager.ts", "README.md"]
+    },
+    {
+      "file": "09-deployment.md",
+      "title": "Deployment",
+      "sources": ["README.md", ".env.example", "server/env.ts", "prisma/schema.prisma", "prisma/migrations", ".gitignore", "package.json", "docs/SECURITY_NOTES.md", "docs/DEVNET_DEPLOYMENT.md", "idl/prediction_market.json", "contracts/quantum_wager/Anchor.toml", "contracts/quantum_wager/programs/quantum_wager/src/lib.rs"]
+    },
+    {
+      "file": "10-agent-guide.md",
+      "title": "Agent Guide",
+      "sources": ["server/xp.ts", "server/oracle.ts", "server/http.ts", "server/validators.ts", "server/env.ts", "server/audit.ts", "lib/useMarkets.ts", "lib/game/config.ts", "docs/SECURITY_NOTES.md", "app/layout.tsx", "prisma/schema.prisma", "store/useGameStore.ts", "app/api/markets/route.ts", "app/utils/methods.tsx", "app/utils/useProgram.ts", "app/utils/SolanaProvider.tsx", "app/utils/walletAuth.tsx", "config.ts", "idl/prediction_market.json", "contracts/quantum_wager/programs/quantum_wager/src/lib.rs"]
+    },
+    {
+      "file": "11-troubleshooting.md",
+      "title": "Troubleshooting",
+      "sources": ["README.md", "package.json", "server/env.ts", "server/auth.ts", "server/http.ts", "server/validators.ts", "server/oracle.ts", "app/api/health/route.ts", "app/utils/walletAuth.tsx", "lib/useMarkets.ts", "lib/game/config.ts", "store/useGameStore.ts", "components/game/GameSync.tsx", "prisma/schema.prisma", "app/utils/useProgram.ts", "docs/DEVNET_DEPLOYMENT.md", "contracts/quantum_wager/Anchor.toml", "docs/BUILD_PROGRESS.md"]
+    },
+    {
+      "file": "12-roadmap-and-open-questions.md",
+      "title": "Roadmap & Open Questions",
+      "sources": ["docs/GAME_LOOP.md", "components/game/GameSync.tsx", "docs/SECURITY_NOTES.md", "store/useGameStore.ts", "server/oracle.ts", "server/env.ts", "docs/ARCHITECTURE.md", "README.md", "docs/BUILD_PROGRESS.md", "app/utils/useProgram.ts", "app/utils/SolanaProvider.tsx", "config.ts", "idl/prediction_market.json", "contracts/quantum_wager/programs/quantum_wager/src/lib.rs"]
+    }
+  ],
+  "detectedGaps": [
+    "No application-level automated tests (only contracts/quantum_wager anchor test).",
+    "No CI workflow (.github/workflows absent).",
+    "docs/ARCHITECTURE.md is partly stale (describes external Render backend; backend is now in-repo).",
+    "useProgram.ts hardcodes the devnet RPC, ignoring NEXT_PUBLIC_SOLANA_RPC_URL.",
+    "Deployed program (C8SAQXW3...toSc) Rust source is not in this repo; only the IDL is present.",
+    "Levels 3-6 do not yet complete from authoritative server/on-chain signals.",
+    "Oracle 'provider' adapter (Pyth/Switchboard) is interface-only, not implemented.",
+    "Two committed lockfiles (npm + pnpm); canonical package manager unconfirmed."
+  ],
+  "recommendedNextUpdateAreas": [
+    "06-api-and-interfaces.md when any app/api/**/route.ts changes method/auth/body.",
+    "07-data-and-state.md when prisma/schema.prisma changes.",
+    "05-configuration.md when .env.example, server/env.ts, or config.ts changes.",
+    "03-core-flows.md when auth, oracle, xp, or GameSync logic changes.",
+    "09-deployment.md when Prisma provider or deployment env changes."
+  ]
+}
