@@ -195,8 +195,8 @@ export default function CreateBattlePage() {
         sideBTokens: [new PublicKey(sideBToken)],
         sideAName,
         sideBName,
-        startTime: new BN(startUnix),
-        endTime: new BN(endUnix),
+        startTime: startUnix,
+        endTime: endUnix,
         metaMarketEnabled: true,
         imageUrl,
       });

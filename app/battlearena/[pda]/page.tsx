@@ -1,4 +1,5 @@
 "use client";
+import BN from "bn.js";
 
 import { useParams } from "next/navigation";
 import { useState } from "react";
@@ -69,6 +70,7 @@ export default function BattlePage() {
   const numericAmount = parseFloat(amount) || 0;
   const lamports = Math.floor(numericAmount * LAMPORTS_PER_SOL);
   const lamportsBN = new BN(lamports);
+  const minBattlePoolSol = MIN_BATTLE_POOL.toNumber() / LAMPORTS_PER_SOL;
   const invalidAmount = numericAmount <= 0 || lamportsBN.lt(MIN_BATTLE_POOL);
 
   const handleEnterBattle = async () => {
@@ -249,7 +251,7 @@ export default function BattlePage() {
                     <h2 className="text-xl font-bold text-white">Place Your Bet</h2>
                   </div>
                   <div className="flex items-center gap-2 text-[10px] font-bold text-white/40 bg-white/5 px-3 py-1.5 rounded-full border border-white/5 uppercase tracking-wider">
-                    Min: {MIN_BATTLE_POOL / LAMPORTS_PER_SOL} SOL
+                    Min: {minBattlePoolSol} SOL
                   </div>
                 </div>
 

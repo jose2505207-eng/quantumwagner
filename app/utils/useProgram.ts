@@ -9,7 +9,8 @@ export function useProgram() {
     const wallet = useAnchorWallet();
     if (!wallet) return null;
 
-    const connection = new Connection("https://api.devnet.solana.com", "confirmed");
+    const rpc = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || "https://api.devnet.solana.com";
+    const connection = new Connection(rpc, "confirmed");
     const provider = new AnchorProvider(connection, wallet, {});
 
     return new Program<PredictionMarket>(

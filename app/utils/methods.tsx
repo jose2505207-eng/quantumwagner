@@ -59,6 +59,7 @@ export interface createToeknParams {
     website?: string;
     twitter?: string;
     telegram?: string;
+    discord?: string;
   };
   initialPrice: number;
   totalSupply: number;
@@ -465,6 +466,7 @@ export default function Methods() {
             website: data.socialLinks.website ?? "",
             twitter: data.socialLinks.twitter ?? "",
             telegram: data.socialLinks.telegram ?? "",
+            discord: data.socialLinks.discord ?? "",
           },
           new anchor.BN(data.initialPrice),
           new anchor.BN(data.totalSupply),
