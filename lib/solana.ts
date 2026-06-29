@@ -31,7 +31,6 @@ export function getProgramId(): PublicKey {
 /** True when we have a plausibly-deployed program id configured. */
 export const IS_PROGRAM_CONFIGURED = (() => {
   try {
-    // eslint-disable-next-line no-new
     new PublicKey(PROGRAM_ID_STR);
     return PROGRAM_ID_STR.length >= 32;
   } catch {

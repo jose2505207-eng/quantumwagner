@@ -39,7 +39,11 @@ export default defineConfig({
     // Never collect tests from agent worktrees (.claude/worktrees/**) or build
     // output — an isolated subagent's worktree carries duplicate *.test.ts copies
     // that pollute the count and load-fail if the worktree is removed mid-run.
-    exclude: ["**/node_modules/**", "**/dist/**", "**/.next/**", "**/.claude/**"],
+    // `test/e2e/**` is the live-devnet on-chain harness (`pnpm e2e`): it needs a
+    // funded wallet + RPC and must never gate the node-only authority suite/CI.
+    // `test/component/**` is the jsdom React layer — it runs as its own project
+    // (vitest.component.config.ts) and must not be collected in this node env.
+    exclude: ["**/node_modules/**", "**/dist/**", "**/.next/**", "**/.claude/**", "test/e2e/**", "test/component/**"],
     // Forward the resolved DB URLs to the worker explicitly (belt-and-braces
     // alongside process.env inheritance).
     env: {
