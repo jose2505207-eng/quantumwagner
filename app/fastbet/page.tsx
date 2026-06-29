@@ -4,84 +4,20 @@ import { Background } from "@/components/background";
 import FastBetHero from "@/components/fastbet/FastBetHero";
 import FastBetCard from "@/components/fastbet/FastBetCard";
 import { DemoBadge } from "@/components/game";
+import { useFastBets } from "@/lib/useFastBets";
 import { motion } from "framer-motion";
 
 export default function FastBetsPage() {
-  // DEMO DATA: there is no live fast-bet feed yet, so these rounds are
-  // illustrative seed data and are clearly badged as demo in the UI below.
-  const demoFastBets = [
-    {
-      id: 1,
-      question: "Will PUMP reach $0.005 in 10 minutes?",
-      currentPrice: 0.00423,
-      yesPercentage: 68,
-      noPercentage: 32,
-      totalPool: 50700,
-      timeRemaining: "8m 34s",
-      status: "live" as const,
-      riskLevel: "high" as const,
-    },
-    {
-      id: 2,
-      question: "Will MEME dump 20% in next 15 minutes?",
-      currentPrice: 0.00312,
-      yesPercentage: 45,
-      noPercentage: 55,
-      totalPool: 42000,
-      timeRemaining: "12m 18s",
-      status: "live" as const,
-      riskLevel: "medium" as const,
-    },
-    {
-      id: 3,
-      question: "Will ROCKET hit ATH in 5 minutes?",
-      currentPrice: 0.00567,
-      yesPercentage: 82,
-      noPercentage: 18,
-      totalPool: 50000,
-      timeRemaining: "3m 45s",
-      status: "closing-soon" as const,
-      riskLevel: "high" as const,
-    },
-    {
-      id: 4,
-      question: "Will DEGEN pump 30% in 10 minutes?",
-      currentPrice: 0.00189,
-      yesPercentage: 0,
-      noPercentage: 0,
-      totalPool: 0,
-      timeRemaining: "Starts in 24m",
-      status: "upcoming" as const,
-      riskLevel: "medium" as const,
-    },
-    {
-      id: 5,
-      question: "Will MOON reach $0.01 in 12 minutes?",
-      currentPrice: 0.00834,
-      yesPercentage: 76,
-      noPercentage: 24,
-      totalPool: 60000,
-      timeRemaining: "Resolving...",
-      status: "resolving" as const,
-      riskLevel: "high" as const,
-    },
-    {
-      id: 6,
-      question: "Will PEPE dump 25% in 8 minutes?",
-      currentPrice: 0.00245,
-      yesPercentage: 42,
-      noPercentage: 58,
-      totalPool: 50000,
-      timeRemaining: "Resolved",
-      status: "resolved" as const,
-      riskLevel: "low" as const,
-    },
-  ];
+  const { fastBets, source, loading } = useFastBets();
+
+  const activeCount = fastBets.filter((b) => b.status === "live").length;
+  const isDemo = source === "demo";
+  const isEmpty = !loading && source === "empty";
 
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden relative font-sans selection:bg-yellow-500/30">
       <Background />
-      
+
       <div className="relative z-10 container mx-auto px-4 py-8 lg:py-12 mt-20 max-w-7xl">
         <FastBetHero />
 
@@ -89,22 +25,46 @@ export default function FastBetsPage() {
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl font-bold text-white flex items-center gap-3">
               <span className="w-2 h-8 rounded-full bg-yellow-500" />
-              Live & Upcoming
-              <DemoBadge note="Fast bets are demo rounds — no live fast-bet feed is connected yet." />
+              Live &amp; Upcoming
+              {isDemo && (
+                <DemoBadge note="Demo fallback shown because no live fast-bet rounds are currently available." />
+              )}
             </h2>
-            <div className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-sm font-semibold text-white">
-                {demoFastBets.filter(b => b.status === 'live').length} Active
-              </span>
-            </div>
+            {!isEmpty && (
+              <div className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-sm font-semibold text-white">{activeCount} Active</span>
+              </div>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-            {demoFastBets.map((bet, index) => (
-              <FastBetCard key={bet.id} {...bet} index={index} />
-            ))}
-          </div>
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-72 rounded-[2rem] bg-white/[0.02] border border-white/5 animate-pulse"
+                />
+              ))}
+            </div>
+          ) : isEmpty ? (
+            <div className="flex flex-col items-center justify-center text-center py-24 rounded-[2rem] bg-white/[0.02] border border-white/5">
+              <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center text-3xl mb-5">
+                ⚡
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">No live rounds right now</h3>
+              <p className="text-white/40 max-w-md">
+                There are no fast-bet rounds open at the moment. Check back shortly — new rounds
+                open continuously.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+              {fastBets.map((bet, index) => (
+                <FastBetCard key={bet.id} {...bet} index={index} />
+              ))}
+            </div>
+          )}
 
           {/* How It Works Section */}
           <div className="mt-32 mb-20">
@@ -136,7 +96,7 @@ export default function FastBetsPage() {
                   icon: "⚡"
                 }
               ].map((item, i) => (
-                <motion.div 
+                <motion.div
                   key={i}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
