@@ -68,3 +68,29 @@ levels can be completed that way — action levels are rejected, never fakeable.
 `source:"provider"` therefore returns an honest 400 until a real
 `PriceFeedProvider` (Pyth Hermes / Switchboard) + its endpoint/feed-id is wired.
 This is correct honesty-boundary behavior, not a bug. See open-questions.md #6.
+
+## Loop 2: Pyth provider is now REAL (Hermes is public/keyless)
+`server/oracleProviders.ts` ships `PythHermesProvider` + `getPriceFeedProvider()`.
+Hermes (https://hermes.pyth.network, `GET /v2/updates/price/latest?ids[]=<feedId>`)
+needs NO credential — it was never a real blocker. Provider is selected when
+`ORACLE_PROVIDER="pyth"` OR `PYTH_FEED_IDS` is set; else the loud stub. SOL/USD
+ships as a VERIFIED built-in feed id
+(`ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d`, confirmed
+against the live catalog + price endpoint). Other symbols MUST be mapped via
+`PYTH_FEED_IDS` or `getPrice()` throws -> 400. Never hardcode an unverified feed
+id: a wrong 32-byte id silently prices the WRONG market. open-questions.md #6 closed.
+
+## Grep `rateLimit(` not `RATE_LIMIT` — the limiter IS wired
+`server/rateLimit.ts` is enforced (gated by `RATE_LIMIT_ENABLED === "true"`) and
+already called in `app/api/auth/nonce/route.ts` (`"auth-nonce"`) and
+`app/api/auth/verify-wallet/route.ts` (`"auth-verify"`). A grep for the literal
+`RATE_LIMIT` misses the lowercase `rateLimit(` call sites and falsely reads it as
+dead code. `HttpError(429)` -> 429 via `server/http.ts` `handler()`. open-questions #4 closed.
+
+## Fast-bets feed exposes per-side split + live price (no schema change)
+`GET /api/fast-bets` returns `yesPool`/`noPool` (one `groupBy`, no N+1) and
+`currentPrice` (live oracle per distinct symbol, fetched once; `null` on any
+provider failure — never invented, never 500s the feed). `POST /api/fast-bets/generate`
+is the admin/cron endpoint (ADMIN_RESOLUTION_KEY) that spawns live rounds to keep
+the feed `live` not `demo`. The fast-bets UI polls every 15s via a quiet
+background reload (skips the spinner) with an in-flight ref guard.
