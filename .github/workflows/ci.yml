@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+# Local test values only — NOT real secrets.
+env:
+  DATABASE_URL: file:./ci.db
+  JWT_SECRET: ci-secret
+  WALLET_AUTH_MESSAGE: "Sign this message to login to Quantum: "
+  ORACLE_MODE: admin
+  ADMIN_RESOLUTION_KEY: ci-admin-key
+  SOLANA_NETWORK: devnet
+  SOLANA_RPC_URL: https://api.devnet.solana.com
+
+jobs:
+  # Blocking pipeline: generate -> typecheck -> build -> test.
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Prisma generate
+        run: pnpm prisma generate
+
+      - name: Typecheck (blocking)
+        run: pnpm typecheck
+
+      - name: Build (blocking — next.config enforces TS, ignores ESLint)
+        run: pnpm build
+
+      - name: Test (blocking — real SQLite test db)
+        run: pnpm test
+
+  # Non-blocking: the legacy codebase has ~62 pre-existing eslint errors
+  # (documented tech debt). Surface them without failing the pipeline yet.
+  lint:
+    name: Lint (non-blocking)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
