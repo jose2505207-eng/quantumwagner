@@ -47,6 +47,10 @@ import {
   recordBattleCreated,
   recordBattleEntry,
   recordBattleIncrease,
+  recordMarketCreated,
+  recordPrediction,
+  recordMarketCancel,
+  recordMarketWithdraw,
 } from "@/lib/api";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -247,6 +251,20 @@ export default function Methods() {
         .rpc({ skipPreflight: false, preflightCommitment: "confirmed" });
 
       toast.success("Market created succssfully!");
+
+      // Best-effort: record the confirmed on-chain market to the backend.
+      try {
+        await recordMarketCreated({
+          question: questionId,
+          category: Object.keys(category)[0] ?? "CRYPTO",
+          endTime: new Date(Date.now() + durationSeconds.toNumber() * 1000),
+          pda: marketPDA.toBase58(),
+          txSignature: tx,
+        });
+      } catch (e) {
+        console.warn("market create not recorded to backend:", e);
+      }
+
       return marketPDA.toBase58();
     } catch (err) {
       if (err instanceof anchor.AnchorError)
@@ -297,6 +315,17 @@ export default function Methods() {
       toast.success("Bet placed successfully");
       // Real on-chain action → completes the "first prediction" milestone.
       useGameStore.getState().completeLevel("first-prediction");
+
+      // Best-effort: record the confirmed on-chain bet to the backend.
+      try {
+        await recordPrediction(marketPDA.toBase58(), {
+          side: outcome ? "YES" : "NO",
+          amount,
+          txSignature: tx,
+        });
+      } catch (e) {
+        console.warn("prediction not recorded to backend:", e);
+      }
       return tx;
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
@@ -316,6 +345,13 @@ export default function Methods() {
           market: marketPDA,
         })
         .rpc({ skipPreflight: false, preflightCommitment: "confirmed" });
+
+      // Best-effort: record the confirmed on-chain cancellation to the backend.
+      try {
+        await recordMarketCancel(marketPDA.toBase58(), { txSignature: tx });
+      } catch (e) {
+        console.warn("market cancel not recorded to backend:", e);
+      }
     } catch (err) {
       throw err;
     }
@@ -376,6 +412,13 @@ export default function Methods() {
           systemProgram: SystemProgram.programId,
         })
         .rpc({ skipPreflight: false, preflightCommitment: "confirmed" });
+
+      // Best-effort: record the confirmed on-chain withdrawal to the backend.
+      try {
+        await recordMarketWithdraw(marketPDA.toBase58(), { txSignature: tx });
+      } catch (e) {
+        console.warn("withdraw not recorded to backend:", e);
+      }
 
       return tx;
     } catch (err) {

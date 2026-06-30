@@ -16,11 +16,17 @@ export const createMarketSchema = z.object({
   category: z.string().max(40).optional().default("CRYPTO"),
   endTime: z.coerce.date(),
   pda: z.string().optional(),
+  txSignature: z.string().optional(),
 });
 
 export const placePredictionSchema = z.object({
   side: z.enum(["YES", "NO"]),
   amount: z.coerce.number().positive().max(1_000_000),
+  txSignature: z.string().optional(),
+});
+
+// withdraw winnings / cancel market — event records keyed by the on-chain tx.
+export const marketTxSchema = z.object({
   txSignature: z.string().optional(),
 });
 
