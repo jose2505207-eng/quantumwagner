@@ -51,6 +51,8 @@ import {
   recordPrediction,
   recordMarketCancel,
   recordMarketWithdraw,
+  recordTokenLaunch,
+  recordTokenEvent,
 } from "@/lib/api";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -560,6 +562,22 @@ export default function Methods() {
       toast.success("Token launched successfully!");
       // Real on-chain action → completes the "launch token" milestone.
       useGameStore.getState().completeLevel("launch-token");
+
+      // Best-effort: record the confirmed on-chain token launch to the backend.
+      try {
+        await recordTokenLaunch({
+          name: data.name,
+          symbol: data.symbol,
+          description: data.description,
+          imageUri: data.imageUrl,
+          totalSupply: String(data.totalSupply),
+          mint: tokenMintPda.toBase58(),
+          txSignature: tx,
+        });
+      } catch (e) {
+        console.warn("token launch not recorded to backend:", e);
+      }
+
       return {
         tx,
         tokenMint: tokenMintPda.toBase58(),
@@ -633,6 +651,17 @@ export default function Methods() {
         .rpc();
 
       toast.success("Token purchase successful!");
+
+      // Best-effort: record the confirmed on-chain buy to the backend.
+      try {
+        await recordTokenEvent(tokenMint.toBase58(), {
+          action: "buy",
+          amount: tokenAmount,
+          txSignature: tx,
+        });
+      } catch (err) {
+        console.warn("token buy not recorded to backend:", err);
+      }
     } catch (e) {
       toast.error("Token purchase failed");
     }
@@ -697,6 +726,17 @@ export default function Methods() {
         systemProgram: SystemProgram.programId,
       })
       .rpc();
+
+    // Best-effort: record the confirmed on-chain sell to the backend.
+    try {
+      await recordTokenEvent(tokenMint.toBase58(), {
+        action: "sell",
+        amount: tokenAmount,
+        txSignature: tx,
+      });
+    } catch (err) {
+      console.warn("token sell not recorded to backend:", err);
+    }
 
     return tx;
   };
@@ -842,6 +882,16 @@ export default function Methods() {
         .rpc();
 
       toast.success("Token claimed successfully!");
+
+      // Best-effort: record the confirmed on-chain creator-token claim.
+      try {
+        await recordTokenEvent(tokenMint.toBase58(), {
+          action: "claim",
+          txSignature: tx,
+        });
+      } catch (err) {
+        console.warn("token claim not recorded to backend:", err);
+      }
     } catch (e) {
       // Anchor surfaces program errors either as `e.error.message` or `e.message`.
       const anchorErr = e as { error?: { message?: string }; message?: string };
@@ -995,6 +1045,17 @@ export default function Methods() {
 
       toast.dismiss();
       toast.success("Royalties withdrawn successfully!");
+
+      // Best-effort: record the confirmed on-chain royalty withdrawal.
+      try {
+        await recordTokenEvent(tokenLaunchAccount.tokenMint.toString(), {
+          action: "royalties",
+          txSignature: tx,
+        });
+      } catch (e) {
+        console.warn("royalty withdrawal not recorded to backend:", e);
+      }
+
       return tx;
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : String(err ?? "");

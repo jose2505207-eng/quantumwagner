@@ -214,4 +214,41 @@ export async function recordMarketWithdraw(
   }
 }
 
+// ----------------------------------------------------------------------------
+// Token launchpad — record on-chain events (POST, auth required). `ref` may be
+// the token cuid OR its SPL mint. Launch is hard-verified on-chain.
+// ----------------------------------------------------------------------------
+
+export type TokenAction = "buy" | "sell" | "claim" | "royalties";
+
+/** Record a launched token. Idempotent on `mint`. Returns the backend row id. */
+export async function recordTokenLaunch(input: {
+  name: string;
+  symbol: string;
+  description?: string;
+  imageUri?: string;
+  totalSupply?: string;
+  mint: string;
+  txSignature?: string;
+}): Promise<{ id: string } | null> {
+  try {
+    const res = await api.post(`/api/launchpad/tokens`, input);
+    return (res.data?.data?.token as { id: string }) ?? null;
+  } catch (err) {
+    throw toApiError(err, "Failed to record token launch");
+  }
+}
+
+/** Record a token event: buy | sell | claim (creator tokens) | royalties. */
+export async function recordTokenEvent(
+  ref: string,
+  input: { action: TokenAction; amount?: number; txSignature?: string }
+): Promise<void> {
+  try {
+    await api.post(`/api/launchpad/tokens/${ref}/trade`, input);
+  } catch (err) {
+    throw toApiError(err, "Failed to record token event");
+  }
+}
+
 export { API_URL };

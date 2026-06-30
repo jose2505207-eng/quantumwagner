@@ -1,10 +1,11 @@
-import { handler, ok } from "@/server/http";
+import { handler, ok, fail } from "@/server/http";
 import { requireAuth } from "@/server/auth";
 import { prisma } from "@/server/db";
 import { createTokenSchema } from "@/server/validators";
 import { completeLevelServer, awardXp } from "@/server/xp";
 import { LEVEL_BY_ID } from "@/lib/game/levels";
 import { logAudit } from "@/server/audit";
+import { verifySignature, REQUIRE_ONCHAIN } from "@/server/solana";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,6 +22,27 @@ export const POST = handler(async (req: Request) => {
   const claims = requireAuth(req);
   const body = createTokenSchema.parse(await req.json());
 
+  // Idempotent on the SPL mint (client retry returns the existing row).
+  if (body.mint) {
+    const existing = await prisma.launchToken.findFirst({ where: { mint: body.mint } });
+    if (existing) return ok({ token: existing, deduped: true });
+  }
+
+  // On-chain confirmation gate (Devnet): a launched token is a real tx.
+  const verification = await verifySignature(body.txSignature);
+  if (body.txSignature && !verification.confirmed) {
+    return fail(
+      `Token not recorded — Devnet transaction not confirmed (${verification.reason}).`,
+      409
+    );
+  }
+  if (!body.txSignature && REQUIRE_ONCHAIN) {
+    return fail(
+      "An on-chain (Devnet) transaction signature is required to launch a token.",
+      400
+    );
+  }
+
   const isFirst =
     (await prisma.launchToken.count({ where: { creatorId: claims.sub } })) === 0;
 
@@ -32,7 +54,8 @@ export const POST = handler(async (req: Request) => {
       imageUri: body.imageUri,
       totalSupply: body.totalSupply,
       mint: body.mint,
-      txSignature: body.txSignature,
+      txSignature: verification.confirmed ? body.txSignature : null,
+      isDemo: !verification.confirmed,
       creatorId: claims.sub,
     },
   });
@@ -40,7 +63,8 @@ export const POST = handler(async (req: Request) => {
     data: {
       userId: claims.sub,
       kind: "launch",
-      signature: body.txSignature,
+      signature: verification.confirmed ? body.txSignature : null,
+      status: verification.confirmed ? "confirmed" : "local-unconfirmed",
       refType: "launch",
       refId: token.id,
     },

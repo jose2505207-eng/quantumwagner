@@ -100,3 +100,11 @@ export const createTokenSchema = z.object({
   mint: z.string().optional(),
   txSignature: z.string().optional(),
 });
+
+// buy / sell / claim-creator-tokens / withdraw-royalties — one discriminated
+// token event, keyed by the on-chain tx.
+export const tokenEventSchema = z.object({
+  action: z.enum(["buy", "sell", "claim", "royalties"]),
+  amount: z.coerce.number().nonnegative().max(1_000_000_000).optional().default(0),
+  txSignature: z.string().optional(),
+});
