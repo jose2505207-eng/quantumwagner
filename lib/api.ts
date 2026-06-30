@@ -104,4 +104,53 @@ export async function getProfile() {
   return res.data;
 }
 
+// ----------------------------------------------------------------------------
+// Battles — record on-chain events (POST, auth required). These run AFTER the
+// Solana tx confirms; the backend re-verifies the signature (REQUIRE_ONCHAIN)
+// before persisting/awarding. `ref` may be the battle cuid OR its on-chain pda.
+// ----------------------------------------------------------------------------
+
+export type BattleSide = "A" | "B";
+
+/** Record a created battle. Idempotent on `pda`. Returns the backend row id. */
+export async function recordBattleCreated(input: {
+  title: string;
+  description?: string;
+  sideA?: string;
+  sideB?: string;
+  pda: string;
+  txSignature?: string;
+}): Promise<{ id: string } | null> {
+  try {
+    const res = await api.post(`/api/battles`, input);
+    return (res.data?.data?.battle as { id: string }) ?? null;
+  } catch (err) {
+    throw toApiError(err, "Failed to record battle");
+  }
+}
+
+/** Record a battle entry (join). */
+export async function recordBattleEntry(
+  ref: string,
+  input: { side: BattleSide; amount: number; txSignature?: string }
+): Promise<void> {
+  try {
+    await api.post(`/api/battles/${ref}/join`, input);
+  } catch (err) {
+    throw toApiError(err, "Failed to record battle entry");
+  }
+}
+
+/** Record a battle position increase. */
+export async function recordBattleIncrease(
+  ref: string,
+  input: { amount: number; txSignature?: string }
+): Promise<void> {
+  try {
+    await api.post(`/api/battles/${ref}/increase`, input);
+  } catch (err) {
+    throw toApiError(err, "Failed to record battle increase");
+  }
+}
+
 export { API_URL };

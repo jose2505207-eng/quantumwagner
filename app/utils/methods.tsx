@@ -44,6 +44,11 @@ import {
 import toast from "react-hot-toast";
 import { useGameStore } from "@/store/useGameStore";
 import {
+  recordBattleCreated,
+  recordBattleEntry,
+  recordBattleIncrease,
+} from "@/lib/api";
+import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getAccount,
   getAssociatedTokenAddress,
@@ -1020,6 +1025,21 @@ export default function Methods() {
       .rpc();
     toast.success("Battle Created successfully!");
 
+    // Best-effort: record the confirmed on-chain event to the backend (indexing,
+    // XP, leaderboard). The tx already landed, so a backend hiccup must not throw.
+    try {
+      await recordBattleCreated({
+        title,
+        description,
+        sideA: sideAName,
+        sideB: sideBName,
+        pda: battlePDA.toBase58(),
+        txSignature: tx,
+      });
+    } catch (e) {
+      console.warn("battle create not recorded to backend:", e);
+    }
+
     return {
       tx,
       battlePDA,
@@ -1156,6 +1176,19 @@ export default function Methods() {
     // Real on-chain action → completes the "join meme battle" milestone.
     useGameStore.getState().completeLevel("join-meme-battle");
 
+    // Best-effort: record the confirmed on-chain entry to the backend. The enum
+    // arrives as { sideA: {} } / { sideB: {} } (or { a }/{ b }); map to "A"/"B".
+    try {
+      const sideLetter = side && ("sideA" in side || "a" in side) ? "A" : "B";
+      await recordBattleEntry(battlePDA.toBase58(), {
+        side: sideLetter,
+        amount,
+        txSignature: tx,
+      });
+    } catch (e) {
+      console.warn("battle entry not recorded to backend:", e);
+    }
+
     return { tx, battlePositionPDA };
   };
 
@@ -1196,6 +1229,16 @@ export default function Methods() {
         systemProgram: SystemProgram.programId,
       })
       .rpc();
+
+    // Best-effort: record the confirmed on-chain increase to the backend.
+    try {
+      await recordBattleIncrease(battlePDA.toBase58(), {
+        amount: additionalAmount,
+        txSignature: tx,
+      });
+    } catch (e) {
+      console.warn("battle increase not recorded to backend:", e);
+    }
 
     return { tx };
   };

@@ -62,10 +62,16 @@ export const createBattleSchema = z.object({
   sideA: z.string().max(60).optional().default("Side A"),
   sideB: z.string().max(60).optional().default("Side B"),
   pda: z.string().optional(),
+  txSignature: z.string().optional(),
 });
 
 export const joinBattleSchema = z.object({
   side: z.enum(["A", "B"]),
+  amount: z.coerce.number().positive().max(1_000_000),
+  txSignature: z.string().optional(),
+});
+
+export const increaseBattleSchema = z.object({
   amount: z.coerce.number().positive().max(1_000_000),
   txSignature: z.string().optional(),
 });
