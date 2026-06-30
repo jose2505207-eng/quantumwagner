@@ -16,6 +16,8 @@
     "db:studio": "prisma studio",
     "test": "vitest run",
     "test:watch": "vitest",
+    "solana:health": "tsx scripts/solana-health.ts",
+    "solana:balance": "tsx scripts/solana-balance.ts",
     "e2e": "tsx test/e2e/devnet-e2e.ts",
     "postinstall": "prisma generate"
   },

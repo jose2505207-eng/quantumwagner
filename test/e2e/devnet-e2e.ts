@@ -23,11 +23,8 @@
  *     economically-neutral instruction that still yields a REAL signature you can
  *     open on Solana Explorer. We do not invent markets/battles/bets here.
  */
-import { existsSync, readFileSync } from "node:fs";
-import path from "node:path";
 import {
   Connection,
-  Keypair,
   LAMPORTS_PER_SOL,
   PublicKey,
   SystemProgram,
@@ -36,70 +33,85 @@ import {
 import * as anchor from "@coral-xyz/anchor";
 import idl from "../../idl/prediction_market.json";
 import type { PredictionMarket } from "../../idl/types";
+import {
+  EXPECTED_PUBKEY,
+  assertReachableDevnet,
+  die as dieCommon,
+  loadEnv,
+  loadKeypair,
+  redactRpc,
+  resolveRpcUrl,
+  resolveWalletPath,
+} from "../../scripts/_devnet-common";
 
 // ---------------------------------------------------------------------------
-// env — load .env exactly like the rest of the repo (no `dotenv` dep here).
-// process.loadEnvFile (Node 20.12+) mirrors vitest.config.ts / prisma.config.ts.
+// env — load .env exactly like the rest of the repo (Node 20.12+ loadEnvFile),
+// then resolve a devnet RPC (ANCHOR_PROVIDER_URL preferred) with a mainnet guard.
 // ---------------------------------------------------------------------------
-try {
-  process.loadEnvFile();
-} catch {
-  /* no .env (e.g. another shell exported the vars) — fall through to checks */
-}
+loadEnv();
 
-const RPC_URL =
-  process.env.ANCHOR_PROVIDER_URL ||
-  process.env.NEXT_PUBLIC_SOLANA_RPC_URL ||
-  "https://api.devnet.solana.com";
-const WALLET_PATH = process.env.ANCHOR_WALLET || path.join(".devnet", "id.json");
-
-function die(msg: string): never {
-  console.error(`\n❌  E2E FAILED — ${msg}\n`);
-  process.exit(1);
-}
-
-function loadKeypair(file: string): Keypair {
-  const full = path.isAbsolute(file) ? file : path.join(process.cwd(), file);
-  if (!existsSync(full)) {
-    die(
-      `wallet keypair not found at "${full}". Set ANCHOR_WALLET (the repo expects ` +
-        `.devnet/id.json, which is gitignored). Drop a devnet keypair there first.`
-    );
-  }
-  let secret: number[];
-  try {
-    secret = JSON.parse(readFileSync(full, "utf8"));
-  } catch (err) {
-    die(`could not parse keypair JSON at "${full}": ${err instanceof Error ? err.message : String(err)}`);
-  }
-  if (!Array.isArray(secret) || (secret.length !== 64 && secret.length !== 32)) {
-    die(`keypair at "${full}" is not a valid Solana secret-key byte array.`);
-  }
-  return Keypair.fromSecretKey(Uint8Array.from(secret));
-}
+const RPC_URL = resolveRpcUrl(); // throws if mainnet
+const WALLET_PATH = resolveWalletPath();
+const die: (msg: string) => never = (msg) => dieCommon(`E2E FAILED — ${msg}`);
 
 const explorerTx = (sig: string) => `https://explorer.solana.com/tx/${sig}?cluster=devnet`;
 const explorerAddr = (a: string) => `https://explorer.solana.com/address/${a}?cluster=devnet`;
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Confirm a signature by HTTP polling (getSignatureStatuses), avoiding the
+ * WebSocket `signatureSubscribe` path. Returns the confirmationStatus on success;
+ * throws on on-chain error or timeout.
+ */
+async function confirmByPolling(
+  conn: Connection,
+  signature: string,
+  timeoutMs = 60_000
+): Promise<string> {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const { value } = await conn.getSignatureStatuses([signature], {
+      searchTransactionHistory: true,
+    });
+    const st = value[0];
+    if (st?.err) {
+      throw new Error(`transaction failed on-chain: ${JSON.stringify(st.err)}`);
+    }
+    if (
+      st?.confirmationStatus === "confirmed" ||
+      st?.confirmationStatus === "finalized"
+    ) {
+      return st.confirmationStatus;
+    }
+    await sleep(2_000);
+  }
+  throw new Error(
+    `timed out after ${timeoutMs}ms polling for confirmation of ${signature}`
+  );
+}
+
 async function main() {
   console.log("=== QuantumWagner devnet E2E harness ===");
-  console.log(`RPC:    ${RPC_URL}`);
-  console.log(`Wallet: ${WALLET_PATH}`);
+  console.log(`RPC host: ${redactRpc(RPC_URL)}`); // host only — never leak the key
+  console.log(`Wallet:   ${WALLET_PATH}`);
 
   const connection = new Connection(RPC_URL, "confirmed");
   const keypair = loadKeypair(WALLET_PATH);
   const wallet = new anchor.Wallet(keypair);
-  console.log(`Pubkey: ${keypair.publicKey.toBase58()}`);
-  console.log(`        ${explorerAddr(keypair.publicKey.toBase58())}`);
-
-  // --- (1) genesis / chain reachability -----------------------------------
-  let version: unknown;
-  try {
-    version = await connection.getVersion();
-  } catch (err) {
-    die(`RPC unreachable at ${RPC_URL}: ${err instanceof Error ? err.message : String(err)}`);
+  console.log(`Pubkey:   ${keypair.publicKey.toBase58()}`);
+  console.log(`          ${explorerAddr(keypair.publicKey.toBase58())}`);
+  if (keypair.publicKey.toBase58() !== EXPECTED_PUBKEY) {
+    die(
+      `signer pubkey mismatch — expected ${EXPECTED_PUBKEY}, got ` +
+        `${keypair.publicKey.toBase58()}. Wrong keypair at "${WALLET_PATH}".`
+    );
   }
-  console.log(`\n[1] RPC reachable. solana-core: ${(version as { "solana-core"?: string })["solana-core"] ?? "?"}`);
+
+  // --- (1) chain reachability + DEVNET cluster proof (genesis hash) --------
+  const { core, genesis } = await assertReachableDevnet(connection, RPC_URL);
+  console.log(`\n[1] RPC reachable. solana-core: ${core}`);
+  console.log(`    Cluster: devnet (genesis ${genesis}) ✓`);
 
   // --- (2) BALANCE GATE — fail loud at 0 SOL -------------------------------
   const lamports = await connection.getBalance(keypair.publicKey);
@@ -135,10 +147,18 @@ async function main() {
     programId
   );
   console.log(`\n    PlatformConfig PDA: ${configPDA.toBase58()}`);
+  // The PlatformConfig counters are the seed inputs for deterministic PDA
+  // discovery below (step 3b). null => config unreadable => discovery is skipped.
+  let nextLaunchId: number | null = null;
+  let nextBattleId: number | null = null;
+  let nextMarketId: number | null = null;
   try {
     const cfg = await program.account.platformConfig.fetch(configPDA);
+    nextLaunchId = Number(cfg.nextLaunchId);
+    nextBattleId = Number(cfg.nextBattleId);
+    nextMarketId = Number(cfg.nextMarketId);
     console.log(`    -> admin=${cfg.admin.toBase58()}`);
-    console.log(`    -> next_launch_id=${Number(cfg.nextLaunchId)} next_battle_id=${Number(cfg.nextBattleId)} next_market_id=${Number(cfg.nextMarketId)}`);
+    console.log(`    -> next_launch_id=${nextLaunchId} next_battle_id=${nextBattleId} next_market_id=${nextMarketId}`);
     console.log(`    -> totals: tokens=${Number(cfg.totalTokensCreated)} battles=${Number(cfg.totalBattles)} markets=${Number(cfg.totalMarkets)}`);
     console.log(`    -> platform_fee_bps=${cfg.platformFeeBps} treasury=${cfg.treasury.toBase58()}`);
   } catch (err) {
@@ -148,23 +168,137 @@ async function main() {
     );
   }
 
-  // Enumerate the live program accounts (real getProgramAccounts reads).
-  const [battles, markets, tokens] = await Promise.all([
-    program.account.battle.all(),
-    program.account.market.all(),
-    program.account.tokenLaunch.all(),
-  ]);
-  console.log(`\n    On-chain inventory (getProgramAccounts):`);
-  console.log(`    -> battles:     ${battles.length}`);
-  console.log(`    -> markets:     ${markets.length}`);
-  console.log(`    -> tokenLaunch: ${tokens.length}`);
-  if (battles[0]) {
-    const b = battles[0];
-    console.log(`    sample battle ${b.publicKey.toBase58()}: title="${b.account.title}" totalPool=${Number(b.account.totalPool)}`);
+  // --- (3b) deterministic PDA discovery — NO getProgramAccounts -----------
+  // Instead of a program-wide `getProgramAccounts` scan (which Alchemy's free
+  // tier blocks), we DERIVE each account PDA by id from the PlatformConfig
+  // counters read above and batch-read them. This is exact, not a guess: the
+  // seeds come straight from the program IDL (`idl/prediction_market.json`) and
+  // match the client conventions in `app/utils/methods.tsx`:
+  //   token_launch: ["token_launch", launch_id u64 LE]   (methods.tsx:~457)
+  //   battle:       ["battle",       battle_id u64 LE]    (methods.tsx:~1050)
+  //   market:       ["market",       market_id u64 LE]    (methods.tsx:~210)
+  // Anchor's `fetchMultiple` uses getMultipleAccountsInfo under the hood (auto-
+  // chunked at 100) and decodes with the program/IDL account coder, returning
+  // `null` for any id that has no live account — so absent ids are reported
+  // HONESTLY, never invented. Counters are 1-based here (first id = 1), so id 0
+  // is expected to be null; we scan [0 .. nextId] inclusive to be exhaustive.
+  const MAX_SCAN = 1024; // safety cap: a corrupt counter can't spin forever
+
+  /** Derive `[seedPrefix, id]` PDAs for ids 0..nextId inclusive (capped). */
+  const derivePdasById = (
+    seedPrefix: string,
+    nextId: number
+  ): { id: number; pda: PublicKey }[] => {
+    const cap = Math.min(Math.max(0, nextId), MAX_SCAN);
+    if (nextId > MAX_SCAN) {
+      console.warn(`    (capping ${seedPrefix} scan at ${MAX_SCAN}; next id was ${nextId})`);
+    }
+    const out: { id: number; pda: PublicKey }[] = [];
+    for (let id = 0; id <= cap; id++) {
+      const [pda] = PublicKey.findProgramAddressSync(
+        [Buffer.from(seedPrefix), new anchor.BN(id).toArrayLike(Buffer, "le", 8)],
+        programId
+      );
+      out.push({ id, pda });
+    }
+    return out;
+  };
+
+  if (nextLaunchId === null || nextBattleId === null || nextMarketId === null) {
+    console.warn(
+      `\n    Deterministic PDA discovery skipped — PlatformConfig counters are ` +
+        `unreadable, so there is no id range to derive from. The program-present ` +
+        `read above and the signed-tx proof below still stand. (No getProgramAccounts ` +
+        `fallback is used on the standard run — see E2E_GPA_INVENTORY below.)`
+    );
+  } else {
+    console.log(`\n    Direct PDA account verification (getMultipleAccountsInfo, no getProgramAccounts):`);
+
+    const launchPdas = derivePdasById("token_launch", nextLaunchId);
+    const battlePdas = derivePdasById("battle", nextBattleId);
+    const marketPdas = derivePdasById("market", nextMarketId);
+
+    const [launches, battles, markets] = await Promise.all([
+      program.account.tokenLaunch.fetchMultiple(launchPdas.map((p) => p.pda)),
+      program.account.battle.fetchMultiple(battlePdas.map((p) => p.pda)),
+      program.account.market.fetchMultiple(marketPdas.map((p) => p.pda)),
+    ]);
+
+    const liveLaunches = launchPdas
+      .map((p, i) => ({ ...p, account: launches[i] }))
+      .filter((x) => x.account !== null);
+    const liveBattles = battlePdas
+      .map((p, i) => ({ ...p, account: battles[i] }))
+      .filter((x) => x.account !== null);
+    const liveMarkets = marketPdas
+      .map((p, i) => ({ ...p, account: markets[i] }))
+      .filter((x) => x.account !== null);
+
+    console.log(
+      `    -> tokenLaunch: ${liveLaunches.length} live of ${launchPdas.length} ids scanned ` +
+        `[ids: ${liveLaunches.map((x) => x.id).join(", ") || "none"}]`
+    );
+    console.log(
+      `    -> battles:     ${liveBattles.length} live of ${battlePdas.length} ids scanned ` +
+        `[ids: ${liveBattles.map((x) => x.id).join(", ") || "none"}]`
+    );
+    console.log(
+      `    -> markets:     ${liveMarkets.length} live of ${marketPdas.length} ids scanned ` +
+        `[ids: ${liveMarkets.map((x) => x.id).join(", ") || "none"}]`
+    );
+
+    const sampleLaunch = liveLaunches[0];
+    if (sampleLaunch?.account) {
+      console.log(
+        `    sample tokenLaunch id=${sampleLaunch.id} ${sampleLaunch.pda.toBase58()}: ` +
+          `${sampleLaunch.account.symbol} mint=${sampleLaunch.account.tokenMint.toBase58()}`
+      );
+    }
+    const sampleBattle = liveBattles[0];
+    if (sampleBattle?.account) {
+      console.log(
+        `    sample battle     id=${sampleBattle.id} ${sampleBattle.pda.toBase58()}: ` +
+          `title="${sampleBattle.account.title}" totalPool=${Number(sampleBattle.account.totalPool)}`
+      );
+    }
+    const sampleMarket = liveMarkets[0];
+    if (sampleMarket?.account) {
+      console.log(
+        `    sample market     id=${sampleMarket.id} ${sampleMarket.pda.toBase58()}: ` +
+          `questionId="${sampleMarket.account.questionId}"`
+      );
+    }
   }
-  if (tokens[0]) {
-    const t = tokens[0];
-    console.log(`    sample token  ${t.publicKey.toBase58()}: ${t.account.symbol} mint=${t.account.tokenMint.toBase58()}`);
+
+  // --- OPTIONAL: legacy getProgramAccounts inventory (env-gated, debug-only) -
+  // The program-wide scan is NOT used by the standard run because many free RPC
+  // tiers (e.g. Alchemy Free) disable getProgramAccounts. It remains available as
+  // an admin/indexer/debug path behind E2E_GPA_INVENTORY=1, with a clear note.
+  if (process.env.E2E_GPA_INVENTORY === "1") {
+    console.log(
+      `\n    [debug] getProgramAccounts inventory requested (E2E_GPA_INVENTORY=1). ` +
+        `Note: this RPC provider may not support getProgramAccounts on a free tier.`
+    );
+    try {
+      const [battles, markets, tokens] = await Promise.all([
+        program.account.battle.all(),
+        program.account.market.all(),
+        program.account.tokenLaunch.all(),
+      ]);
+      console.log(`    -> battles:     ${battles.length}`);
+      console.log(`    -> markets:     ${markets.length}`);
+      console.log(`    -> tokenLaunch: ${tokens.length}`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      const tierBlocked = /getProgramAccounts is not available|not available on the .* tier/i.test(msg);
+      console.warn(
+        `    [debug] getProgramAccounts inventory skipped — ${
+          tierBlocked
+            ? "this RPC tier disables getProgramAccounts (use a paid devnet RPC for the bulk scan)"
+            : msg
+        }. This is OPTIONAL; the deterministic PDA verification above is the real proof.`
+      );
+    }
   }
 
   // --- (4) signing-liveness proof — REAL tx, economically neutral ----------
@@ -181,12 +315,26 @@ async function main() {
   let sig: string;
   try {
     sig = await connection.sendTransaction(tx, [keypair]);
-    await connection.confirmTransaction(sig, "confirmed");
+    // Confirm via HTTP polling (getSignatureStatuses), NOT confirmTransaction:
+    // the latter opens a `signatureSubscribe` WebSocket, which key-only HTTPS RPC
+    // endpoints (e.g. Alchemy) don't serve — it would hang for 30s and time out
+    // even though the tx already landed. Polling is HTTP-only and authoritative.
+    const status = await confirmByPolling(connection, sig);
+    console.log(`    Confirmed: ${status} (via getSignatureStatuses)`);
   } catch (err) {
     die(`signing-liveness transfer failed: ${err instanceof Error ? err.message : String(err)}`);
   }
   console.log(`    Signature: ${sig}`);
   console.log(`    ${explorerTx(sig)}`);
+
+  // --- focused proof summary (signer · program · tx · PDA reads · link) ----
+  console.log(`\n=== E2E PROOF SUMMARY ===`);
+  console.log(`  Signer wallet:   ${keypair.publicKey.toBase58()}`);
+  console.log(`  Program id:      ${programId.toBase58()}`);
+  console.log(`  PlatformConfig:  ${configPDA.toBase58()} (read OK${nextLaunchId === null ? " — uninitialised" : ""})`);
+  console.log(`  Account verify:  deterministic PDA reads via getMultipleAccountsInfo (no getProgramAccounts)`);
+  console.log(`  Tx signature:    ${sig}`);
+  console.log(`  Explorer (tx):   ${explorerTx(sig)}`);
 
   console.log(`\n✅  E2E PASSED — chain reachable, program present, account reads real, wallet can sign.`);
 }

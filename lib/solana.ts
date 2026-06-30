@@ -5,12 +5,19 @@
  * Devnet-only by design. Do NOT point these at mainnet without an audit.
  */
 import { PublicKey } from "@solana/web3.js";
+import { assertDevnetNetwork, assertNotMainnet } from "./solanaNetwork";
 
 export const SOLANA_NETWORK =
   process.env.NEXT_PUBLIC_SOLANA_NETWORK || "devnet";
 
 export const SOLANA_RPC_URL =
   process.env.NEXT_PUBLIC_SOLANA_RPC_URL || "https://api.devnet.solana.com";
+
+// Fail loud (browser + server) if anyone configures a non-devnet network or a
+// mainnet RPC. This is the single source of truth for the frontend endpoint, so
+// guarding here covers SolanaProvider (wallet connection) and useProgram (Anchor).
+assertDevnetNetwork(SOLANA_NETWORK, "NEXT_PUBLIC_SOLANA_NETWORK");
+assertNotMainnet(SOLANA_RPC_URL, "NEXT_PUBLIC_SOLANA_RPC_URL");
 
 /** Deployed prediction-market program id (Devnet). Overridable via env. */
 export const PROGRAM_ID_STR =

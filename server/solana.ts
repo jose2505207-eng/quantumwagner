@@ -7,9 +7,15 @@
  */
 import { Connection } from "@solana/web3.js";
 import { SOLANA_RPC_URL as PUBLIC_RPC } from "@/lib/solana";
+import { assertNotMainnet } from "@/lib/solanaNetwork";
 import { DEMO_MODE } from "@/lib/game/config";
 
-const RPC = process.env.SOLANA_RPC_URL || PUBLIC_RPC;
+// Server-side RPC: prefer the authenticated Anchor/devnet endpoint (may carry a
+// key — never exposed to the browser), then the server SOLANA_RPC_URL, then the
+// public devnet fallback. Devnet-only (guarded).
+const RPC =
+  process.env.ANCHOR_PROVIDER_URL || process.env.SOLANA_RPC_URL || PUBLIC_RPC;
+assertNotMainnet(RPC, "server Solana RPC (ANCHOR_PROVIDER_URL/SOLANA_RPC_URL)");
 
 let _conn: Connection | null = null;
 export function solanaConnection(): Connection {

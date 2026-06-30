@@ -56,13 +56,18 @@ pnpm test:watch    # watch mode (vitest)
 ### Devnet on-chain E2E harness (`pnpm e2e`, not in CI)
 `test/e2e/devnet-e2e.ts` is a **live on-chain** harness: it confirms the deployed
 program (`idl/prediction_market.json`, 18 instructions) is reachable on devnet,
-performs real read-only account reads (`PlatformConfig` PDA + `getProgramAccounts`
-inventory), and proves signing-liveness with a 0-lamport self-transfer that yields
-a **real** transaction signature. `Source: test/e2e/devnet-e2e.ts`,
+performs real read-only account reads (`PlatformConfig` PDA, then **deterministic
+PDA discovery** — `token_launch`/`battle`/`market` PDAs derived by id from the
+config counters and batch-read with `getMultipleAccountsInfo`), and proves
+signing-liveness with a 0-lamport self-transfer that yields a **real** transaction
+signature. The standard run does **not** use `getProgramAccounts`, so a free-tier
+devnet RPC suffices; the program-wide scan is kept only as an opt-in debug path
+(`E2E_GPA_INVENTORY=1`). `Source: test/e2e/devnet-e2e.ts`,
 `Source: test/e2e/README.md`.
 
 ```bash
-pnpm e2e           # tsx test/e2e/devnet-e2e.ts
+# IPv4-first avoids unreachable-AAAA hangs on some hosts:
+NODE_OPTIONS="--dns-result-order=ipv4first" pnpm e2e   # tsx test/e2e/devnet-e2e.ts
 ```
 
 It is **excluded from `pnpm test` and CI** (`test/e2e/**` is in the node config's
