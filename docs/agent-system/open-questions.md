@@ -36,13 +36,19 @@ with how to verify. Do NOT guess these in code or docs. (Sourced from
    being requested from the team). `.gitignore` now excludes `.devnet/` so a local
    keypair can be dropped in for the E2E run without risk of committing it. Do NOT
    fabricate signatures; this stays open until a real run is captured.
-   *Status (Loop 7) — harness BUILT, still blocked on creds:* the E2E harness now
-   exists — `test/e2e/devnet-e2e.ts` + `pnpm e2e` (excluded from CI via
-   `vitest.config.ts`). It does real read-only account reads + a 0-lamport
-   self-transfer for a real signature, and **fails LOUD at 0 SOL** (no skip-as-pass,
-   no fake signature). It turns green only once a funded keypair is at `.devnet/id.json`
-   (pubkey `EBJjWqRqR6qidwo9qNNpaDvveX6A5PRD1avtxvDkVphA`) and an authenticated
-   `ANCHOR_PROVIDER_URL` is set. Still OPEN until a real signature is captured.
+   *RESOLVED (Loop 7):* **proven on live devnet with a real, confirmed transaction.**
+   `pnpm e2e` (`test/e2e/devnet-e2e.ts`, excluded from CI) reads the real
+   `PlatformConfig` PDA, verifies live accounts by **deterministic PDA derivation**
+   (4 token launches, 7 battles, 0 markets — matching the on-chain counters, with
+   NO `getProgramAccounts`, so it works on free-tier RPC), and signs + confirms a
+   0-lamport self-transfer. Funded keypair `EBJjWqRqR6qidwo9qNNpaDvveX6A5PRD1avtxvDkVphA`
+   (~1 SOL) + an authenticated Alchemy devnet `ANCHOR_PROVIDER_URL` (gitignored
+   `.env`). Cluster proven by genesis hash. Sample real tx:
+   `9c7hGBgp1ELMZSNm3WMHAjhAbgf2MmFSoYNsCyJFZdrAXxkYyiarZa8JUHJrJLK15M8EYat7Dpbor5NWKLMWpNA`
+   (`?cluster=devnet`). Run with `NODE_OPTIONS="--dns-result-order=ipv4first" pnpm e2e`.
+   Remaining: this proves reachability + signing, not the full create/bet/settle
+   instruction path end-to-end — a deeper harness could exercise one real
+   read-modify instruction next.
 
 4. **Is `RATE_LIMIT_ENABLED` actually enforced anywhere?**
    *RESOLVED (Loop 2):* Yes. `server/rateLimit.ts` gates on
