@@ -104,4 +104,151 @@ export async function getProfile() {
   return res.data;
 }
 
+// ----------------------------------------------------------------------------
+// Battles — record on-chain events (POST, auth required). These run AFTER the
+// Solana tx confirms; the backend re-verifies the signature (REQUIRE_ONCHAIN)
+// before persisting/awarding. `ref` may be the battle cuid OR its on-chain pda.
+// ----------------------------------------------------------------------------
+
+export type BattleSide = "A" | "B";
+
+/** Record a created battle. Idempotent on `pda`. Returns the backend row id. */
+export async function recordBattleCreated(input: {
+  title: string;
+  description?: string;
+  sideA?: string;
+  sideB?: string;
+  pda: string;
+  txSignature?: string;
+}): Promise<{ id: string } | null> {
+  try {
+    const res = await api.post(`/api/battles`, input);
+    return (res.data?.data?.battle as { id: string }) ?? null;
+  } catch (err) {
+    throw toApiError(err, "Failed to record battle");
+  }
+}
+
+/** Record a battle entry (join). */
+export async function recordBattleEntry(
+  ref: string,
+  input: { side: BattleSide; amount: number; txSignature?: string }
+): Promise<void> {
+  try {
+    await api.post(`/api/battles/${ref}/join`, input);
+  } catch (err) {
+    throw toApiError(err, "Failed to record battle entry");
+  }
+}
+
+/** Record a battle position increase. */
+export async function recordBattleIncrease(
+  ref: string,
+  input: { amount: number; txSignature?: string }
+): Promise<void> {
+  try {
+    await api.post(`/api/battles/${ref}/increase`, input);
+  } catch (err) {
+    throw toApiError(err, "Failed to record battle increase");
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Markets — record on-chain events (POST, auth required). `ref` may be the
+// market cuid OR its on-chain pda. Bets/withdrawals re-verify on-chain; market
+// creation is soft-verified (admin off-chain markets are allowed).
+// ----------------------------------------------------------------------------
+
+export type MarketSide = "YES" | "NO";
+
+/** Record a created market. Idempotent on `pda`. Returns the backend row id. */
+export async function recordMarketCreated(input: {
+  question: string;
+  description?: string;
+  category?: string;
+  endTime: string | Date;
+  pda: string;
+  txSignature?: string;
+}): Promise<{ id: string } | null> {
+  try {
+    const res = await api.post(`/api/markets`, input);
+    return (res.data?.data?.market as { id: string }) ?? null;
+  } catch (err) {
+    throw toApiError(err, "Failed to record market");
+  }
+}
+
+/** Record a prediction (bet) on a market. */
+export async function recordPrediction(
+  ref: string,
+  input: { side: MarketSide; amount: number; txSignature?: string }
+): Promise<void> {
+  try {
+    await api.post(`/api/markets/${ref}/predictions`, input);
+  } catch (err) {
+    throw toApiError(err, "Failed to record prediction");
+  }
+}
+
+/** Record a market cancellation (creator-only). */
+export async function recordMarketCancel(
+  ref: string,
+  input: { txSignature?: string } = {}
+): Promise<void> {
+  try {
+    await api.post(`/api/markets/${ref}/cancel`, input);
+  } catch (err) {
+    throw toApiError(err, "Failed to record market cancel");
+  }
+}
+
+/** Record a winnings withdrawal from a market. */
+export async function recordMarketWithdraw(
+  ref: string,
+  input: { txSignature?: string } = {}
+): Promise<void> {
+  try {
+    await api.post(`/api/markets/${ref}/withdraw`, input);
+  } catch (err) {
+    throw toApiError(err, "Failed to record market withdrawal");
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Token launchpad — record on-chain events (POST, auth required). `ref` may be
+// the token cuid OR its SPL mint. Launch is hard-verified on-chain.
+// ----------------------------------------------------------------------------
+
+export type TokenAction = "buy" | "sell" | "claim" | "royalties";
+
+/** Record a launched token. Idempotent on `mint`. Returns the backend row id. */
+export async function recordTokenLaunch(input: {
+  name: string;
+  symbol: string;
+  description?: string;
+  imageUri?: string;
+  totalSupply?: string;
+  mint: string;
+  txSignature?: string;
+}): Promise<{ id: string } | null> {
+  try {
+    const res = await api.post(`/api/launchpad/tokens`, input);
+    return (res.data?.data?.token as { id: string }) ?? null;
+  } catch (err) {
+    throw toApiError(err, "Failed to record token launch");
+  }
+}
+
+/** Record a token event: buy | sell | claim (creator tokens) | royalties. */
+export async function recordTokenEvent(
+  ref: string,
+  input: { action: TokenAction; amount?: number; txSignature?: string }
+): Promise<void> {
+  try {
+    await api.post(`/api/launchpad/tokens/${ref}/trade`, input);
+  } catch (err) {
+    throw toApiError(err, "Failed to record token event");
+  }
+}
+
 export { API_URL };

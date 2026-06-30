@@ -44,6 +44,17 @@ import {
 import toast from "react-hot-toast";
 import { useGameStore } from "@/store/useGameStore";
 import {
+  recordBattleCreated,
+  recordBattleEntry,
+  recordBattleIncrease,
+  recordMarketCreated,
+  recordPrediction,
+  recordMarketCancel,
+  recordMarketWithdraw,
+  recordTokenLaunch,
+  recordTokenEvent,
+} from "@/lib/api";
+import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getAccount,
   getAssociatedTokenAddress,
@@ -242,6 +253,20 @@ export default function Methods() {
         .rpc({ skipPreflight: false, preflightCommitment: "confirmed" });
 
       toast.success("Market created succssfully!");
+
+      // Best-effort: record the confirmed on-chain market to the backend.
+      try {
+        await recordMarketCreated({
+          question: questionId,
+          category: Object.keys(category)[0] ?? "CRYPTO",
+          endTime: new Date(Date.now() + durationSeconds.toNumber() * 1000),
+          pda: marketPDA.toBase58(),
+          txSignature: tx,
+        });
+      } catch (e) {
+        console.warn("market create not recorded to backend:", e);
+      }
+
       return marketPDA.toBase58();
     } catch (err) {
       if (err instanceof anchor.AnchorError)
@@ -292,6 +317,17 @@ export default function Methods() {
       toast.success("Bet placed successfully");
       // Real on-chain action → completes the "first prediction" milestone.
       useGameStore.getState().completeLevel("first-prediction");
+
+      // Best-effort: record the confirmed on-chain bet to the backend.
+      try {
+        await recordPrediction(marketPDA.toBase58(), {
+          side: outcome ? "YES" : "NO",
+          amount,
+          txSignature: tx,
+        });
+      } catch (e) {
+        console.warn("prediction not recorded to backend:", e);
+      }
       return tx;
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
@@ -311,6 +347,13 @@ export default function Methods() {
           market: marketPDA,
         })
         .rpc({ skipPreflight: false, preflightCommitment: "confirmed" });
+
+      // Best-effort: record the confirmed on-chain cancellation to the backend.
+      try {
+        await recordMarketCancel(marketPDA.toBase58(), { txSignature: tx });
+      } catch (e) {
+        console.warn("market cancel not recorded to backend:", e);
+      }
     } catch (err) {
       throw err;
     }
@@ -371,6 +414,13 @@ export default function Methods() {
           systemProgram: SystemProgram.programId,
         })
         .rpc({ skipPreflight: false, preflightCommitment: "confirmed" });
+
+      // Best-effort: record the confirmed on-chain withdrawal to the backend.
+      try {
+        await recordMarketWithdraw(marketPDA.toBase58(), { txSignature: tx });
+      } catch (e) {
+        console.warn("withdraw not recorded to backend:", e);
+      }
 
       return tx;
     } catch (err) {
@@ -512,6 +562,22 @@ export default function Methods() {
       toast.success("Token launched successfully!");
       // Real on-chain action → completes the "launch token" milestone.
       useGameStore.getState().completeLevel("launch-token");
+
+      // Best-effort: record the confirmed on-chain token launch to the backend.
+      try {
+        await recordTokenLaunch({
+          name: data.name,
+          symbol: data.symbol,
+          description: data.description,
+          imageUri: data.imageUrl,
+          totalSupply: String(data.totalSupply),
+          mint: tokenMintPda.toBase58(),
+          txSignature: tx,
+        });
+      } catch (e) {
+        console.warn("token launch not recorded to backend:", e);
+      }
+
       return {
         tx,
         tokenMint: tokenMintPda.toBase58(),
@@ -585,6 +651,17 @@ export default function Methods() {
         .rpc();
 
       toast.success("Token purchase successful!");
+
+      // Best-effort: record the confirmed on-chain buy to the backend.
+      try {
+        await recordTokenEvent(tokenMint.toBase58(), {
+          action: "buy",
+          amount: tokenAmount,
+          txSignature: tx,
+        });
+      } catch (err) {
+        console.warn("token buy not recorded to backend:", err);
+      }
     } catch (e) {
       toast.error("Token purchase failed");
     }
@@ -649,6 +726,17 @@ export default function Methods() {
         systemProgram: SystemProgram.programId,
       })
       .rpc();
+
+    // Best-effort: record the confirmed on-chain sell to the backend.
+    try {
+      await recordTokenEvent(tokenMint.toBase58(), {
+        action: "sell",
+        amount: tokenAmount,
+        txSignature: tx,
+      });
+    } catch (err) {
+      console.warn("token sell not recorded to backend:", err);
+    }
 
     return tx;
   };
@@ -794,6 +882,16 @@ export default function Methods() {
         .rpc();
 
       toast.success("Token claimed successfully!");
+
+      // Best-effort: record the confirmed on-chain creator-token claim.
+      try {
+        await recordTokenEvent(tokenMint.toBase58(), {
+          action: "claim",
+          txSignature: tx,
+        });
+      } catch (err) {
+        console.warn("token claim not recorded to backend:", err);
+      }
     } catch (e) {
       // Anchor surfaces program errors either as `e.error.message` or `e.message`.
       const anchorErr = e as { error?: { message?: string }; message?: string };
@@ -947,6 +1045,17 @@ export default function Methods() {
 
       toast.dismiss();
       toast.success("Royalties withdrawn successfully!");
+
+      // Best-effort: record the confirmed on-chain royalty withdrawal.
+      try {
+        await recordTokenEvent(tokenLaunchAccount.tokenMint.toString(), {
+          action: "royalties",
+          txSignature: tx,
+        });
+      } catch (e) {
+        console.warn("royalty withdrawal not recorded to backend:", e);
+      }
+
       return tx;
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : String(err ?? "");
@@ -1019,6 +1128,21 @@ export default function Methods() {
       })
       .rpc();
     toast.success("Battle Created successfully!");
+
+    // Best-effort: record the confirmed on-chain event to the backend (indexing,
+    // XP, leaderboard). The tx already landed, so a backend hiccup must not throw.
+    try {
+      await recordBattleCreated({
+        title,
+        description,
+        sideA: sideAName,
+        sideB: sideBName,
+        pda: battlePDA.toBase58(),
+        txSignature: tx,
+      });
+    } catch (e) {
+      console.warn("battle create not recorded to backend:", e);
+    }
 
     return {
       tx,
@@ -1156,6 +1280,19 @@ export default function Methods() {
     // Real on-chain action → completes the "join meme battle" milestone.
     useGameStore.getState().completeLevel("join-meme-battle");
 
+    // Best-effort: record the confirmed on-chain entry to the backend. The enum
+    // arrives as { sideA: {} } / { sideB: {} } (or { a }/{ b }); map to "A"/"B".
+    try {
+      const sideLetter = side && ("sideA" in side || "a" in side) ? "A" : "B";
+      await recordBattleEntry(battlePDA.toBase58(), {
+        side: sideLetter,
+        amount,
+        txSignature: tx,
+      });
+    } catch (e) {
+      console.warn("battle entry not recorded to backend:", e);
+    }
+
     return { tx, battlePositionPDA };
   };
 
@@ -1196,6 +1333,16 @@ export default function Methods() {
         systemProgram: SystemProgram.programId,
       })
       .rpc();
+
+    // Best-effort: record the confirmed on-chain increase to the backend.
+    try {
+      await recordBattleIncrease(battlePDA.toBase58(), {
+        amount: additionalAmount,
+        txSignature: tx,
+      });
+    } catch (e) {
+      console.warn("battle increase not recorded to backend:", e);
+    }
 
     return { tx };
   };

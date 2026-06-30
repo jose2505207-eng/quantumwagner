@@ -16,11 +16,17 @@ export const createMarketSchema = z.object({
   category: z.string().max(40).optional().default("CRYPTO"),
   endTime: z.coerce.date(),
   pda: z.string().optional(),
+  txSignature: z.string().optional(),
 });
 
 export const placePredictionSchema = z.object({
   side: z.enum(["YES", "NO"]),
   amount: z.coerce.number().positive().max(1_000_000),
+  txSignature: z.string().optional(),
+});
+
+// withdraw winnings / cancel market — event records keyed by the on-chain tx.
+export const marketTxSchema = z.object({
   txSignature: z.string().optional(),
 });
 
@@ -62,10 +68,16 @@ export const createBattleSchema = z.object({
   sideA: z.string().max(60).optional().default("Side A"),
   sideB: z.string().max(60).optional().default("Side B"),
   pda: z.string().optional(),
+  txSignature: z.string().optional(),
 });
 
 export const joinBattleSchema = z.object({
   side: z.enum(["A", "B"]),
+  amount: z.coerce.number().positive().max(1_000_000),
+  txSignature: z.string().optional(),
+});
+
+export const increaseBattleSchema = z.object({
   amount: z.coerce.number().positive().max(1_000_000),
   txSignature: z.string().optional(),
 });
@@ -86,5 +98,13 @@ export const createTokenSchema = z.object({
   imageUri: z.string().max(500).optional().default(""),
   totalSupply: z.string().optional().default("0"),
   mint: z.string().optional(),
+  txSignature: z.string().optional(),
+});
+
+// buy / sell / claim-creator-tokens / withdraw-royalties — one discriminated
+// token event, keyed by the on-chain tx.
+export const tokenEventSchema = z.object({
+  action: z.enum(["buy", "sell", "claim", "royalties"]),
+  amount: z.coerce.number().nonnegative().max(1_000_000_000).optional().default(0),
   txSignature: z.string().optional(),
 });

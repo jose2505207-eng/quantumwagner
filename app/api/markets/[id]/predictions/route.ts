@@ -30,7 +30,10 @@ export const POST = handler(
     const { id } = await ctx.params;
     const body = placePredictionSchema.parse(await req.json());
 
-    const market = await prisma.market.findUnique({ where: { id } });
+    // Accept either the market cuid or its on-chain pda (the frontend has the pda).
+    const market = await prisma.market.findFirst({
+      where: { OR: [{ id }, { pda: id }] },
+    });
     if (!market) return fail("market not found", 404);
     if (market.status !== "ACTIVE") return fail("market is not active", 409);
     if (market.endTime.getTime() < Date.now()) return fail("market has ended", 409);
@@ -59,7 +62,7 @@ export const POST = handler(
 
     const prediction = await prisma.prediction.create({
       data: {
-        marketId: id,
+        marketId: market.id,
         userId: claims.sub,
         side: body.side,
         amount: body.amount,
@@ -69,7 +72,7 @@ export const POST = handler(
     });
 
     await prisma.market.update({
-      where: { id },
+      where: { id: market.id },
       data:
         body.side === "YES"
           ? { yesPool: market.yesPool + body.amount }
