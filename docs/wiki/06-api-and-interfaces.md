@@ -26,6 +26,12 @@ cross-referenced with the maintained reference `docs/API.md`.
 | GET | `/api/health` | — | `app/api/health/route.ts` |
 | GET | `/api/config/public` | — | `app/api/config/public/route.ts` |
 
+`/api/health` returns `{ status, db, limiter, monitoring, time }` on success
+(503 if the DB is unreachable). `limiter` is the rate-limit backend
+(`disabled`/`memory`/`redis`); `monitoring` is `on`/`off`.
+`Source: app/api/health/route.ts`, `Source: server/rateLimit.ts`,
+`Source: server/monitoring.ts`.
+
 ### Auth (wallet signed-message)
 | Method | Path | Auth | Handler |
 | --- | --- | --- | --- |
@@ -37,6 +43,12 @@ cross-referenced with the maintained reference `docs/API.md`.
 
 Flow: `nonce` → wallet signs `message` (ed25519) → `verify-wallet` → JWT. Nonces
 single-use, 5-min TTL. `Source: server/auth.ts`, `Source: docs/API.md`.
+
+The auth endpoints call the rate limiter (no-op unless `RATE_LIMIT_ENABLED`):
+`auth-nonce` 30/min, `auth-verify` 20/min. The call is `await`ed (the limiter is
+async to support the Redis backend) and a `429` is thrown when the window is
+exceeded. `Source: app/api/auth/nonce/route.ts`,
+`Source: app/api/auth/verify-wallet/route.ts`, `Source: server/rateLimit.ts`.
 
 ### Player
 | Method | Path | Auth | Handler |
@@ -95,10 +107,16 @@ Body schemas (`Source: server/validators.ts`): `createMarketSchema`
 | --- | --- | --- | --- |
 | POST | `/api/oracle/webhook` | key | `app/api/oracle/webhook/route.ts` |
 | GET | `/api/oracle/resolutions/:id` | — | `app/api/oracle/resolutions/[id]/route.ts` |
+| GET | `/api/oracle/settle-stats` | — | `app/api/oracle/settle-stats/route.ts` |
+| GET | `/api/oracle/price` | — | `app/api/oracle/price/route.ts` |
 
 Resolution settles predictions pari-mutuel, awards XP/wins, updates the
 leaderboard, and writes an audit log. `Source: server/oracle.ts`,
-`Source: docs/API.md`.
+`Source: docs/API.md`. `GET /api/oracle/settle-stats` returns settlement
+analytics and is consumed by the admin **Oracle Stats** tab
+(`components/admin/OracleSettleStats.tsx`, mounted in `app/admin/page.tsx`).
+`Source: app/api/oracle/settle-stats/route.ts`,
+`Source: components/admin/OracleSettleStats.tsx`.
 
 > Method/auth columns marked from `docs/API.md` are the maintained reference; if
 > you change a handler's method or auth, re-open the matching `route.ts` to keep

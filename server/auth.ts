@@ -46,7 +46,6 @@ export function optionalAuth(req: Request): JwtClaims | null {
 /** Validate a base58 Solana address. */
 export function isValidWallet(address: string): boolean {
   try {
-    // eslint-disable-next-line no-new
     new PublicKey(address);
     return true;
   } catch {

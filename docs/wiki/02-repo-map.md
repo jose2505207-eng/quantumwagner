@@ -25,6 +25,8 @@ each area: what it owns, and whether it's safe to touch.
 | `contracts/` | Reference Anchor escrow program (Rust) | Separate workspace |
 | `config.ts` | On-chain program id, treasury, fee/param constants | Affects real chain calls |
 | `constants/` | FAQ, fonts, links | Safe |
+| `scripts/` | One-off ops scripts: `backfill-wins.ts` (wins reconciliation), `update-wiki.mjs` (wiki sync) | Run deliberately; `backfill-wins` is `--dry-run` by default |
+| `test/` | Vitest suites: `unit/`, `integration/` (node + Postgres), `component/` (jsdom), `e2e/` (live devnet) | Mirror existing patterns |
 | `docs/` | Hand-written docs (incl. this `wiki/`) | Keep in sync |
 
 `Source: repository root listing`
@@ -56,7 +58,7 @@ One folder per resource; `route.ts` files export `GET`/`POST` wrapped by
 | --- | --- |
 | `SolanaProvider.tsx` | Wallet adapter + connection context |
 | `walletAuth.tsx` | Side-effect: nonce → sign → verify → store JWT |
-| `useProgram.ts` | Builds the Anchor `Program` from the IDL (hardcoded devnet RPC) |
+| `useProgram.ts` | Builds the Anchor `Program` from the IDL (RPC from `lib/solana`, single source) |
 | `methods.tsx` | The big on-chain action module (markets/battles/tokens) |
 | `useAllBattles / useAllTokens / useUserBattles / useUserTokens / useUserBoughtTokens` | On-chain data hooks |
 | `hooks/` | `CountdownTimer`, `useCountDown`, `routeProgress` |
@@ -73,6 +75,8 @@ sign and send real (devnet) transactions.
 | `env.ts` | Zod-validated env; refuses insecure prod boot |
 | `db.ts` | Prisma client singleton |
 | `validators.ts` | Zod schemas for every request body |
+| `rateLimit.ts` | Async fixed-window limiter; pluggable `MemoryStore`/`RedisStore`; fails open |
+| `monitoring.ts` | `captureException`/`captureMessage`; no-op unless `MONITORING_DSN` set |
 | `oracle.ts` | Resolution adapters + pari-mutuel `applyResolution` |
 | `xp.ts` | `awardXp` (only XP path) + `completeLevelServer` |
 | `users.ts` | User lookup/creation, active season |
@@ -105,7 +109,8 @@ contract.
 `game/` (19) the HUD/progression layer · `ui/` (25) shadcn primitives ·
 `market/` (8), `marketing/` (8 — Navbar/Footer), `leaderboard/` (6),
 `reputationCards/` (6), `achivementNFTCards/` (6), `custom/` (5),
-`token-details/` (4), `admin/` (4), `buytoken/` (4), `battlearena/` (3),
+`token-details/` (4), `admin/` (5 — incl. `OracleSettleStats.tsx`, the
+admin "Oracle Stats" tab), `buytoken/` (4), `battlearena/` (3),
 `fastbet/` (3), `landing/` (3), `portfolio/` (3), `global/` (3),
 `positions/` (1), `helper/` (1).
 

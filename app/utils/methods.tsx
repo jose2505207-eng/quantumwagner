@@ -3,6 +3,8 @@
 import { PublicKey, SystemProgram } from "@solana/web3.js";
 import { useProgram } from "@/app/utils/useProgram";
 import * as anchor from "@coral-xyz/anchor";
+import type { IdlAccounts } from "@coral-xyz/anchor";
+import type { PredictionMarket } from "@/idl/types";
 import {
   treasury,
   royaltyVault,
@@ -66,16 +68,17 @@ export interface createToeknParams {
   tags: string[];
 }
 
+// Precise Anchor-decoded account shapes from the IDL. Loop 7 aligned the UI
+// consumer types to these (PublicKey, BN, option->null), so the container types
+// below are now the real decoded shapes instead of `any`.
+type DecodedBattle = IdlAccounts<PredictionMarket>["battle"];
+type DecodedTokenLaunch = IdlAccounts<PredictionMarket>["tokenLaunch"];
+
 type BoughtToken = {
   mint: string;
   balance: number;
   ata: string;
-  // NOTE: typing this as the precise Anchor-decoded tokenLaunch account cascades
-  // type errors into UI consumers (app/portfolio/token/*) whose hand-written
-  // shapes diverge from the IDL (PublicKey vs string, null vs undefined). Kept as
-  // `any` to preserve runtime + build stability; tracked as a Loop 7 backlog item
-  // (align UI consumer types to the IDL, then tighten this).
-  tokenData: any;
+  tokenData: DecodedTokenLaunch;
 };
 
 // Anchor enum args are encoded as a single-key object whose value is an empty
@@ -1037,11 +1040,7 @@ export default function Methods() {
     const battles: Array<{
       id: number;
       pda: PublicKey;
-      // NOTE: kept `any` (not the precise IDL battle type) — see BoughtToken.tokenData
-      // above. The decoded battle shape cascades type errors into the battle UI pages
-      // (app/battlearena/*, app/portfolio/battle/*) whose local BattleData types
-      // diverge from the IDL. Loop 7 backlog: align those, then tighten this.
-      data: any;
+      data: DecodedBattle;
     }> = [];
 
     for (let id = 0; id < nextBattleId; id++) {
@@ -1085,11 +1084,7 @@ export default function Methods() {
     const battles: Array<{
       id: number;
       pda: PublicKey;
-      // NOTE: kept `any` (not the precise IDL battle type) — see BoughtToken.tokenData
-      // above. The decoded battle shape cascades type errors into the battle UI pages
-      // (app/battlearena/*, app/portfolio/battle/*) whose local BattleData types
-      // diverge from the IDL. Loop 7 backlog: align those, then tighten this.
-      data: any;
+      data: DecodedBattle;
     }> = [];
 
     for (let id = 0; id < nextBattleId; id++) {

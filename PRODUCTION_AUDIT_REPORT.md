@@ -31,13 +31,13 @@ and no security/economic/legal review has occurred.
 | Database | **Postgres-ready** (provider `postgresql`, baseline migration committed). Needs a provisioned managed instance + `DATABASE_URL`; not yet connected to a live prod DB here. |
 | Fast bets | Backend is real; the **UI feed is still demo** data (badged). |
 | Token launch | Metadata persisted; **SPL deployment not wired**. |
-| Rate limiting | In-memory only — not distributed. |
-| Tests | Unit tests only; **no integration/E2E** in CI (core loop verified manually via script). |
-| Monitoring | No error tracking / alerting / analytics wired (hooks documented only). |
+| Rate limiting | Distributed-capable (Loop 7): in-memory default, **opt-in Redis/Upstash** backend via env. Default deploy is still single-instance until the Redis env is set. |
+| Tests | Server-authority integration suite + **client component tests** (jsdom/RTL, Loop 7) run in CI (106 tests). A **devnet on-chain E2E harness** exists (`pnpm e2e`) but is excluded from CI and not yet run green (needs funded creds). |
+| Monitoring | Env-gated hooks **wired** (Loop 7): `captureException` on the 500 path + `/api/health` status. No-op until `MONITORING_DSN` is set; no managed collector provisioned yet. |
 
 ## Risk register
 
-- **Security:** in-memory rate limiter won't span instances; no dependency scanning in CI; admin key is a shared secret (rotate + scope before prod). No critical client-trust issues found.
+- **Security:** rate limiter is now distributed-capable (opt-in Redis, Loop 7) — but defaults to in-memory until the env is set, so multi-instance prod must configure `RATE_LIMIT_REDIS_URL`/`_TOKEN`; no dependency scanning in CI; admin key is a shared secret (rotate + scope before prod). No critical client-trust issues found (Loop 7 security-review of the limiter/monitoring/auth-route changes: no findings).
 - **Legal/compliance:** prediction markets + token launches are regulated. **Blocker** — KYC/AML, geofencing, age gating, Terms, and counsel review required before real money. The app must stay devnet/demo until then.
 - **Smart contract:** UNAUDITED scaffold. Reentrancy/arithmetic/PDA/rent correctness unreviewed. Do not deploy to mainnet.
 - **Data integrity:** off-chain payouts mean the ledger is only as trustworthy as the DB; add reconciliation against chain once on-chain settlement lands. XP is event-sourced (`XPEvent`) and reconstructable.
@@ -54,9 +54,13 @@ and no security/economic/legal review has occurred.
 
 ## Test results
 
-- `pnpm test` (vitest): **25 passed / 25** — settlement math, ed25519 auth core, rank/level logic, server validators, rate limiter.
+- `pnpm test` (vitest): **106 passed / 106** (Loop 7) across two projects — the
+  node server-authority suite (settlement math, ed25519 auth, ranks/levels,
+  validators, oracle, fast-bet, rate limiter, wins backfill) and the jsdom
+  component suite (battlearena selector, OracleSettleStats).
 - `pnpm typecheck`: **0 errors**.
-- `pnpm lint`: new code clean; pre-existing legacy warnings documented.
+- `pnpm lint`: **0 errors** (Loop 7); ~143 pre-existing warnings remain as known
+  debt (unused imports, `<img>`→`<Image>`, exhaustive-deps).
 - `pnpm build`: **passes** (all routes + 30+ API handlers).
 - DB: `prisma migrate deploy` + `db:seed` succeed.
 - Manual E2E (script): nonce → sign → verify (L1) → create market → first prediction (L2) → admin resolve → win settled → leaderboard updated. ✅
@@ -64,8 +68,8 @@ and no security/economic/legal review has occurred.
 ## Remaining blockers (to production)
 
 1. Wire on-chain settlement (compile/deploy Anchor program; verify tx signatures).
-2. Provision managed Postgres + set `DATABASE_URL` + run `prisma migrate deploy`; add distributed rate limiting.
-3. Integration/E2E tests in CI for money flows.
+2. Provision managed Postgres + set `DATABASE_URL` + run `prisma migrate deploy`; for multi-instance, set `RATE_LIMIT_REDIS_URL`/`_TOKEN` to activate the distributed limiter (Loop 7 made it opt-in-ready).
+3. Run the devnet E2E harness green (funded keypair + RPC) and add money-flow E2E in CI.
 4. Security audit + economic review + **legal/compliance review**.
 5. Monitoring/alerting + analytics.
 

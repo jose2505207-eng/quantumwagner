@@ -158,7 +158,7 @@ export default function BattlePage() {
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-8 border-b border-gray-800 pb-6">
           <div className="flex-shrink-0">
             <img
-              src={d.imageUrl}
+              src={d.imageUrl ?? undefined}
               width={110}
               height={110}
               className="rounded-xl border border-gray-800"
@@ -257,11 +257,11 @@ export default function BattlePage() {
               </h3>
 
               <div className="flex gap-2">
-                {d.sideATokens.map((mint: string) => {
+                {d.sideATokens.map((mint) => {
                   const token = getToken(mint);
                   return (
                     <div
-                      key={mint}
+                      key={mint.toString()}
                       className="flex flex-col items-center gap-1"
                     >
                       <img
@@ -287,11 +287,11 @@ export default function BattlePage() {
               </h3>
 
               <div className="flex gap-2">
-                {d.sideBTokens.map((mint: string) => {
+                {d.sideBTokens.map((mint) => {
                   const token = getToken(mint);
                   return (
                     <div
-                      key={mint}
+                      key={mint.toString()}
                       className="flex flex-col items-center gap-1"
                     >
                       <img

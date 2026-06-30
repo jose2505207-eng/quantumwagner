@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LayoutDashboard, Users, Loader2, Copy, Edit2 } from "lucide-react";
+import { LayoutDashboard, Users, Loader2, Copy, Edit2, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Stats from "@/components/admin/Stats";
 import CreateMarkets from "@/components/admin/CreateMarket";
 import ActiveMarkets from "@/components/admin/ActiveMarkets";
+import OracleSettleStats from "@/components/admin/OracleSettleStats";
 import { useMarketStore } from "@/store/adminMarketStore";
 import { useUserStore } from "@/store/userInfo";
 import { notFound } from "next/navigation";
@@ -34,6 +35,7 @@ import Methods from "../utils/methods";
 const navItems = [
   { name: "Dashboard", icon: LayoutDashboard },
   { name: "User Management", icon: Users },
+  { name: "Oracle Stats", icon: Activity },
 ];
 
 export default function AdminDashboard() {
@@ -187,6 +189,8 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
+
+        {active === "Oracle Stats" && <OracleSettleStats />}
 
         {active === "User Management" && (
           <div className="space-y-4">

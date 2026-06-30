@@ -12,9 +12,11 @@ interface BattleData {
   sideBPool?: unknown;
   totalPool?: unknown;
   title?: string;
-  imageUrl?: string;
+  imageUrl?: string | null;
   uniqueParticipants?: unknown;
-  endTime?: string | number;
+  // Decoded on-chain value is a BN of unix seconds; other call paths may pass a
+  // number/string. Kept `unknown` (like the pool fields) and coerced via safe().
+  endTime?: unknown;
 }
 
 interface BattleCardProps {
@@ -103,7 +105,7 @@ export function BattleCard({ battle, index }: BattleCardProps) {
             </div>
             <div className="flex items-center gap-1.5">
               <Timer className="w-3.5 h-3.5" />
-              <span>Ends {d.endTime ? new Date(d.endTime).toLocaleDateString() : "—"}</span>
+              <span>Ends {d.endTime ? new Date(Number(safe(d.endTime)) * 1000).toLocaleDateString() : "—"}</span>
             </div>
           </div>
         </div>

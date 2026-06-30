@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
  * with the existing frontend (`success`, `token`, `user`).
  */
 export const POST = handler(async (req: Request) => {
-  rateLimit(req, "auth-verify", 20, 60_000);
+  await rateLimit(req, "auth-verify", 20, 60_000);
   const body = verifyWalletSchema.parse(await req.json());
   if (!isValidWallet(body.wallet_address)) return fail("invalid wallet address", 400);
 

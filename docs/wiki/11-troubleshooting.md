@@ -22,6 +22,9 @@ code that produces the behaviour.
 | `/api/health` not healthy | DB unreachable / migrations not applied | run `pnpm db:migrate` (`Source: app/api/health/route.ts`, `README.md`) |
 | `market already resolved` error on resolve | resolving a `RESOLVED` market | expected guard; markets resolve once (`Source: server/oracle.ts`) |
 | `invalid admin resolution key` | wrong/missing `adminKey` for the admin resolver | pass the configured `ADMIN_RESOLUTION_KEY` (`Source: server/oracle.ts`) |
+| `429 Rate limit exceeded` on `/api/auth/*` | too many nonce/verify calls in the window | back off and retry; tune via `RATE_LIMIT_ENABLED` and the Redis backend env (`Source: server/rateLimit.ts`) |
+| Limiter silently allows everything under load | Redis backend unreachable → **fail-open** by design | check `GET /api/health` `limiter` field + Upstash creds; a down backend never 429s (`Source: server/rateLimit.ts`) |
+| `profile.wins` undercounts a player's first win | Loop 5 fixed it forward-only; pre-fix first wins stayed −1 | run `tsx scripts/backfill-wins.ts` (`--dry-run` default; `--apply` to write) to recount from settled records (`Source: scripts/backfill-wins.ts`) |
 
 ## Data & honesty
 
@@ -38,7 +41,8 @@ code that produces the behaviour.
 | Symptom | Cause | Fix |
 | --- | --- | --- |
 | `useProgram()` returns `null` | no connected Anchor wallet | connect a wallet first (`Source: app/utils/useProgram.ts`) |
-| Tx fails / wrong cluster after RPC change | `useProgram.ts` hardcodes the devnet RPC | update the hardcoded URL too, not just env (`Source: app/utils/useProgram.ts`) |
+| Tx fails / wrong cluster after RPC change | endpoint comes from `lib/solana` (`SOLANA_RPC_URL`) | set `NEXT_PUBLIC_SOLANA_RPC_URL`; both provider + program read it — no hardcoded URL to chase (`Source: lib/solana.ts`, `app/utils/useProgram.ts`) |
+| `pnpm e2e` fails loud at 0 SOL | devnet wallet unfunded | fund the keypair (faucet/authenticated RPC); the harness is meant to fail at 0 SOL, not skip (`Source: test/e2e/README.md`) |
 | `anchor test`/`deploy` fails | Solana/Anchor toolchain missing | install Rust + Solana CLI + Anchor (avm); not vendored (`Source: docs/DEVNET_DEPLOYMENT.md`) |
 | Program id mismatch | reference scaffold uses placeholder `Quantum111…` | `anchor keys sync` after build; update `config.ts` + `NEXT_PUBLIC_PROGRAM_ID` (`Source: contracts/quantum_wager/Anchor.toml`) |
 

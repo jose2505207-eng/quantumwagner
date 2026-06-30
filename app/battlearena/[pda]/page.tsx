@@ -124,7 +124,7 @@ export default function BattlePage() {
       {/* Ambient Background Image */}
       <div className="fixed inset-0 z-0 opacity-20 pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent z-10" />
-        <img src={d.imageUrl} className="w-full h-full object-cover blur-3xl scale-110" alt="" />
+        <img src={d.imageUrl ?? undefined} className="w-full h-full object-cover blur-3xl scale-110" alt="" />
       </div>
 
       <div className="relative z-10 container mx-auto px-4 py-8 lg:py-12 mt-20 max-w-7xl">
@@ -165,9 +165,9 @@ export default function BattlePage() {
             >
               <div className="aspect-video relative">
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-transparent to-transparent z-10" />
-                <img 
-                  src={d.imageUrl} 
-                  alt={d.title} 
+                <img
+                  src={d.imageUrl ?? undefined}
+                  alt={d.title}
                   className="w-full h-full object-cover"
                 />
                 
@@ -210,21 +210,21 @@ export default function BattlePage() {
                 side="A" 
                 name={d.sideAName} 
                 participants={d.sideAParticipants} 
-                tokens={d.sideATokens} 
+                tokens={d.sideATokens.map((t) => t.toString())}
                 getToken={getToken} 
                 isOpen={detailsOpen}
                 onToggle={() => setDetailsOpen(!detailsOpen)}
-                pool={d.sideAPool}
+                pool={d.sideAPool.toString()}
               />
               <SideCard 
                 side="B" 
                 name={d.sideBName} 
                 participants={d.sideBParticipants} 
-                tokens={d.sideBTokens} 
+                tokens={d.sideBTokens.map((t) => t.toString())}
                 getToken={getToken} 
                 isOpen={detailsOpen}
                 onToggle={() => setDetailsOpen(!detailsOpen)}
-                pool={d.sideBPool}
+                pool={d.sideBPool.toString()}
               />
             </div>
 

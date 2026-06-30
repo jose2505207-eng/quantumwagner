@@ -10,9 +10,15 @@ underlying code/config changes.
   `eslint.ignoreDuringBuilds: true`). Run `pnpm lint` separately.
 - **Typecheck:** `pnpm typecheck` (`tsc --noEmit`).
 - **Dev:** `pnpm dev`; health probe `curl localhost:3000/api/health`.
-- **Test:** `pnpm test` (`vitest run`) — targets the **server authority layer**;
-  `vitest.config.ts` forces a **single fork** (one process drives the SQLite file)
-  and uses `test/setup.ts`. `pnpm test:watch` to iterate.
+- **Test:** `pnpm test` (`vitest run`) runs **two Vitest projects** via
+  `vitest.workspace.ts` (Loop 7): (1) the **server authority layer** —
+  `vitest.config.ts`, `environment:"node"`, single fork, `test/setup.ts`
+  (provisions a real Postgres `quantum_test` schema); (2) the **client component
+  layer** — `vitest.component.config.ts`, `jsdom` + `@testing-library/react`,
+  DB-free `test/component/setup.ts`, specs in `test/component/**`. The node project
+  `exclude`s `test/component/**` and `test/e2e/**`. 106 tests as of Loop 7.
+  `pnpm test:watch` to iterate. Live on-chain proof is separate: `pnpm e2e`
+  (`test/e2e/devnet-e2e.ts`) — needs a funded devnet wallet, never gates CI.
 
 ## Database
 
@@ -62,6 +68,19 @@ underlying code/config changes.
   ("Prisma config detected, skipping environment variable loading"), so
   `prisma.config.ts` loads `.env`/`.env.local` itself — don't delete that loader or
   `prisma db push`/migrate/generate lose DATABASE_URL / TEST_DATABASE_URL.
+- **Rate limiter + monitoring (Loop 7, both env-gated, no-op by default):**
+  `server/rateLimit.ts` puts the fixed-window counter behind a `RateLimitStore`
+  interface — `MemoryStore` (default) or `RedisStore` (Upstash REST via `fetch`,
+  opt-in via `RATE_LIMIT_REDIS_URL`+`RATE_LIMIT_REDIS_TOKEN`). `rateLimit()` is
+  **async** (call sites `await`) and **fails open** if the backend errors.
+  `server/monitoring.ts` (`captureException`/`captureMessage`) no-ops unless
+  `MONITORING_DSN` is set; wired fire-and-forget into `server/http.ts`'s 500 path
+  (response never changes). `GET /api/health` reports `limiter`/`monitoring` status.
+- **wins backfill (Loop 7):** `scripts/backfill-wins.ts` (idempotent; `--dry-run`
+  default, `--apply`) recomputes `profile.wins` + active-season
+  `LeaderboardEntry.wins` from settled `FastBetEntry`/`Prediction`/`MemeBattleEntry`
+  records — the forward-only Loop-5 first-win fix is not retroactive, so this
+  reconciles pre-fix under-counts. No schema change.
 - **Fast-bet settlement value path (`server/fastbetSettlement.ts`):** first win
   grants the Level-3 milestone AND counts the win (Loop 5 fix — `completeLevelServer`
   takes `win?:boolean`); `awardXp` sets season `LeaderboardEntry.wins` to the

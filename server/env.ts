@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { assertNotMainnet, assertDevnetNetwork } from "@/lib/solanaNetwork";
 
 /**
  * Server env validation. Fails fast in production if required secrets are
@@ -19,8 +20,22 @@ const schema = z.object({
   ORACLE_MODE: z.enum(["dev", "admin", "provider"]).default("admin"),
   ADMIN_RESOLUTION_KEY: z.string().default("dev-admin-key-change-me"),
   RATE_LIMIT_ENABLED: z.string().optional(),
+  // Optional distributed limiter backend (Upstash Redis REST). When BOTH are set
+  // the limiter uses Redis instead of in-memory; absence keeps memory behavior.
+  RATE_LIMIT_REDIS_URL: z.string().optional(),
+  RATE_LIMIT_REDIS_TOKEN: z.string().optional(),
+  // Optional monitoring sink. MONITORING_DSN set -> unhandled 5xx are POSTed as
+  // JSON; unset (or MONITORING_ENABLED="false") -> no-op. Provider-agnostic.
+  MONITORING_ENABLED: z.string().optional(),
+  MONITORING_DSN: z.string().optional(),
   SOLANA_NETWORK: z.string().default("devnet"),
   SOLANA_RPC_URL: z.string().default("https://api.devnet.solana.com"),
+  // Server/Anchor RPC for on-chain + E2E paths (may carry an authenticated key —
+  // server-side only, never exposed to the browser). Optional: falls back to
+  // SOLANA_RPC_URL when unset. Must be devnet (guarded below).
+  ANCHOR_PROVIDER_URL: z.string().optional(),
+  ANCHOR_WALLET: z.string().optional(),
+  NEXT_PUBLIC_SOLANA_RPC_URL: z.string().optional(),
   // Pyth Hermes price oracle (public, keyless). PYTH_HERMES_URL has a safe
   // default; PYTH_FEED_IDS maps symbols to 32-byte feed ids (see .env.example).
   // ORACLE_PROVIDER selects the real provider ("pyth") over the loud stub.
@@ -42,7 +57,32 @@ if (!parsed.success) {
 
 export const env = parsed.success ? parsed.data : schema.parse({});
 
-// Loud warning if running prod with the insecure dev secret.
-if (isProd && env.JWT_SECRET === "dev-only-insecure-secret-change-me") {
-  throw new Error("JWT_SECRET must be set to a strong value in production");
+// ---------------------------------------------------------------------------
+// Devnet-only safety guard — UNCONDITIONAL (dev, build, and prod). Pointing any
+// Solana endpoint at mainnet, or setting a non-devnet network, is a hard refusal
+// regardless of NODE_ENV. These never echo a full URL (key-safe).
+// ---------------------------------------------------------------------------
+assertDevnetNetwork(env.SOLANA_NETWORK, "SOLANA_NETWORK");
+assertNotMainnet(env.SOLANA_RPC_URL, "SOLANA_RPC_URL");
+assertNotMainnet(env.ANCHOR_PROVIDER_URL, "ANCHOR_PROVIDER_URL");
+assertNotMainnet(env.NEXT_PUBLIC_SOLANA_RPC_URL, "NEXT_PUBLIC_SOLANA_RPC_URL");
+
+// ---------------------------------------------------------------------------
+// Production-only required secrets. Fail fast with ONE clear message listing
+// everything that is missing or still on an insecure dev default.
+// ---------------------------------------------------------------------------
+if (isProd) {
+  const problems: string[] = [];
+  if (env.JWT_SECRET === "dev-only-insecure-secret-change-me")
+    problems.push("JWT_SECRET (still the insecure dev default)");
+  if (env.ADMIN_RESOLUTION_KEY === "dev-admin-key-change-me")
+    problems.push("ADMIN_RESOLUTION_KEY (still the insecure dev default)");
+  if (!process.env.DATABASE_URL) problems.push("DATABASE_URL (unset)");
+  if (!process.env.WALLET_AUTH_MESSAGE)
+    problems.push("WALLET_AUTH_MESSAGE (unset)");
+  if (problems.length) {
+    throw new Error(
+      `Invalid production environment — fix the following: ${problems.join("; ")}.`
+    );
+  }
 }

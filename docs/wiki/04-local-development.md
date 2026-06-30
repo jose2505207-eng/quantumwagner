@@ -37,9 +37,13 @@ Why one process? The API is Next.js Route Handlers under `app/api/*`, so
 ## Verify it's alive
 
 ```bash
-curl localhost:3000/api/health        # { success, data: { status: "healthy" } }
+curl localhost:3000/api/health        # { status, db, limiter, monitoring, time }
 curl localhost:3000/api/leaderboard   # seeded season standings
 ```
+
+`/api/health` now also reports the rate-limiter backend
+(`disabled`/`memory`/`redis`) and whether monitoring is `on`/`off`.
+`Source: app/api/health/route.ts`.
 
 `Source: README.md`, `Source: app/api/health/route.ts`,
 `Source: app/api/leaderboard/route.ts`.
@@ -55,6 +59,9 @@ curl localhost:3000/api/leaderboard   # seeded season standings
 | `pnpm start` | `next start` | Serve the build (needs a strong `JWT_SECRET`) |
 | `pnpm lint` | `eslint` | Lint (config: `eslint.config.mjs`) |
 | `pnpm typecheck` | `tsc --noEmit` | Type-check only |
+| `pnpm test` | `vitest run` | Both Vitest projects: node authority (real Postgres) + jsdom components |
+| `pnpm test:watch` | `vitest` | Watch mode |
+| `pnpm e2e` | `tsx test/e2e/devnet-e2e.ts` | Live devnet on-chain harness (needs a funded wallet; not in CI) |
 | `pnpm db:generate` | `prisma generate` | Regenerate Prisma client |
 | `pnpm db:migrate` | `prisma migrate dev` | Create/apply a dev migration |
 | `pnpm db:migrate:deploy` | `prisma migrate deploy` | Apply migrations in CI/prod |
