@@ -42,8 +42,9 @@ const MarketCard = ({ market }) => {
   };
 
   const volume = (Number(market.total_volume) / LAMPORTS_PER_SOL).toFixed(2) + " SOL";
-  // Mock traders count for now
-  const traders = Math.floor(Math.random() * 1000) + 100; 
+  // Real participant count from the backend (positions). Was a Math.random() mock
+  // that both fabricated data and caused an SSR/client hydration mismatch.
+  const traders = market._count?.positions ?? 0;
 
   return (
     <Link href={`/markets/${market.id}`}>

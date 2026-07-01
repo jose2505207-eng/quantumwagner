@@ -28,8 +28,18 @@ import {
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState<boolean>(false);
+  // The Solana WalletMultiButton renders wallet-state-dependent markup (the
+  // connected-wallet icon/name) that only exists in the browser, so rendering it
+  // during SSR causes a hydration mismatch on every page. Gate it behind a mount
+  // flag: server + first client render show a stable placeholder, then we swap in
+  // the real button after hydration.
+  const [mounted, setMounted] = useState<boolean>(false);
   const { connected } = useWallet();
   const { userInfo } = useUserStore();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Check for admin access
   const hasAccess =
@@ -191,7 +201,14 @@ const Navbar = () => {
           <div className="flex items-center gap-x-3">
             <NavbarHUD />
             <div className="hidden lg:flex items-center gap-3">
-                <WalletMultiButton style={{}} />
+                {mounted ? (
+                  <WalletMultiButton style={{}} />
+                ) : (
+                  <div
+                    aria-hidden
+                    className="h-12 w-[160px] rounded-md bg-white/5"
+                  />
+                )}
             </div>
             <div className="lg:hidden">
               <MobileMenu />

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowUpRight, TrendingUp, Activity, DollarSign, BarChart3 } from "lucide-react";
+import { ArrowUpRight, Activity, BarChart3 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -26,12 +26,12 @@ export function TokenCard({ token, index }: TokenCardProps) {
   const imageUri = acc.imageUri;
   const status = Object.keys(acc.status || {})[0] || "unknown";
   
-  // Mock data for visual appeal (since real data might be missing)
-  const price = (Math.random() * 10).toFixed(2);
-  const change = (Math.random() * 20 - 5).toFixed(2);
-  const isPositive = parseFloat(change) >= 0;
-  const marketCap = (Math.random() * 10 + 1).toFixed(1) + "M";
-  const volume = (Math.random() * 500 + 50).toFixed(0) + "K";
+  // No live price feed exists for launch tokens yet. Show neutral placeholders
+  // instead of fabricated figures — this also removes a Math.random()-in-render
+  // hydration mismatch. `status` above is real (from the on-chain account).
+  const price = "—";
+  const marketCap = "—";
+  const volume = "—";
 
   return (
     <Link href={`/token/${mint}`} className="block h-full">
@@ -79,14 +79,9 @@ export function TokenCard({ token, index }: TokenCardProps) {
               </div>
             </div>
             
-            <div className={cn(
-              "flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-lg border",
-              isPositive 
-                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
-                : "bg-rose-500/10 text-rose-400 border-rose-500/20"
-            )}>
-              {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingUp className="w-3 h-3 rotate-180" />}
-              {change}%
+            <div className="flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-lg border bg-white/5 text-muted-foreground border-white/10">
+              <Activity className="w-3 h-3" />
+              —
             </div>
           </div>
 
@@ -96,12 +91,7 @@ export function TokenCard({ token, index }: TokenCardProps) {
               <span className="text-lg text-muted-foreground">$</span>
               {price}
             </div>
-            <div className="h-1 w-full bg-white/5 rounded-full mt-3 overflow-hidden">
-              <div 
-                className={cn("h-full rounded-full opacity-50", isPositive ? "bg-emerald-500" : "bg-rose-500")} 
-                style={{ width: `${Math.random() * 60 + 20}%` }} 
-              />
-            </div>
+            <div className="h-1 w-full bg-white/5 rounded-full mt-3 overflow-hidden" />
           </div>
 
           {/* Stats Grid */}
