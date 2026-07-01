@@ -1,9 +1,12 @@
 /**
  * Typed HTTP client for the LIVE Quantum Wager backend.
  *
- * This is the single entry point for real REST calls. It injects the wallet JWT
- * (stored by walletAuth) and centralises base URL + error handling so screens
- * never hand-roll axios calls with hardcoded URLs again.
+ * This is the single entry point for real REST calls. Identity rides in the
+ * HttpOnly `qw_session` cookie set by the auth flow — there is no token in
+ * localStorage to attach. `withCredentials` makes the browser send that cookie
+ * even when NEXT_PUBLIC_API_URL points at a different origin (same-origin sends
+ * it automatically). Centralises base URL + error handling so screens never
+ * hand-roll axios calls with hardcoded URLs again.
  */
 import axios, { AxiosError, AxiosInstance } from "axios";
 import { API_URL } from "@/lib/game/config";
@@ -12,15 +15,7 @@ import { Market } from "@/app/types";
 export const api: AxiosInstance = axios.create({
   baseURL: API_URL,
   timeout: 15_000,
-});
-
-// Attach the wallet auth token (if present) to every request.
-api.interceptors.request.use((cfg) => {
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("token");
-    if (token) cfg.headers.Authorization = `Bearer ${token}`;
-  }
-  return cfg;
+  withCredentials: true,
 });
 
 export class ApiError extends Error {

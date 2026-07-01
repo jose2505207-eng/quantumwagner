@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { handler, fail } from "@/server/http";
 import { verifySignedMessage, signToken, isValidWallet } from "@/server/auth";
+import { setSessionCookie } from "@/server/session";
 import { getOrCreateUserByWallet } from "@/server/users";
 import { verifyWalletSchema } from "@/server/validators";
 import { completeLevelServer } from "@/server/xp";
@@ -12,9 +13,10 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * Verify a signed login message → issue a JWT, create/load the user, and
- * complete Level 1 (connect-wallet) server-side. Returns a shape compatible
- * with the existing frontend (`success`, `token`, `user`).
+ * Verify a signed login message → issue a session, create/load the user, and
+ * complete Level 1 (connect-wallet) server-side. The JWT is set as an HttpOnly
+ * `qw_session` cookie (never returned in the body, so XSS can't read it); the
+ * response body keeps the `success` + `user` shape the frontend expects.
  */
 export const POST = handler(async (req: Request) => {
   await rateLimit(req, "auth-verify", 20, 60_000);
@@ -42,13 +44,14 @@ export const POST = handler(async (req: Request) => {
   await logAudit({ actorId: user.id, action: "auth.verify", target: user.id });
 
   const token = signToken({ sub: user.id, wallet: user.walletAddress });
-  return NextResponse.json({
+  const res = NextResponse.json({
     success: true,
-    token,
     user: {
       id: user.id,
       wallet_address: user.walletAddress,
       username: user.username,
     },
   });
+  setSessionCookie(res, token);
+  return res;
 });
