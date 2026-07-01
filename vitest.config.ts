@@ -49,6 +49,14 @@ export default defineConfig({
     env: {
       DATABASE_URL: process.env.DATABASE_URL ?? "",
       TEST_DATABASE_URL: process.env.TEST_DATABASE_URL ?? "",
+      // The integration suite exercises the OFF-CHAIN recording branch (it cannot
+      // produce real signed Devnet txs), so it must run with DEMO_MODE on /
+      // REQUIRE_ONCHAIN off — the contract these tests were written against. This
+      // is test-only and does NOT affect the runtime/deploy posture (production
+      // keeps DEMO_MODE off via the deployed env). Set explicitly because the
+      // production `.env` now defaults DEMO_MODE off + SOLANA_REQUIRE_ONCHAIN on.
+      NEXT_PUBLIC_DEMO_MODE: "true",
+      SOLANA_REQUIRE_ONCHAIN: "false",
     },
     pool: "forks",
     poolOptions: {
