@@ -87,9 +87,7 @@ export default function CreateMarkets() {
       const res = await axios.post(
         `${BACKEND_URL}/api/admin/markets`,
         { ...form, end_time: endTime },
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
+        { withCredentials: true }
       );
 
       marketId = res.data.market.id; // store id in case rollback needed
@@ -118,9 +116,7 @@ export default function CreateMarkets() {
       await axios.put(
         `${BACKEND_URL}/api/admin/markets/${marketId}`,
         { pda },
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
+        { withCredentials: true }
       );
 
       setProgressStep(4); // Finished
@@ -149,9 +145,7 @@ export default function CreateMarkets() {
       if (marketId) {
         try {
           await axios.delete(`${BACKEND_URL}/api/admin/markets/${marketId}`, {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
+            withCredentials: true,
           });
 
           toast.error("Market rolled back successfully");

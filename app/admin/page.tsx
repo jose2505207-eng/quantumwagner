@@ -51,12 +51,10 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const fetchAllUsers = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) return toast.error("Unauthorized");
-
       try {
+        // Auth rides the HttpOnly session cookie (sent automatically).
         const res = await axios.get(`${BACKEND_URL}/api/admin/users`, {
-          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true,
         });
         setAllUserInfo(Array.isArray(res.data.users) ? res.data.users : []);
       } catch {
@@ -70,13 +68,10 @@ export default function AdminDashboard() {
   async function handleEditRole(user: User) {
     try {
       setLoadingEdit(true);
-      const token = localStorage.getItem("token");
-      if (!token) throw new Error("Unauthorized");
-
       await axios.put(
         `${BACKEND_URL}/api/admin/users/${user.id}/role`,
         { role: user.role },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { withCredentials: true }
       );
 
       toast.success("Role updated");

@@ -185,14 +185,10 @@ export default function Portfolio() {
     try {
       setLoading(true);
       setUsingDemoPositions(false);
-      const token = localStorage.getItem("token");
-      if (!token) {
-        applyFallback();
-        return;
-      }
-
+      // Auth rides the HttpOnly session cookie; if not authenticated the request
+      // 401s and the catch falls back to demo positions (same as before).
       const res = await axios.get(`${BACKEND_URL}/api/positions`, {
-        headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true,
       });
 
       const real = res.data?.data?.positions;
@@ -223,9 +219,7 @@ export default function Portfolio() {
           settled_at: new Date(),
           position_id: positionId,
         },
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
+        { withCredentials: true }
       );
 
       toast.success("Bet withdrawn");

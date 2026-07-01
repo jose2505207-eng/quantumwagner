@@ -367,12 +367,8 @@ export default function MarketDetailPage() {
         selected === "yes"
       );
 
-      const token = localStorage.getItem("token");
-      if (!token) {
-        toast.error("Unaouthorized");
-        return;
-      }
-
+      // Auth rides the HttpOnly session cookie (sent automatically);
+      // withCredentials keeps it working if BACKEND_URL is a different origin.
       const res = await axios.post(
         `${BACKEND_URL}/api/positions/add`,
         {
@@ -382,10 +378,8 @@ export default function MarketDetailPage() {
           stake_tx_hash: tx,
         },
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
         }
       );
 

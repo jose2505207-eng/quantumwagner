@@ -12,7 +12,7 @@ export function useMarkets() {
   const fetchMarkets = async ():Promise<void> => {
     try {
       const res = await axios.get<{success:boolean,markets:Market[]}>(`${BACKEND_URL}/api/admin/markets`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        withCredentials: true,
       });
 
       if (res.data.success) {

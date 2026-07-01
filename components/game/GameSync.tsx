@@ -38,7 +38,9 @@ export function GameSync() {
   // authenticated. Best-effort: silently ignored if the backend is offline.
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (!localStorage.getItem("token")) return;
+    // Auth is an HttpOnly cookie (unreadable from JS); wallet-connected is the
+    // client-side signal that a session should exist. A 401 is caught below.
+    if (!connected) return;
     let cancelled = false;
     (async () => {
       try {

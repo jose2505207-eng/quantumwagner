@@ -36,9 +36,10 @@ export function CompleteLevelOnMount({
     // so the server (not the client) is the authority for XP/levels. The visit
     // endpoint allowlists genuinely visit-based levels only. Failures are
     // silently ignored — the HUD already reflected the local display.
-    const token =
-      typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    if (connected && token) {
+    // Session is an HttpOnly cookie sent automatically; a wallet connection is
+    // the client-side signal that a session should exist. Best-effort — a 401
+    // (not authenticated) is silently ignored, the local HUD already updated.
+    if (connected) {
       api.post(`/api/player/levels/${level}/complete`).catch(() => {});
     }
   }, [connected, requireWallet, level, completeLevel]);

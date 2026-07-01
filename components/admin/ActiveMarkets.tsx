@@ -70,7 +70,7 @@ export default function ActiveMarkets() {
     try {
       setLoading(true);
       const res = await axios.get(`${BACKEND_URL}/api/admin/markets`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        withCredentials: true,
       });
       if (res.data.success) setMarkets(res.data.markets);
     } catch (err) {
@@ -99,14 +99,14 @@ export default function ActiveMarkets() {
         console.log("from admin active page ", data);
 
         await axios.put(`${BACKEND_URL}/api/admin/markets/${id}`, data, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          withCredentials: true,
         });
 
         toast.success(`${editing?.question} updated successfully`);
       } else {
         // Non-resolve status → just update backend
         await axios.put(`${BACKEND_URL}/api/admin/markets/${id}`, data, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          withCredentials: true,
         });
 
         toast.success(`${editing?.question} updated successfully`);
@@ -129,7 +129,7 @@ export default function ActiveMarkets() {
 
       await axios
         .delete(`${BACKEND_URL}/api/admin/markets/${id}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          withCredentials: true,
         })
         .then(async () => {
           await cancelMarket(new PublicKey(`${pda}`));
