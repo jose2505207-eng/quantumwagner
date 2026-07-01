@@ -4,6 +4,7 @@ import { prisma } from "@/server/db";
 import { marketTxSchema } from "@/server/validators";
 import { logAudit } from "@/server/audit";
 import { verifySignature } from "@/server/solana";
+import { rateLimit } from "@/server/rateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,6 +14,7 @@ export const dynamic = "force-dynamic";
 // stored if confirmed, but cancelling a demo/off-chain market needs no tx.
 export const POST = handler(
   async (req: Request, ctx: { params: Promise<{ id: string }> }) => {
+    await rateLimit(req, "markets-cancel", 20, 60_000);
     const claims = requireAuth(req);
     const { id } = await ctx.params;
     const body = marketTxSchema.parse(await req.json().catch(() => ({})));

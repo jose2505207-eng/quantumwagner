@@ -1,5 +1,5 @@
 import { prisma } from "./db";
-import { env } from "./env";
+import { isValidAdminKey } from "./adminKey";
 import { awardXp } from "./xp";
 import { logAudit } from "./audit";
 import { computePayout } from "./settlement";
@@ -54,7 +54,7 @@ export function adminResolver(adminKey: string): OracleAdapter {
   return {
     name: "admin",
     async propose({ marketId, outcome, raw }) {
-      if (adminKey !== env.ADMIN_RESOLUTION_KEY) {
+      if (!isValidAdminKey(adminKey)) {
         throw new Error("invalid admin resolution key");
       }
       if (!outcome) throw new Error("admin resolver requires an outcome");

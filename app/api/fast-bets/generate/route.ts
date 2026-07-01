@@ -6,6 +6,8 @@ import { env } from "@/server/env";
 import { generateFastBetsSchema } from "@/server/validators";
 import { getPriceFeedProvider } from "@/server/oracleProviders";
 import { logAudit } from "@/server/audit";
+import { rateLimit } from "@/server/rateLimit";
+import { isValidAdminKey, isValidBearer } from "@/server/adminKey";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,9 +18,7 @@ export const dynamic = "force-dynamic";
  * unset we never authorize a cron request (admin POST remains the only path).
  */
 function authorizeCron(req: Request): boolean {
-  if (!env.CRON_SECRET) return false;
-  const auth = req.headers.get("authorization") ?? "";
-  return auth === `Bearer ${env.CRON_SECRET}`;
+  return isValidBearer(req.headers.get("authorization"), env.CRON_SECRET);
 }
 
 /**
@@ -79,9 +79,10 @@ async function createRounds(
  * rounds open; it is admin-gated by ADMIN_RESOLUTION_KEY exactly like resolve.
  */
 export const POST = handler(async (req: Request) => {
+  await rateLimit(req, "fastbets-generate", 20, 60_000);
   const claims = requireAuth(req);
   const body = generateFastBetsSchema.parse(await req.json());
-  if (body.adminKey !== env.ADMIN_RESOLUTION_KEY) return fail("invalid admin key", 403);
+  if (!isValidAdminKey(body.adminKey)) return fail("invalid admin key", 403);
 
   const fastBets = await createRounds(
     { symbol: body.symbol, count: body.count, durationSec: body.durationSec },

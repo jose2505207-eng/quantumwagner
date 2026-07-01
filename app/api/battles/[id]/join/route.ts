@@ -6,12 +6,14 @@ import { completeLevelServer, awardXp } from "@/server/xp";
 import { LEVEL_BY_ID } from "@/lib/game/levels";
 import { logAudit } from "@/server/audit";
 import { verifySignature, REQUIRE_ONCHAIN } from "@/server/solana";
+import { rateLimit } from "@/server/rateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export const POST = handler(
   async (req: Request, ctx: { params: Promise<{ id: string }> }) => {
+    await rateLimit(req, "battles-join", 30, 60_000);
     const claims = requireAuth(req);
     const { id } = await ctx.params;
     const body = joinBattleSchema.parse(await req.json());

@@ -3,6 +3,7 @@ import { requireAuth } from "@/server/auth";
 import { completeLevelServer } from "@/server/xp";
 import { LEVEL_BY_ID, isVisitLevel } from "@/lib/game/levels";
 import type { LevelId } from "@/lib/game/types";
+import { rateLimit } from "@/server/rateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,6 +23,7 @@ export const dynamic = "force-dynamic";
  */
 export const POST = handler(
   async (req: Request, ctx: { params: Promise<{ levelId: string }> }) => {
+    await rateLimit(req, "levels-complete", 30, 60_000);
     const claims = requireAuth(req);
     const { levelId } = await ctx.params;
 

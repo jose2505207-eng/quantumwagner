@@ -4,12 +4,14 @@ import { prisma } from "@/server/db";
 import { enterFastBetSchema } from "@/server/validators";
 import { awardXp } from "@/server/xp";
 import { logAudit } from "@/server/audit";
+import { rateLimit } from "@/server/rateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export const POST = handler(
   async (req: Request, ctx: { params: Promise<{ id: string }> }) => {
+    await rateLimit(req, "fastbets-enter", 30, 60_000);
     const claims = requireAuth(req);
     const { id } = await ctx.params;
     const body = enterFastBetSchema.parse(await req.json());

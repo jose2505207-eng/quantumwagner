@@ -1,6 +1,7 @@
 import { handler, ok, fail } from "@/server/http";
-import { env } from "@/server/env";
 import { getPriceFeedProvider } from "@/server/oracleProviders";
+import { rateLimit } from "@/server/rateLimit";
+import { isValidAdminKey } from "@/server/adminKey";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,10 +20,11 @@ export const dynamic = "force-dynamic";
  * that loud failure as a 502 with the real error message — never a fake price.
  */
 export const GET = handler(async (req: Request) => {
+  await rateLimit(req, "oracle-price", 30, 60_000);
   const url = new URL(req.url);
 
   const adminKey = req.headers.get("x-admin-key") ?? url.searchParams.get("adminKey");
-  if (adminKey !== env.ADMIN_RESOLUTION_KEY) return fail("invalid admin key", 403);
+  if (!isValidAdminKey(adminKey)) return fail("invalid admin key", 403);
 
   const symbol = url.searchParams.get("symbol") ?? "SOL/USD";
 
