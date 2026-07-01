@@ -1,14 +1,24 @@
-import type { Market as DbMarket, Prediction } from "@prisma/client";
+import type { Market as DbMarket, Prediction, User } from "@prisma/client";
 
 type MarketWithCounts = DbMarket & {
   predictions?: Prediction[];
   _count?: { predictions: number };
+  creator?: User | null;
 };
 
 /** Serialize a DB market into the shape the frontend Market type expects. */
 export function serializeMarket(m: MarketWithCounts) {
   const positions = m._count?.predictions ?? m.predictions?.length ?? 0;
   return {
+    // Present only when the caller `include`d the creator relation; a market may
+    // also legitimately have no creator (off-chain / admin-created markets).
+    creator: m.creator
+      ? {
+          id: m.creator.id,
+          username: m.creator.username,
+          wallet_address: m.creator.walletAddress,
+        }
+      : undefined,
     id: m.id,
     question: m.question,
     description: m.description,

@@ -10,7 +10,7 @@ export const GET = handler(
     const { id } = await ctx.params;
     const market = await prisma.market.findUnique({
       where: { id },
-      include: { _count: { select: { predictions: true } } },
+      include: { _count: { select: { predictions: true } }, creator: true },
     });
     if (!market) return fail("market not found", 404);
 

@@ -331,16 +331,16 @@ export default function MarketDetailPage() {
               <div className="flex flex-wrap items-center gap-6 pt-2">
                 <div className="flex items-center gap-3 bg-white/5 rounded-full pr-4 pl-1 py-1 border border-white/5 hover:bg-white/10 transition-colors cursor-pointer">
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center border border-white/10">
-                    <img 
-                      src={`https://api.dicebear.com/7.x/identicon/svg?seed=${market.creator.username}`} 
-                      alt="Creator" 
+                    <img
+                      src={`https://api.dicebear.com/7.x/identicon/svg?seed=${market.creator?.username || market.creator?.wallet_address || market.id}`}
+                      alt="Creator"
                       className="w-5 h-5 opacity-80"
                     />
                   </div>
                   <div className="flex flex-col">
                     <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Created by</span>
                     <span className="text-xs font-bold text-white">
-                      {market.creator.username || "Anonymous"}
+                      {market.creator?.username || "Anonymous"}
                     </span>
                   </div>
                 </div>
