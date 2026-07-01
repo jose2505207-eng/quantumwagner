@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getFastBets, type ApiFastBet } from "@/lib/api";
-import { DEMO_MODE } from "@/lib/game/config";
-import { DEMO_FAST_BETS } from "@/lib/demo/fastbets";
 import type { FastBetCardProps } from "@/components/fastbet/FastBetCard";
 
+// "demo" is retained in the union for backward compatibility with UI branches,
+// but is never produced: only real live rounds or an empty state are rendered.
 export type DataSource = "live" | "demo" | "empty";
 
 /** Card-ready fast-bet row (the props FastBetCard consumes, minus `index`). */
@@ -134,25 +134,17 @@ export function useFastBets(): UseFastBetsResult {
       if (live.length > 0) {
         setFastBets(live.map(toRow));
         setSource("live");
-      } else if (DEMO_MODE) {
-        setFastBets(DEMO_FAST_BETS);
-        setSource("demo");
       } else {
         setFastBets([]);
         setSource("empty");
       }
     } catch (e) {
-      // Backend down / network error. In demo mode we still show seed data
-      // (badged), but we ALSO record the error so the UI can flag it.
+      // Backend down / network error — surface it and show an empty state.
+      // No demo fallback: we never fabricate fast-bet rounds.
       const msg = e instanceof Error ? e.message : "Failed to load fast bets";
       setError(msg);
-      if (DEMO_MODE) {
-        setFastBets(DEMO_FAST_BETS);
-        setSource("demo");
-      } else {
-        setFastBets([]);
-        setSource("empty");
-      }
+      setFastBets([]);
+      setSource("empty");
     } finally {
       if (!background) setLoading(false);
       inFlight.current = false;

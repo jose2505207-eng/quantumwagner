@@ -18,12 +18,13 @@ function readMode(): AppMode {
 export const APP_MODE: AppMode = readMode();
 
 /**
- * DEMO_MODE is ON unless we are explicitly in production, OR forced on via flag.
- * When ON, screens are allowed to render clearly-labelled seed/demo data as a
- * fallback when the live backend/chain has nothing to show.
+ * DEMO_MODE is OFF by default — the app runs against real Devnet + the live
+ * backend and NEVER renders seed/demo/sample data. It is strictly opt-in via
+ * `NEXT_PUBLIC_DEMO_MODE=true` (local illustration only). Production/devnet
+ * evaluation must keep this off so every market/bet/position shown is real.
  */
 export const DEMO_MODE: boolean =
-  process.env.NEXT_PUBLIC_DEMO_MODE === "true" || APP_MODE !== "production";
+  process.env.NEXT_PUBLIC_DEMO_MODE === "true";
 
 /**
  * REST backend base URL. Defaults to "" (same-origin) so the in-repo Next.js

@@ -34,116 +34,8 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Position } from "@/store/types/user/postionType";
-import { DEMO_MODE } from "@/lib/game/config";
-import { DemoBadge } from "@/components/game";
 import { Spinner } from "@/components/custom/Spinner";
 
-// DEMO positions — only ever shown when DEMO_MODE is on AND the user has no
-// real positions. Never silently presented as the user's real holdings.
-const DEMO_POSITIONS: Position[] = [
-  {
-    id: "pos_1",
-    user_id: "user_1",
-    market_id: "market_1",
-    position_type: "YES",
-    amount_staked: "1000000000", // 1 SOL
-    settled: false,
-    stake_tx_hash: "tx_1",
-    created_at: new Date().toISOString(),
-    market: {
-      id: "market_1",
-      question: "Will Bitcoin hit $100k in 2024?",
-      category: "Crypto",
-      status: "OPEN",
-      end_time: new Date(Date.now() + 86400000 * 5).toISOString(), // 5 days from now
-      outcome: null,
-      pda: "pda_1",
-      total_volume: "5000000000",
-      yes_pool: "3000000000",
-      no_pool: "2000000000",
-    },
-    user: {
-      id: "user_1",
-      username: "CryptoKing",
-      wallet_address: "WalletAddr123",
-      is_verified: true,
-    },
-    shares_owned: "1000",
-    average_price: "0.5",
-    payout_amount: "0",
-    profit_loss: "0",
-    settled_at: null,
-    payout_tx_hash: null,
-  },
-  {
-    id: "pos_2",
-    user_id: "user_1",
-    market_id: "market_2",
-    position_type: "NO",
-    amount_staked: "500000000", // 0.5 SOL
-    settled: false,
-    stake_tx_hash: "tx_2",
-    created_at: new Date().toISOString(),
-    market: {
-      id: "market_2",
-      question: "Will Solana flip Ethereum in 2025?",
-      category: "Crypto",
-      status: "OPEN",
-      end_time: new Date(Date.now() + 86400000 * 10).toISOString(),
-      outcome: null,
-      pda: "pda_2",
-      total_volume: "2000000000",
-      yes_pool: "1000000000",
-      no_pool: "1000000000",
-    },
-    user: {
-      id: "user_1",
-      username: "CryptoKing",
-      wallet_address: "WalletAddr123",
-      is_verified: true,
-    },
-    shares_owned: "500",
-    average_price: "0.4",
-    payout_amount: "0",
-    profit_loss: "0",
-    settled_at: null,
-    payout_tx_hash: null,
-  },
-  {
-    id: "pos_3",
-    user_id: "user_1",
-    market_id: "market_3",
-    position_type: "YES",
-    amount_staked: "2000000000", // 2 SOL
-    settled: true,
-    stake_tx_hash: "tx_3",
-    created_at: new Date(Date.now() - 86400000 * 10).toISOString(),
-    market: {
-      id: "market_3",
-      question: "Will SpaceX launch Starship in March?",
-      category: "Tech",
-      status: "RESOLVED",
-      end_time: new Date(Date.now() - 86400000 * 2).toISOString(), // Ended 2 days ago
-      outcome: "YES",
-      pda: "pda_3",
-      total_volume: "10000000000",
-      yes_pool: "6000000000",
-      no_pool: "4000000000",
-    },
-    user: {
-      id: "user_1",
-      username: "CryptoKing",
-      wallet_address: "WalletAddr123",
-      is_verified: true,
-    },
-    shares_owned: "2000",
-    average_price: "0.6",
-    payout_amount: "3333333333",
-    profit_loss: "1333333333",
-    settled_at: new Date().toISOString(),
-    payout_tx_hash: "tx_payout_3",
-  }
-];
 
 export default function Portfolio() {
   const {
@@ -155,7 +47,6 @@ export default function Portfolio() {
   } = Methods();
   const { positions, setPositions } = usePositionStore();
   const [loading, setLoading] = useState(false);
-  const [usingDemoPositions, setUsingDemoPositions] = useState(false);
   const [tab, setTab] = useState("active");
   const [withdrawingMap, setWithdrawingMap] = useState<Record<string, boolean>>(
     {}
@@ -168,39 +59,22 @@ export default function Portfolio() {
     loadPositions();
   }, []);
 
-  // Honest fallback: only show demo positions when DEMO_MODE is on, and always
-  // flag it. In production with no token / no data we show the real empty state.
-  const applyFallback = (reason?: string) => {
-    if (DEMO_MODE) {
-      setPositions(DEMO_POSITIONS);
-      setUsingDemoPositions(true);
-    } else {
-      setPositions([]);
-      setUsingDemoPositions(false);
-      if (reason) toast.error(reason);
-    }
-  };
-
+  // Real positions only — no demo fallback. Empty state when there are none.
   const loadPositions = async () => {
     try {
       setLoading(true);
-      setUsingDemoPositions(false);
-      // Auth rides the HttpOnly session cookie; if not authenticated the request
-      // 401s and the catch falls back to demo positions (same as before).
+      // Auth rides the HttpOnly session cookie; an unauthenticated request 401s
+      // and the catch shows the real empty state (never fabricated positions).
       const res = await axios.get(`${BACKEND_URL}/api/positions`, {
         withCredentials: true,
       });
 
       const real = res.data?.data?.positions;
-      if (real && real.length > 0) {
-        setPositions(real);
-        setUsingDemoPositions(false);
-      } else {
-        applyFallback();
-      }
+      setPositions(real && real.length > 0 ? real : []);
     } catch (err) {
       console.error("Failed to fetch positions:", err);
-      applyFallback("Couldn't reach the positions service.");
+      setPositions([]);
+      toast.error("Couldn't reach the positions service.");
     } finally {
       setLoading(false);
     }
@@ -258,14 +132,6 @@ export default function Portfolio() {
             <p className="text-muted-foreground mt-1">
               Track your performance, reputation, and assets.
             </p>
-            {usingDemoPositions && (
-              <div className="mt-2 flex items-center gap-2">
-                <DemoBadge note="These are sample positions, not your real holdings." />
-                <span className="text-xs text-muted-foreground">
-                  Sample positions shown — connect & trade to see your real holdings.
-                </span>
-              </div>
-            )}
           </div>
           
           <div className="flex gap-4">

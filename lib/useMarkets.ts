@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { Market } from "@/app/types";
 import { getMarkets } from "@/lib/api";
-import { DEMO_MODE } from "@/lib/game/config";
-import { DEMO_MARKETS } from "@/lib/demo/markets";
 
+// "demo" is retained in the union for backward compatibility with UI branches,
+// but is never produced: the app only ever renders real live data or an empty
+// state. No seed/demo markets exist anymore.
 export type DataSource = "live" | "demo" | "empty";
 
 interface UseMarketsResult {
@@ -19,9 +20,7 @@ interface UseMarketsResult {
 /**
  * Loads markets from the live backend. The honesty contract:
  *   - source === "live"  -> real backend markets
- *   - source === "demo"  -> backend returned none and DEMO_MODE is on; the
- *                            markets are seed data and MUST be badged in the UI
- *   - source === "empty" -> no live markets and demo is off
+ *   - source === "empty" -> no live markets (no demo fallback — this is real)
  * On a hard failure we surface `error` (UI shows an ErrorState with retry).
  */
 export function useMarkets(): UseMarketsResult {
@@ -38,25 +37,17 @@ export function useMarkets(): UseMarketsResult {
       if (live.length > 0) {
         setMarkets(live);
         setSource("live");
-      } else if (DEMO_MODE) {
-        setMarkets(DEMO_MARKETS);
-        setSource("demo");
       } else {
         setMarkets([]);
         setSource("empty");
       }
     } catch (e) {
-      // Network/backend down. In demo mode we still show seed data (badged),
-      // but we ALSO record the error so the UI can tell the user it's offline.
+      // Network/backend down — surface the error and show an empty state.
+      // No demo fallback: we never fabricate markets.
       const msg = e instanceof Error ? e.message : "Failed to load markets";
       setError(msg);
-      if (DEMO_MODE) {
-        setMarkets(DEMO_MARKETS);
-        setSource("demo");
-      } else {
-        setMarkets([]);
-        setSource("empty");
-      }
+      setMarkets([]);
+      setSource("empty");
     } finally {
       setLoading(false);
     }
