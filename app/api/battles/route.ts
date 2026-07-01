@@ -4,6 +4,7 @@ import { prisma } from "@/server/db";
 import { createBattleSchema } from "@/server/validators";
 import { logAudit } from "@/server/audit";
 import { verifySignature, REQUIRE_ONCHAIN } from "@/server/solana";
+import { rateLimit } from "@/server/rateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,6 +21,7 @@ export const GET = handler(async () => {
 // POST records an on-chain "create battle" event. Idempotent on the PDA, and —
 // like predictions — only persists a signature we actually confirmed on Devnet.
 export const POST = handler(async (req: Request) => {
+  await rateLimit(req, "battles-create", 10, 60_000);
   const claims = requireAuth(req);
   const body = createBattleSchema.parse(await req.json());
 

@@ -5,6 +5,7 @@ import { serializeMarket } from "@/server/markets";
 import { createMarketSchema } from "@/server/validators";
 import { logAudit } from "@/server/audit";
 import { verifySignature } from "@/server/solana";
+import { rateLimit } from "@/server/rateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,6 +29,7 @@ export const GET = handler(async (req: Request) => {
 // unless it confirmed), but a signature is NOT hard-required — that would break
 // admin/off-chain creation. The value action (placing a bet) hard-requires it.
 export const POST = handler(async (req: Request) => {
+  await rateLimit(req, "markets-create", 10, 60_000);
   const claims = requireAuth(req);
   const body = createMarketSchema.parse(await req.json());
 

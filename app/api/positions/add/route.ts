@@ -7,6 +7,7 @@ import { completeLevelServer, awardXp } from "@/server/xp";
 import { LEVEL_BY_ID } from "@/lib/game/levels";
 import { logAudit } from "@/server/audit";
 import { verifySignature, REQUIRE_ONCHAIN } from "@/server/solana";
+import { rateLimit } from "@/server/rateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,6 +27,7 @@ const schema = z.object({
  * /api/markets/[id]/predictions.
  */
 export const POST = handler(async (req: Request) => {
+  await rateLimit(req, "positions-add", 30, 60_000);
   const claims = requireAuth(req);
   const body = schema.parse(await req.json());
 

@@ -1,6 +1,8 @@
 import { handler, ok, fail } from "@/server/http";
 import { env } from "@/server/env";
 import { runAutoResolve } from "@/server/fastbetAutoResolve";
+import { rateLimit } from "@/server/rateLimit";
+import { isValidAdminKey, isValidBearer } from "@/server/adminKey";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,9 +13,7 @@ export const dynamic = "force-dynamic";
  * CRON_SECRET is unset we never authorize a cron request.
  */
 function authorizeCron(req: Request): boolean {
-  if (!env.CRON_SECRET) return false;
-  const auth = req.headers.get("authorization") ?? "";
-  return auth === `Bearer ${env.CRON_SECRET}`;
+  return isValidBearer(req.headers.get("authorization"), env.CRON_SECRET);
 }
 
 /**
@@ -33,6 +33,7 @@ async function readAdminKey(req: Request): Promise<string | null> {
 
 /** Vercel Cron path (GET): authorized via CRON_SECRET only. */
 export const GET = handler(async (req: Request) => {
+  await rateLimit(req, "fastbets-autoresolve", 30, 60_000);
   if (!authorizeCron(req)) return fail("unauthorized", 403);
   const result = await runAutoResolve();
   return ok(result);
@@ -40,10 +41,11 @@ export const GET = handler(async (req: Request) => {
 
 /** GitHub Actions / admin path (POST): cron Bearer OR admin key. */
 export const POST = handler(async (req: Request) => {
+  await rateLimit(req, "fastbets-autoresolve", 30, 60_000);
   let authorized = authorizeCron(req);
   if (!authorized) {
     const adminKey = await readAdminKey(req);
-    authorized = adminKey !== null && adminKey === env.ADMIN_RESOLUTION_KEY;
+    authorized = isValidAdminKey(adminKey);
   }
   if (!authorized) return fail("unauthorized", 403);
   const result = await runAutoResolve();

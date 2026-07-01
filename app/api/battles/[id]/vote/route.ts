@@ -3,12 +3,14 @@ import { requireAuth } from "@/server/auth";
 import { prisma } from "@/server/db";
 import { voteBattleSchema } from "@/server/validators";
 import { awardXp } from "@/server/xp";
+import { rateLimit } from "@/server/rateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export const POST = handler(
   async (req: Request, ctx: { params: Promise<{ id: string }> }) => {
+    await rateLimit(req, "battles-vote", 30, 60_000);
     const claims = requireAuth(req);
     const { id } = await ctx.params;
     const body = voteBattleSchema.parse(await req.json());

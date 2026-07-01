@@ -2,6 +2,7 @@ import { handler, ok, fail } from "@/server/http";
 import { z } from "zod";
 import { applyResolution, adminResolver, type Outcome } from "@/server/oracle";
 import { logAudit } from "@/server/audit";
+import { rateLimit } from "@/server/rateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,6 +21,7 @@ const webhookSchema = z.object({
  * No outcome is ever invented server-side.
  */
 export const POST = handler(async (req: Request) => {
+  await rateLimit(req, "oracle-webhook", 30, 60_000);
   const body = webhookSchema.parse(await req.json());
   await logAudit({ action: "oracle.webhook", target: body.marketId, meta: { source: body.source } });
 

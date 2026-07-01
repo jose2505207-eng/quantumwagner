@@ -3,12 +3,14 @@ import { requireAuth } from "@/server/auth";
 import { prisma } from "@/server/db";
 import { ensureQuests, todayKey } from "@/server/quests";
 import { awardXp } from "@/server/xp";
+import { rateLimit } from "@/server/rateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export const POST = handler(
   async (req: Request, ctx: { params: Promise<{ questId: string }> }) => {
+    await rateLimit(req, "quests-claim", 30, 60_000);
     const claims = requireAuth(req);
     const { questId } = await ctx.params;
     await ensureQuests();

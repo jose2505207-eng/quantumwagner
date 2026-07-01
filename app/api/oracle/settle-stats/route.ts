@@ -1,6 +1,7 @@
 import { handler, ok, fail } from "@/server/http";
-import { env } from "@/server/env";
 import { prisma } from "@/server/db";
+import { rateLimit } from "@/server/rateLimit";
+import { isValidAdminKey } from "@/server/adminKey";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,10 +25,11 @@ export const dynamic = "force-dynamic";
  * (NOT 0 — we never report 0% as if it were measured).
  */
 export const GET = handler(async (req: Request) => {
+  await rateLimit(req, "oracle-settle-stats", 30, 60_000);
   const url = new URL(req.url);
 
   const adminKey = req.headers.get("x-admin-key") ?? url.searchParams.get("adminKey");
-  if (adminKey !== env.ADMIN_RESOLUTION_KEY) return fail("invalid admin key", 403);
+  if (!isValidAdminKey(adminKey)) return fail("invalid admin key", 403);
 
   const [methodGroups, sourceGroups] = await Promise.all([
     prisma.fastBet.groupBy({

@@ -8,6 +8,7 @@ import {
   applyResolution,
 } from "@/server/oracle";
 import { getPriceFeedProvider } from "@/server/oracleProviders";
+import { rateLimit } from "@/server/rateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,6 +20,7 @@ export const dynamic = "force-dynamic";
  */
 export const POST = handler(
   async (req: Request, ctx: { params: Promise<{ id: string }> }) => {
+    await rateLimit(req, "markets-resolve", 20, 60_000);
     requireAuth(req);
     const { id } = await ctx.params;
     const body = resolveMarketSchema.parse(await req.json());
