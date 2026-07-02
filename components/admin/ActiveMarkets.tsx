@@ -1,6 +1,6 @@
 "use client";
 
-import { Edit, Trash2 } from "lucide-react";
+import { Gavel, Trash2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { ScrollArea } from "../ui/scroll-area";
@@ -19,7 +19,6 @@ import {
   SheetTrigger,
 } from "../ui/sheet";
 import { Input } from "../ui/input";
-import { Textarea } from "../ui/textarea";
 import { useEffect, useState } from "react";
 import axios from "axios";
 
@@ -37,7 +36,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
-import { Switch } from "../ui/switch";
 import { BACKEND_URL } from "@/config";
 import { PublicKey } from "@solana/web3.js";
 import {
@@ -47,101 +45,93 @@ import {
   MarketStatus,
 } from "@/app/types";
 import Methods from "@/app/utils/methods";
+import { useMarkets } from "../helper/fetchMarkets";
 
 export default function ActiveMarkets() {
   const [filterCategory, setFilterCategory] = useState("ALL");
-  const { markets, setMarkets } = useMarketStore();
+  const { markets } = useMarketStore();
+  const { fetchMarkets } = useMarkets();
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState<Market | null>(null);
+  const [resolving, setResolving] = useState<Market | null>(null);
   const [selectedOutcome, setSelectedOutcome] = useState<"YES" | "NO" | null>(
     null
   );
+  const [adminKey, setAdminKey] = useState("");
   const [open, setOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
 
   const { cancelMarket, settleMarket } = Methods();
 
   useEffect(() => {
-    fetchMarkets();
+    (async () => {
+      setLoading(true);
+      await fetchMarkets();
+      setLoading(false);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Fetch markets
-  const fetchMarkets = async () => {
-    try {
-      setLoading(true);
-      const res = await axios.get(`${BACKEND_URL}/api/admin/markets`, {
-        withCredentials: true,
-      });
-      if (res.data.success) setMarkets(res.data.markets);
-    } catch (err) {
-      toast.error(`Failed to fetch markets ${err}`);
-    } finally {
-      setLoading(false);
-    }
+  const refresh = async () => {
+    setLoading(true);
+    await fetchMarkets();
+    setLoading(false);
   };
 
-  const handleUpdateMarket = async (
-    id: string,
-    data: Partial<Market>,
-    pda?: string,
-    outcome?: "YES" | "NO"
-  ) => {
+  /**
+   * Resolve a market: settle on-chain first (only when it has a PDA), then let
+   * the server-side oracle record the resolution + pay out predictions. The
+   * server is the authority — it requires the ADMIN_RESOLUTION_KEY.
+   */
+  const handleResolveMarket = async (market: Market, outcome: "YES" | "NO") => {
+    if (!adminKey.trim()) {
+      toast.error("Enter the admin key");
+      return;
+    }
     try {
       setLoading(true);
-      if (data.status === "RESOLVED" && pda && outcome) {
-        const outcomeBool = outcome === "YES";
 
-        // Try settle first
-        await settleMarket(new PublicKey(pda), outcomeBool);
+      if (market.pda) {
+        await settleMarket(new PublicKey(market.pda), outcome === "YES");
         toast.success(`Market settled on-chain (${outcome})`);
-
-        // Only if chain succeeded, update backend
-        console.log("from admin active page ", data);
-
-        await axios.put(`${BACKEND_URL}/api/admin/markets/${id}`, data, {
-          withCredentials: true,
-        });
-
-        toast.success(`${editing?.question} updated successfully`);
-      } else {
-        // Non-resolve status → just update backend
-        await axios.put(`${BACKEND_URL}/api/admin/markets/${id}`, data, {
-          withCredentials: true,
-        });
-
-        toast.success(`${editing?.question} updated successfully`);
       }
 
-      fetchMarkets();
+      await axios.post(
+        `${BACKEND_URL}/api/markets/${market.id}/resolve`,
+        { outcome, source: "admin", adminKey: adminKey.trim() },
+        { withCredentials: true }
+      );
+      toast.success(`${market.question} resolved (${outcome})`);
+
+      await refresh();
     } catch (err) {
-      console.error("handleUpdateMarket failed:", err);
-      toast.error(`${err}`);
+      console.error("handleResolveMarket failed:", err);
+      const error = err as { response?: { data?: { error?: string } } };
+      toast.error(error.response?.data?.error || `${err}`);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCancelMarket = async (id: string, pda: string) => {
+  /**
+   * Cancel a market on-chain; `cancelMarket` records the confirmed
+   * cancellation to the backend itself (POST /api/markets/[pda]/cancel).
+   */
+  const handleCancelMarket = async (market: Market) => {
     try {
       setLoading(true);
       setConfirmText("");
-
-
-      await axios
-        .delete(`${BACKEND_URL}/api/admin/markets/${id}`, {
-          withCredentials: true,
-        })
-        .then(async () => {
-          await cancelMarket(new PublicKey(`${pda}`));
-          toast.success("market deleted successfully");
-        })
-        .catch((err) => {
-          toast.error(`market faild to delete ${err} `);
-        });
-      fetchMarkets();
+      if (!market.pda) {
+        toast.error("Market has no on-chain PDA to cancel");
+        return;
+      }
+      await cancelMarket(new PublicKey(market.pda));
+      toast.success("Market cancelled");
+      await refresh();
     } catch (err) {
-      setLoading(false);
       console.error("Failed to cancel market:", err);
+      toast.error(`Failed to cancel market: ${err}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -206,185 +196,80 @@ export default function ActiveMarkets() {
                     </p>
                   </div>
                   <div className="flex space-x-2">
-                    {/* Edit */}
-                    <Sheet open={open} onOpenChange={setOpen}>
-                      <SheetTrigger asChild>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => {
-                            setEditing(market);
-                            setSelectedOutcome(null);
-                          }}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                      </SheetTrigger>
-                      <SheetContent
-                        side="right"
-                        className="bg-black/40 backdrop-blur-xl"
-                      >
-                        <SheetHeader>
-                          <SheetTitle>Edit Market</SheetTitle>
-                        </SheetHeader>
-
-                        {editing && (
-                          <form
-                            className="space-y-4 mt-4"
-                            onSubmit={(e) => {
-                              e.preventDefault();
-                              if (editing?.id) {
-                                handleUpdateMarket(
-                                  editing.id,
-                                  {
-                                    question: editing.question,
-                                    description: editing.description,
-                                    category: editing.category,
-                                    end_time: editing.end_time,
-                                    oracle_source: editing.oracle_source,
-                                    oracle_config: editing.oracle_config || "",
-                                    resolution_criteria:
-                                      editing.resolution_criteria || "",
-                                    status: editing.status,
-                                    featured: editing.featured,
-                                  },
-                                  editing.pda,
-                                  selectedOutcome || undefined
-                                );
-                                setEditing(null);
-                                setSelectedOutcome(null);
-                                setOpen(false);
-                              }
+                    {/* Resolve */}
+                    {market.status === MarketStatus.ACTIVE && (
+                      <Sheet open={open} onOpenChange={setOpen}>
+                        <SheetTrigger asChild>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => {
+                              setResolving(market);
+                              setSelectedOutcome(null);
                             }}
                           >
-                            <Label>Question</Label>
-                            <Input
-                              placeholder="Question"
-                              value={editing.question || ""}
-                              onChange={(e) =>
-                                setEditing({
-                                  ...editing,
-                                  question: e.target.value,
-                                })
-                              }
-                            />
+                            <Gavel className="w-4 h-4" />
+                          </Button>
+                        </SheetTrigger>
+                        <SheetContent
+                          side="right"
+                          className="bg-black/40 backdrop-blur-xl"
+                        >
+                          <SheetHeader>
+                            <SheetTitle>Resolve Market</SheetTitle>
+                          </SheetHeader>
 
-                            <Label>Description</Label>
-                            <Textarea
-                              placeholder="Description"
-                              value={editing.description || ""}
-                              onChange={(e) =>
-                                setEditing({
-                                  ...editing,
-                                  description: e.target.value,
-                                })
-                              }
-                            />
-
-                            <Label>Category</Label>
-                            <Select
-                              value={editing.category}
-                              onValueChange={(val) =>
-                                setEditing({
-                                  ...editing,
-                                  category: val as MarketCategory,
-                                })
-                              }
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder=" Select Category" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {Object.values(MarketCategory).map((cat) => (
-                                  <SelectItem key={cat} value={cat}>
-                                    {MarketCategoryLabels[cat]}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-
-                            <Label>Resolution Criteria</Label>
-                            <Textarea
-                              placeholder="Resolution Criteria"
-                              value={editing.resolution_criteria || ""}
-                              onChange={(e) =>
-                                setEditing({
-                                  ...editing,
-                                  resolution_criteria: e.target.value,
-                                })
-                              }
-                            />
-
-                            <Label>Status</Label>
-                            <Select
-                              value={editing.status}
-                              onValueChange={(val) =>
-                                setEditing({
-                                  ...editing,
-                                  status: val as Market["status"],
-                                })
-                              }
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Status" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value={MarketStatus.ACTIVE}>
-                                  Active
-                                </SelectItem>
-                                <SelectItem value={MarketStatus.RESOLVED}>
-                                  RESOLVED
-                                </SelectItem>
-                                
-                              </SelectContent>
-                            </Select>
-
-                            {/* ✅ Only show outcome select when status is RESOLVED */}
-                            {editing.status === MarketStatus.RESOLVED && (
-                              <>
-                                <Label>Outcome</Label>
-                                <Select
-                                  value={selectedOutcome || ""}
-                                  onValueChange={(val) =>
-                                    setSelectedOutcome(val as "YES" | "NO")
-                                  }
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select Outcome" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="YES">YES</SelectItem>
-                                    <SelectItem value="NO">NO</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </>
-                            )}
-
-                            {/* Featured toggle */}
-                            <div className="flex items-center space-x-3 pt-2">
-                              <Switch
-                                checked={editing.featured}
-                                onCheckedChange={(val) =>
-                                  setEditing({
-                                    ...editing,
-                                    featured: val,
-                                  })
+                          {resolving && (
+                            <form
+                              className="space-y-4 mt-4"
+                              onSubmit={(e) => {
+                                e.preventDefault();
+                                if (!selectedOutcome) {
+                                  toast.error("Select an outcome");
+                                  return;
                                 }
+                                handleResolveMarket(resolving, selectedOutcome);
+                                setResolving(null);
+                                setSelectedOutcome(null);
+                                setOpen(false);
+                              }}
+                            >
+                              <p className="text-sm">{resolving.question}</p>
+
+                              <Label>Outcome</Label>
+                              <Select
+                                value={selectedOutcome || ""}
+                                onValueChange={(val) =>
+                                  setSelectedOutcome(val as "YES" | "NO")
+                                }
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select Outcome" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="YES">YES</SelectItem>
+                                  <SelectItem value="NO">NO</SelectItem>
+                                </SelectContent>
+                              </Select>
+
+                              <Label>Admin key</Label>
+                              <Input
+                                type="password"
+                                placeholder="Admin resolution key"
+                                value={adminKey}
+                                onChange={(e) => setAdminKey(e.target.value)}
                               />
-                              <Label className="text-white">
-                                Mark as Featured
-                              </Label>
-                            </div>
 
-                            <Button type="submit" className="w-full">
-                              Save Changes
-                            </Button>
-                          </form>
-                        )}
-                      </SheetContent>
-                    </Sheet>
+                              <Button type="submit" className="w-full">
+                                Resolve Market
+                              </Button>
+                            </form>
+                          )}
+                        </SheetContent>
+                      </Sheet>
+                    )}
 
-                    {/* Delete */}
+                    {/* Cancel */}
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button size="icon" variant="destructive">
@@ -393,7 +278,7 @@ export default function ActiveMarkets() {
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Market</AlertDialogTitle>
+                          <AlertDialogTitle>Cancel Market</AlertDialogTitle>
                           <AlertDialogDescription>
                             This action
                             <span className="font-bold text-red-700">
@@ -401,11 +286,11 @@ export default function ActiveMarkets() {
                               cannot be undone
                             </span>
                             . <br />
-                            To confirm deletion of
+                            To confirm cancelling
                             <span className="italic"> {market.question}</span>,
                             please type{" "}
                             <code className="px-1 py-0.5 bg-muted rounded">
-                              delete market
+                              cancel market
                             </code>{" "}
                             below.
                           </AlertDialogDescription>
@@ -414,21 +299,19 @@ export default function ActiveMarkets() {
                         {/* Input field for confirmation */}
                         <div className="mt-4">
                           <Input
-                            placeholder="Type 'delete market' to confirm"
+                            placeholder="Type 'cancel market' to confirm"
                             value={confirmText}
                             onChange={(e) => setConfirmText(e.target.value)}
                           />
                         </div>
 
                         <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogCancel>Back</AlertDialogCancel>
                           <AlertDialogAction
-                            disabled={confirmText !== "delete market"}
-                            onClick={() =>
-                              handleCancelMarket(market.id, market.pda)
-                            }
+                            disabled={confirmText !== "cancel market"}
+                            onClick={() => handleCancelMarket(market)}
                           >
-                            Delete
+                            Cancel Market
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>

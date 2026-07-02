@@ -13,12 +13,10 @@ import {
 } from "../ui/select";
 import { Button } from "../ui/button";
 import { Progress } from "../ui/progress";
-import axios from "axios";
 import { useEffect, useState } from "react";
 import { useMarkets } from "../helper/fetchMarkets";
 import toast from "react-hot-toast";
 import { Switch } from "../ui/switch";
-import { BACKEND_URL } from "@/config";
 import * as anchor from "@coral-xyz/anchor";
 import { MarketCategory, MarketCategoryLabels } from "@/app/types";
 import Methods from "@/app/utils/methods";
@@ -31,7 +29,7 @@ export default function CreateMarkets() {
   const [hours, setHours] = useState("0");
   const [minutes, setMinutes] = useState("0");
   const [endTime, setEndTime] = useState<string | null>(null);
-  const [progressStep, setProgressStep] = useState<number>(0); // 0-3
+  const [progressStep, setProgressStep] = useState<number>(0); // 0-2
   const [isCreating, setIsCreating] = useState(false);
 
   const [form, setForm] = useState({
@@ -69,6 +67,22 @@ export default function CreateMarkets() {
     }
   }, [days, hours, minutes]);
 
+  // App-level categories → the on-chain enum (price | events | social | other).
+  const onChainCategory = (cat: MarketCategory) => {
+    switch (cat) {
+      case MarketCategory.CRYPTO:
+      case MarketCategory.STOCKS:
+        return { price: {} };
+      case MarketCategory.DEFI_EVENTS:
+      case MarketCategory.MARKET_EVENTS:
+        return { events: {} };
+      case MarketCategory.CELEBRITY_CRYPTO:
+        return { social: {} };
+      default:
+        return { other: {} };
+    }
+  };
+
   const handleCreateMarket = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!endTime) {
@@ -76,50 +90,32 @@ export default function CreateMarkets() {
       return;
     }
 
-    let marketId = "";
-    let pda = "";
-
     try {
       setIsCreating(true);
-      setProgressStep(1); // Step 1: Backend creation
+      setProgressStep(1); // Step 1: on-chain initialize_market
 
-      // 1️ Create market on backend
-      const res = await axios.post(
-        `${BACKEND_URL}/api/admin/markets`,
-        { ...form, end_time: endTime },
-        { withCredentials: true }
-      );
-
-      marketId = res.data.market.id; // store id in case rollback needed
-      setProgressStep(2); // Step 2: Contract initialization
-
-      // 2️ Initialize contract
-      const tx = await initMarket({
-        questionId: `${marketId}`,
-        category: { price: {} },
+      // Create the market on-chain; initMarket records the confirmed market
+      // (pda + tx signature) to the backend via POST /api/markets itself.
+      const pda = await initMarket({
+        questionId: form.question,
+        category: onChainCategory(form.category),
         durationSeconds: new anchor.BN(
           parseInt(days) * 86400 +
             parseInt(hours) * 3600 +
             parseInt(minutes) * 60
         ),
         minBetAmount: new anchor.BN(100_000_000),
-        tags: ["ETH", "Price"],
+        tags: [form.category],
         imageUrl: null,
+        record: {
+          question: form.question,
+          description: form.description,
+          category: form.category,
+        },
       });
+      if (!pda) throw new Error("market creation returned no PDA");
 
-      console.log("tx", tx);
-
-      pda = tx!.toString();
-      setProgressStep(3); // Step 3: Update backend with contract
-
-      // 3️ Update backend with PDA
-      await axios.put(
-        `${BACKEND_URL}/api/admin/markets/${marketId}`,
-        { pda },
-        { withCredentials: true }
-      );
-
-      setProgressStep(4); // Finished
+      setProgressStep(2); // Finished
       toast.success("Market created successfully");
 
       fetchMarkets();
@@ -139,34 +135,14 @@ export default function CreateMarkets() {
       setMinutes("0");
     } catch (err) {
       console.error("Market creation failed:", err);
-      toast.error("Market creation failed, rolling back...");
-
-      // Rollback if market created on backend
-      if (marketId) {
-        try {
-          await axios.delete(`${BACKEND_URL}/api/admin/markets/${marketId}`, {
-            withCredentials: true,
-          });
-
-          toast.error("Market rolled back successfully");
-        } catch (rollbackErr) {
-          console.error("Rollback failed:", rollbackErr);
-          toast.error("Failed to rollback market. Manual deletion needed.");
-        }
-      }
+      toast.error("Market creation failed");
       setProgressStep(0);
     } finally {
       setIsCreating(false);
     }
   };
 
-  const progressLabel = [
-    "Waiting",
-    "Creating Backend",
-    "Initializing Contract",
-    "Updating Backend",
-    "Done",
-  ];
+  const progressLabel = ["Waiting", "Initializing Contract", "Done"];
 
   return (
     <Card className="border border-border bg-black/30 backdrop-blur-xl">
@@ -283,7 +259,7 @@ export default function CreateMarkets() {
           {isCreating && (
             <div className="space-y-1">
               <Label>{progressLabel[progressStep]}</Label>
-              <Progress value={(progressStep / 4) * 100} />
+              <Progress value={(progressStep / 2) * 100} />
             </div>
           )}
 

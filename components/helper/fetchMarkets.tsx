@@ -11,12 +11,13 @@ export function useMarkets() {
 
   const fetchMarkets = async ():Promise<void> => {
     try {
-      const res = await axios.get<{success:boolean,markets:Market[]}>(`${BACKEND_URL}/api/admin/markets`, {
-        withCredentials: true,
-      });
+      const res = await axios.get<{
+        success: boolean;
+        data: { markets: Market[] };
+      }>(`${BACKEND_URL}/api/markets`, { withCredentials: true });
 
       if (res.data.success) {
-        setMarkets(res.data.markets);
+        setMarkets(res.data.data.markets);
       }
     } catch (err) {
       toast.error(`Failed to fetch markets ${err}`);

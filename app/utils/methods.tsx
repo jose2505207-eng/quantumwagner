@@ -188,9 +188,11 @@ export default function Methods() {
     questionId,
     category = { price: {} },
     durationSeconds = new anchor.BN(3600 * 24),
-    minBetAmount = new anchor.BN(1),
+    // 0.1 SOL — the deployed program rejects tiny values (InvalidMinBetAmount).
+    minBetAmount = new anchor.BN(100_000_000),
     tags = ["BTC", "Price"],
     imageUrl,
+    record,
   }: {
     questionId: string;
     category?: MarketCategory;
@@ -198,6 +200,9 @@ export default function Methods() {
     minBetAmount?: anchor.BN;
     tags?: string[];
     imageUrl?: string | null;
+    /** Overrides for the off-chain backend record (question text, description,
+     *  app-level category) when `questionId` isn't the display question. */
+    record?: { question?: string; description?: string; category?: string };
   }) => {
     if (!program) {
       toast.error("Program not ready");
@@ -257,8 +262,9 @@ export default function Methods() {
       // Best-effort: record the confirmed on-chain market to the backend.
       try {
         await recordMarketCreated({
-          question: questionId,
-          category: Object.keys(category)[0] ?? "CRYPTO",
+          question: record?.question ?? questionId,
+          description: record?.description,
+          category: record?.category ?? Object.keys(category)[0] ?? "CRYPTO",
           endTime: new Date(Date.now() + durationSeconds.toNumber() * 1000),
           pda: marketPDA.toBase58(),
           txSignature: tx,

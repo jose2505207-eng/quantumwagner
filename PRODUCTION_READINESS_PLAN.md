@@ -59,3 +59,25 @@ backend-real but UI/on-chain partially demo (documented).
 **Overall:** Beta/demo-ready on devnet. Not production/mainnet-ready — see the
 audit report for blockers (on-chain settlement, security/economic audit, legal).
 Database is now Postgres-ready (provision a managed instance + set `DATABASE_URL`).
+
+## Loop 8 — devnet-production hardening (2026-07-02)
+
+- **Env**: rotated `JWT_SECRET`/`ADMIN_RESOLUTION_KEY` off the dev defaults
+  (prod boot guard was refusing all auth routes), enabled `RATE_LIMIT_ENABLED`,
+  added `CRON_SECRET` (documented in `.env.example`) and `ORACLE_PROVIDER=pyth`
+  (without it fast-bet rounds get `startPrice=null` and never auto-resolve).
+- **Proven live on devnet** (Supabase Postgres + `next start`):
+  fast-bet generate → real Pyth baseline → auto-resolve; and the full market
+  journey via `test/e2e/market-e2e.ts` — on-chain `initialize_market` →
+  wallet-signature auth → market recorded (server re-verifies the tx) →
+  on-chain `place_bet` → prediction recorded. Markets 1+2 exist on-chain and in DB.
+- **Admin surface repaired**: it previously pointed at a nonexistent
+  `/api/admin/markets|users` backend AND was unreachable (gate required
+  `kyc_level >= 3` while the API hardcodes 0). Now: page requires a session;
+  user list via new key-gated `GET /api/admin/users`; market create goes
+  on-chain (`initMarket` self-records); resolve → `POST /api/markets/[id]/resolve`
+  (admin key); cancel → on-chain + self-record. Metadata/role editing removed
+  (no backend/data-model support).
+- **Known on-chain constraints**: deployed program source is NOT in this repo
+  (IDL-only interface); `initialize_market` rejects `min_bet_amount` below
+  0.1 SOL (frontend default fixed accordingly).
