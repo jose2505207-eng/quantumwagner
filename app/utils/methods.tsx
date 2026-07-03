@@ -590,8 +590,11 @@ export default function Methods() {
         tokenVault: tokenVaultPda.toBase58(),
         solVault: solVaultPda.toBase58(),
       };
-    } catch (e) {
-      toast.error("Token failed to create");
+    } catch (err) {
+      if (err instanceof anchor.AnchorError)
+        toast.error(`Token launch failed: ${err.error.errorMessage}`);
+      else toast.error("Token failed to create");
+      throw err;
     }
   };
 
@@ -668,8 +671,11 @@ export default function Methods() {
       } catch (err) {
         console.warn("token buy not recorded to backend:", err);
       }
-    } catch (e) {
-      toast.error("Token purchase failed");
+    } catch (err) {
+      if (err instanceof anchor.AnchorError)
+        toast.error(`Token purchase failed: ${err.error.errorMessage}`);
+      else toast.error("Token purchase failed");
+      throw err;
     }
   };
 

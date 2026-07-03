@@ -71,3 +71,16 @@ live RPC, so it never gates the green build. The node-only Vitest suite excludes
 The devnet faucet is currently IP-blocked for this host; the wallet is funded
 out-of-band via an authenticated devnet RPC. Until funded, `pnpm e2e` is expected
 to fail loud at step [2] — that is the correct honest behaviour, not a bug.
+
+## Companion journey proofs
+
+- `npx tsx test/e2e/market-e2e.ts` — full market journey: on-chain
+  `initialize_market` → wallet auth → market recorded (server re-verifies the
+  tx) → on-chain `place_bet` → prediction recorded.
+- `npx tsx test/e2e/token-e2e.ts` — full memecoin journey: on-chain
+  `create_token_launch` (pays the 0.1 SOL creation fee) → launch recorded →
+  on-chain `buy_token` → trade recorded.
+
+Both need the app running (`E2E_BASE_URL`, default `http://localhost:3000`)
+and the funded `.devnet/id.json` wallet. Like the harness above they are NOT
+part of `pnpm test` / CI.
