@@ -4,10 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 import { Market } from "@/app/types";
 import { getMarkets } from "@/lib/api";
 
-// "demo" is retained in the union for backward compatibility with UI branches,
-// but is never produced: the app only ever renders real live data or an empty
-// state. No seed/demo markets exist anymore.
-export type DataSource = "live" | "demo" | "empty";
+// The app only ever renders real live data or an empty state — there is no
+// demo/seed source.
+export type DataSource = "live" | "empty";
 
 interface UseMarketsResult {
   markets: Market[];

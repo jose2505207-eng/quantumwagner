@@ -4,91 +4,15 @@ import { useAllTokens } from "@/app/utils/useAllTokens";
 import { useUserBattles } from "@/app/utils/useUserBattles";
 import { PublicKey } from "@solana/web3.js";
 import { useRouter } from "next/navigation";
-import { DEMO_MODE } from "@/lib/game/config";
-import { DemoBadge } from "@/components/game";
-
-// DEMO data — only used as a fallback when DEMO_MODE is on and the user has no
-// real battles. Always badged in the UI; never silently shown as real data.
-const DEMO_BATTLES = [
-	{
-		id: "battle_1",
-		pda: "battle_pda_1",
-		data: {
-			imageUrl:
-				"https://images.unsplash.com/photo-1642104704074-907c0698cbd9?q=80&w=2532&auto=format&fit=crop",
-			title: "Meme Coin Wars",
-			description: "Doge vs Shiba Inu - Who will reign supreme?",
-			status: { Open: {} },
-			sideATokens: ["token_mint_1"],
-			sideBTokens: ["token_mint_2"],
-		},
-	},
-	{
-		id: "battle_2",
-		pda: "battle_pda_2",
-		data: {
-			imageUrl:
-				"https://images.unsplash.com/photo-1621416894569-0f39ed31d247?q=80&w=2555&auto=format&fit=crop",
-			title: "L1 Showdown",
-			description: "Solana vs Ethereum - The battle for speed.",
-			status: { Active: {} },
-			sideATokens: ["token_mint_3"],
-			sideBTokens: ["token_mint_4"],
-		},
-	},
-];
-
-const DEMO_ALL_TOKENS = [
-	{
-		account: {
-			tokenMint: "token_mint_1",
-			symbol: "DOGE",
-			imageUri: "https://cryptologos.cc/logos/dogecoin-doge-logo.png",
-		},
-	},
-	{
-		account: {
-			tokenMint: "token_mint_2",
-			symbol: "SHIB",
-			imageUri: "https://cryptologos.cc/logos/shiba-inu-shib-logo.png",
-		},
-	},
-	{
-		account: {
-			tokenMint: "token_mint_3",
-			symbol: "SOL",
-			imageUri: "https://cryptologos.cc/logos/solana-sol-logo.png",
-		},
-	},
-	{
-		account: {
-			tokenMint: "token_mint_4",
-			symbol: "ETH",
-			imageUri: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
-		},
-	},
-];
 
 export default function UserBattlesList() {
 	const { battles: userBattles, loading: battleLoading } = useUserBattles();
 	const { tokens: allToken, loading: tokenLoading } = useAllTokens();
 	const router = useRouter();
 
-	// Honest fallback: demo battles only when DEMO_MODE is on and there is no
-	// real data. Otherwise show the genuine (possibly empty) state.
-	const hasRealBattles = !!(userBattles && userBattles.length > 0);
-	const displayBattles = hasRealBattles
-		? userBattles
-		: DEMO_MODE
-		? DEMO_BATTLES
-		: [];
-	const displayTokens =
-		allToken && allToken.length > 0
-			? allToken
-			: DEMO_MODE
-			? DEMO_ALL_TOKENS
-			: [];
-	const showingDemo = !hasRealBattles && DEMO_MODE;
+	// Real on-chain battles only — an empty state is the honest answer.
+	const displayBattles = userBattles ?? [];
+	const displayTokens = allToken ?? [];
 
 	if (battleLoading || tokenLoading) return <Spinner />;
 
@@ -112,11 +36,13 @@ export default function UserBattlesList() {
 					<h3 className="text-xl sm:text-2xl font-semibold bg-gradient-to-r from-[#a855f7] to-[#9333ea] bg-clip-text text-transparent">
 						Your Created Battles
 					</h3>
-					{showingDemo && (
-						<DemoBadge note="Sample battles, not your real data." />
-					)}
 				</div>
 			</div>
+			{displayBattles.length === 0 && (
+				<p className="text-gray-400 text-center text-sm sm:text-base py-10">
+					You haven&#39;t created any battles yet.
+				</p>
+			)}
 			{displayBattles?.map((b) => {
         const d = b.data;
 
@@ -140,7 +66,7 @@ export default function UserBattlesList() {
               <div className="flex items-start gap-4 flex-shrink-0">
                 <div className="w-16 h-16 rounded-xl overflow-hidden border border-white/10 flex-shrink-0 bg-white/5 shadow-inner">
                   <img
-                    src={d.imageUrl}
+                    src={d.imageUrl ?? undefined}
                     width={64}
                     height={64}
                     alt={d.title}
@@ -179,12 +105,12 @@ export default function UserBattlesList() {
                   <h3 className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider">Side A</h3>
 
                   <div className="flex gap-1.5">
-                    {d.sideATokens.map((mint: string) => {
+                    {d.sideATokens.map((mint) => {
                       const token = getToken(mint);
 
                       return (
                         <div
-                          key={mint}
+                          key={mint.toString()}
                           className="flex flex-col items-center gap-1"
                         >
                           <div className="w-8 h-8 rounded-lg overflow-hidden border border-white/10 bg-white/5 p-0.5">
@@ -213,12 +139,12 @@ export default function UserBattlesList() {
                   <h3 className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider">Side B</h3>
 
                   <div className="flex gap-1.5">
-                    {d.sideBTokens.map((mint: string) => {
+                    {d.sideBTokens.map((mint) => {
                       const token = getToken(mint);
 
                       return (
                         <div
-                          key={mint}
+                          key={mint.toString()}
                           className="flex flex-col items-center gap-1"
                         >
                            <div className="w-8 h-8 rounded-lg overflow-hidden border border-white/10 bg-white/5 p-0.5">

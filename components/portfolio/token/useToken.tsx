@@ -11,60 +11,6 @@ import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { Copy, ExternalLink } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { DEMO_MODE } from "@/lib/game/config";
-import { DemoBadge } from "@/components/game";
-
-// DEMO data — only used as a fallback when DEMO_MODE is on and the user has no
-// real tokens. Always badged in the UI; never silently shown as real holdings.
-const DEMO_USER_TOKENS = [
-	{
-		account: {
-			tokenMint: "mint_created_1",
-			name: "Buzz Token",
-			symbol: "BUZZ",
-			imageUri: "https://cryptologos.cc/logos/solana-sol-logo.png", // Placeholder
-			launchId: "launch_1",
-			currentPrice: 1500000000, // 1.5 SOL
-			totalSupply: "1000000",
-		},
-	},
-	{
-		account: {
-			tokenMint: "mint_created_2",
-			name: "Moon Rocket",
-			symbol: "MOON",
-			imageUri: null, // Test fallback
-			launchId: "launch_2",
-			currentPrice: 500000000, // 0.5 SOL
-			totalSupply: "1000000000",
-		},
-	},
-];
-
-const DEMO_BOUGHT_TOKENS = [
-	{
-		mint: "mint_bought_1",
-		balance: "500",
-		tokenData: {
-			name: "Pepe Coin",
-			symbol: "PEPE",
-			imageUri: "https://cryptologos.cc/logos/pepe-pepe-logo.png",
-			currentPrice: 100000, // 0.0001 SOL
-			totalSupply: "420690000000",
-		},
-	},
-	{
-		mint: "mint_bought_2",
-		balance: "10",
-		tokenData: {
-			name: "Bonk",
-			symbol: "BONK",
-			imageUri: "https://cryptologos.cc/logos/bonk1-bonk-logo.png",
-			currentPrice: 200000, // 0.0002 SOL
-			totalSupply: "99999999999",
-		},
-	},
-];
 
 export default function Tokens() {
 	const { tokens: userToken, loading: tokenLoading } = useUserTokens();
@@ -72,22 +18,9 @@ export default function Tokens() {
 		useUserBoughtTokens();
 	const router = useRouter();
 
-	// Honest fallback: demo tokens only when DEMO_MODE is on and there is no
-	// real data. Otherwise show the genuine (possibly empty) state.
-	const hasRealUserTokens = !!(userToken && userToken.length > 0);
-	const hasRealBoughtTokens = !!(userBoughtToken && userBoughtToken.length > 0);
-	const displayUserTokens = hasRealUserTokens
-		? userToken
-		: DEMO_MODE
-		? DEMO_USER_TOKENS
-		: [];
-	const displayBoughtTokens = hasRealBoughtTokens
-		? userBoughtToken
-		: DEMO_MODE
-		? DEMO_BOUGHT_TOKENS
-		: [];
-	const showingDemo =
-		(!hasRealUserTokens || !hasRealBoughtTokens) && DEMO_MODE;
+	// Real on-chain holdings only — an empty state is the honest answer.
+	const displayUserTokens = userToken ?? [];
+	const displayBoughtTokens = userBoughtToken ?? [];
 
 	return (
 		<>
@@ -100,9 +33,6 @@ export default function Tokens() {
 							<h3 className="text-xl sm:text-2xl font-semibold bg-gradient-to-r from-[#a855f7] to-[#9333ea] bg-clip-text text-transparent">
 								Your Tokens
 							</h3>
-							{showingDemo && (
-								<DemoBadge note="Sample tokens, not your real holdings." />
-							)}
 						</div>
 
 						<TabsList className="bg-gray-900/70 border border-gray-800 rounded-lg flex justify-center sm:justify-start">
@@ -251,7 +181,7 @@ export default function Tokens() {
 															Current Price
 														</p>
 														<p className="text-sm font-mono font-medium text-white">
-															{toDisplay(acc.currentPrice / LAMPORTS_PER_SOL)}{" "}
+															{toDisplay(Number(acc.currentPrice.toString()) / LAMPORTS_PER_SOL)}{" "}
 															SOL
 														</p>
 													</div>
@@ -416,7 +346,7 @@ export default function Tokens() {
 															Current Price
 														</p>
 														<p className="text-sm font-mono font-medium text-blue-200">
-															{toDisplay(acc.currentPrice / LAMPORTS_PER_SOL)}{" "}
+															{toDisplay(Number(acc.currentPrice.toString()) / LAMPORTS_PER_SOL)}{" "}
 															SOL
 														</p>
 													</div>

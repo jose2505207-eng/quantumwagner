@@ -38,7 +38,7 @@ export function LuxuryLanding() {
   const hydrated = useHydrated();
   const { connected } = useWallet();
   const { setVisible } = useWalletModal();
-  const { markets, source, loading } = useMarkets();
+  const { markets, loading } = useMarkets();
   const isConnected = hydrated && connected;
   const preview = markets.slice(0, 3);
 
@@ -264,11 +264,6 @@ export function LuxuryLanding() {
             })
           )}
         </div>
-        {source === "demo" && (
-          <p className="mt-4 text-center text-[12px] text-[var(--text-subtle)]">
-            Showing demo markets — live markets will appear here once created.
-          </p>
-        )}
       </motion.section>
 
       {/* ---------------- FINAL CTA ---------------- */}

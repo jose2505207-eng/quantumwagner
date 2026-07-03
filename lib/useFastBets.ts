@@ -4,9 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getFastBets, type ApiFastBet } from "@/lib/api";
 import type { FastBetCardProps } from "@/components/fastbet/FastBetCard";
 
-// "demo" is retained in the union for backward compatibility with UI branches,
-// but is never produced: only real live rounds or an empty state are rendered.
-export type DataSource = "live" | "demo" | "empty";
+// Only real live rounds or an empty state are rendered — no demo/seed source.
+export type DataSource = "live" | "empty";
 
 /** Card-ready fast-bet row (the props FastBetCard consumes, minus `index`). */
 export type FastBetRow = Omit<FastBetCardProps, "index">;
@@ -106,12 +105,9 @@ const POLL_INTERVAL_MS = 15000;
 
 /**
  * Loads fast-bet rounds from the live backend. The honesty contract:
- *   - source === "live"  -> real backend rounds (rendered with NO demo badge)
- *   - source === "demo"  -> backend returned none and DEMO_MODE is on; the rounds
- *                            are seed data and MUST be badged in the UI
- *   - source === "empty" -> no live rounds and demo is off
- * On a hard failure we surface `error` (and still fall back to demo-or-empty so
- * the screen degrades gracefully — but demo data stays clearly badged).
+ *   - source === "live"  -> real backend rounds
+ *   - source === "empty" -> no live rounds (nothing is ever fabricated)
+ * On a hard failure we surface `error` (UI shows an ErrorState with retry).
  */
 export function useFastBets(): UseFastBetsResult {
   const [fastBets, setFastBets] = useState<FastBetRow[]>([]);

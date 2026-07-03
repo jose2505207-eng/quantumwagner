@@ -7,10 +7,10 @@ import MarketsHero from "@/components/market/MarketsHero";
 import MarketsGrid from "@/components/market/MarketsGrid";
 import TradingStats from "@/components/market/TradingStats";
 import { useMarkets } from "@/lib/useMarkets";
-import { DemoBadge, ErrorState, PlayerHUD } from "@/components/game";
+import { ErrorState, PlayerHUD } from "@/components/game";
 
 export default function Markets() {
-  const { markets, source, loading, error, reload } = useMarkets();
+  const { markets, loading, error, reload } = useMarkets();
   const setMarkets = useMarketStore((s) => s.setMarkets);
 
   // Keep the shared store in sync for components that read from it.
@@ -29,16 +29,7 @@ export default function Markets() {
         <PlayerHUD />
       </div>
 
-      {source === "demo" && (
-        <div className="mx-auto mt-6 flex w-full max-w-6xl items-center gap-2 px-4">
-          <DemoBadge note="No live markets returned — showing seed data." />
-          <span className="text-xs text-zinc-400">
-            Showing demo markets — the live backend returned none.
-          </span>
-        </div>
-      )}
-
-      {error && source !== "demo" ? (
+      {error ? (
         <div className="px-4 py-10">
           <ErrorState
             description={`We couldn't reach the markets service. ${error}`}

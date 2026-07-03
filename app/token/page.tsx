@@ -78,8 +78,9 @@ export default function LaunchPage() {
     if (!name.trim()) return "Token Name is required";
     if (!symbol.trim()) return "Token Symbol is required";
     if (!description.trim()) return "Description is required";
-    if (!imageUrl.trim() || !isValidUrl(imageUrl)) return "Valid Image URL is required";
-    
+    // Image is optional; when provided it must be a valid URL.
+    if (imageUrl.trim() && !isValidUrl(imageUrl)) return "Image URL is not a valid URL";
+
     const supplyNum = Number(supply);
     const minTokenSupply = MIN_TOKEN_SUPPLY.toNumber();
     const maxTokenSupply = MAX_TOKEN_SUPPLY.toNumber();
@@ -108,7 +109,8 @@ export default function LaunchPage() {
         name,
         symbol,
         description,
-        imageUrl,
+        // Image is optional — fall back to the Quantum Wager logo.
+        imageUrl: imageUrl.trim() || "/quantlogo.svg",
         socialLinks: {
           website: website || undefined,
           twitter: twitter || undefined,
@@ -325,7 +327,7 @@ export default function LaunchPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-white/60 uppercase tracking-wider">Image URL</label>
+                    <label className="text-xs font-bold text-white/60 uppercase tracking-wider">Image URL (optional — defaults to the Quantum Wager logo)</label>
                     <div className="relative">
                       <input 
                         type="text" 

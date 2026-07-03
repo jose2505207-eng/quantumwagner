@@ -3,7 +3,7 @@
 import { Background } from "@/components/background";
 import FastBetHero from "@/components/fastbet/FastBetHero";
 import FastBetCard from "@/components/fastbet/FastBetCard";
-import { DemoBadge, ErrorState } from "@/components/game";
+import { ErrorState } from "@/components/game";
 import { useFastBets } from "@/lib/useFastBets";
 import { motion } from "framer-motion";
 
@@ -11,7 +11,6 @@ export default function FastBetsPage() {
   const { fastBets, source, loading, error, reload } = useFastBets();
 
   const activeCount = fastBets.filter((b) => b.status === "live").length;
-  const isDemo = source === "demo";
   const isEmpty = !loading && source === "empty";
 
   return (
@@ -26,9 +25,6 @@ export default function FastBetsPage() {
             <h2 className="text-2xl font-bold text-white flex items-center gap-3">
               <span className="w-2 h-8 rounded-full bg-yellow-500" />
               Live &amp; Upcoming
-              {isDemo && (
-                <DemoBadge note="Demo fallback shown because no live fast-bet rounds are currently available." />
-              )}
             </h2>
             {!isEmpty && (
               <div className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl">
@@ -38,7 +34,7 @@ export default function FastBetsPage() {
             )}
           </div>
 
-          {error && source !== "demo" ? (
+          {error ? (
             <ErrorState
               description={`We couldn't reach the fast-bets service. ${error}`}
               onRetry={reload}

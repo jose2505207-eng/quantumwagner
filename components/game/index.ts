@@ -10,8 +10,6 @@ export { PlayerHUD } from "./PlayerHUD";
 export { MissionMap } from "./MissionMap";
 export { MissionCard } from "./MissionCard";
 export { DailyQuests } from "./DailyQuests";
-export { LiveArenaStats } from "./LiveArenaStats";
-export type { ArenaStat } from "./LiveArenaStats";
 export { XPToast } from "./XPToast";
 export { WalletGate } from "./WalletGate";
 export { NavbarHUD } from "./NavbarHUD";

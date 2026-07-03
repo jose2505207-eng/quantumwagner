@@ -164,7 +164,7 @@ export default function Portfolio() {
             transition={{ duration: 0.5 }}
             className="lg:col-span-2 h-[400px]"
           >
-            <PortfolioChart />
+            <PortfolioChart positions={positions} />
           </motion.div>
 
           {/* Reputation Section - Spans 1 column */}
@@ -199,14 +199,6 @@ export default function Portfolio() {
                                     #{userInfo?.user.id?.toString().slice(0,4) || "0000"}
                                 </span>
                             </div>
-                            <div className="flex items-center gap-2 mt-1.5">
-                                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-                                    <ShieldCheck className="w-3 h-3 text-emerald-400" />
-                                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">
-                                        KYC Level {userInfo?.user.kyc_level || 0}
-                                    </span>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -215,9 +207,8 @@ export default function Portfolio() {
                 <div className="flex-1 flex flex-col justify-between p-6 relative z-10">
                     <div className="flex-1 flex items-center justify-center py-2">
                         <div className="w-full">
-                             {/* We pass the hardcoded score for mock as requested */}
                             <ProfileCard
-                                reputation_score={42500}
+                                reputation_score={userInfo?.user.reputation_score ?? 0}
                                 win_rate={userInfo?.user.win_rate || "0"}
                                 battels_won={userInfo?.user.correct_predictions?.toString() || "0"}
                                 total_wagged={userInfo?.user.total_volume ? Number(userInfo.user.total_volume) / LAMPORTS_PER_SOL : 0}
