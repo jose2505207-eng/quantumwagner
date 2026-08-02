@@ -1,10 +1,63 @@
 "use client";
 
-import React from "react";
-import { TrendingUp, Trophy, Target, BarChart3 } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import { Trophy, Target, BarChart3, Coins } from "lucide-react";
 import { Button } from "../ui/button";
+import { api } from "@/lib/api";
+
+/**
+ * Your real standing.
+ *
+ * This panel used to be entirely invented: rank #1,247, "+23 positions this
+ * week", $4,250 profit, 72.4% win rate, 23 markets traded, and a "Recent
+ * Performance" row of made-up daily P&L. Every value now comes from the
+ * player's own persisted record, and a signed-out visitor is told to connect
+ * rather than shown someone's imaginary stats.
+ */
+interface Standing {
+  rank: number;
+  xp: number;
+  wins: number;
+}
+
+interface Profile {
+  total_predictions: number;
+  correct_predictions: number;
+  win_rate: string;
+  total_volume: string;
+  rank_id: string;
+  level: number;
+}
 
 const YourRanking = () => {
+  const [standing, setStanding] = useState<Standing | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [board, me] = await Promise.all([
+          api.get("/api/leaderboard").catch(() => null),
+          api.get("/api/auth/profile").catch(() => null),
+        ]);
+        if (cancelled) return;
+        const you = board?.data?.data?.you ?? null;
+        setStanding(you ? { rank: you.rank, xp: you.xp, wins: you.wins } : null);
+        setProfile((me?.data?.user as Profile) ?? null);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const signedIn = Boolean(profile);
+
   return (
     <div className="bg-[#0A0A0A] border border-border rounded-xl p-6 mb-8">
       <div className="flex items-center gap-3 mb-6">
@@ -14,101 +67,82 @@ const YourRanking = () => {
         <div>
           <h3 className="text-xl font-bold">Your Ranking</h3>
           <p className="text-muted-foreground text-sm">
-            Current position in leaderboard
+            Your position in the live season
           </p>
         </div>
       </div>
 
-      {/* Current Rank */}
-      <div className="text-center mb-6">
-        <div className="text-4xl font-bold text-purple-400 mb-2">#1,247</div>
-        <div className="flex items-center justify-center gap-2 text-sm">
-          <TrendingUp className="w-4 h-4 text-green-400" />
-          <span className="text-green-400">+23 positions</span>
-          <span className="text-muted-foreground">this week</span>
+      {loading ? (
+        <div className="h-40 animate-pulse rounded-lg bg-white/[0.03]" />
+      ) : !signedIn ? (
+        <div className="py-8 text-center">
+          <p className="text-sm text-muted-foreground">
+            Connect your wallet and place a bet to enter the season standings.
+          </p>
+          <Button asChild className="mt-4 w-full bg-purple-600 hover:bg-purple-500">
+            <Link href="/markets">Browse markets</Link>
+          </Button>
         </div>
-      </div>
-
-      {/* Progress to Next Rank */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between text-sm mb-2">
-          <span className="text-muted-foreground">Progress to Top 1000</span>
-          <span className="font-medium">247 spots to go</span>
-        </div>
-        <div className="w-full bg-[#1A1A1A] rounded-full h-2">
-          <div
-            className="bg-purple-500 h-2 rounded-full"
-            style={{ width: "20%" }}
-          ></div>
-        </div>
-        <div className="text-xs text-muted-foreground mt-1">
-          Need $12,500 more profit
-        </div>
-      </div>
-
-      {/* Key Stats Comparison */}
-      <div className="space-y-4 mb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-green-400" />
-            <span className="text-sm">Total Profit</span>
-          </div>
-          <div className="text-right">
-            <div className="font-semibold text-green-400">$4,250</div>
-            <div className="text-xs text-muted-foreground">
-              vs #1000: $16,750
+      ) : (
+        <>
+          <div className="text-center mb-6">
+            <div className="text-4xl font-bold text-purple-400 mb-2">
+              {standing ? `#${standing.rank}` : "Unranked"}
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {standing
+                ? `${standing.xp} XP · ${standing.wins} win${standing.wins === 1 ? "" : "s"}`
+                : "Win a bet to enter the standings"}
             </div>
           </div>
-        </div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Target className="w-4 h-4 text-blue-400" />
-            <span className="text-sm">Win Rate</span>
+          <div className="space-y-3">
+            <Stat
+              icon={<Coins className="w-4 h-4 text-yellow-400" />}
+              label="Staked"
+              value={`${Number(profile?.total_volume ?? 0).toFixed(3)} SOL`}
+            />
+            <Stat
+              icon={<BarChart3 className="w-4 h-4 text-blue-400" />}
+              label="Bets placed"
+              value={String(profile?.total_predictions ?? 0)}
+            />
+            <Stat
+              icon={<Target className="w-4 h-4 text-green-400" />}
+              label="Win rate"
+              value={
+                (profile?.total_predictions ?? 0) > 0 ? `${profile?.win_rate}%` : "—"
+              }
+            />
           </div>
-          <div className="text-right">
-            <div className="font-semibold text-blue-400">72.4%</div>
-            <div className="text-xs text-muted-foreground">vs #1000: 78.2%</div>
-          </div>
-        </div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Trophy className="w-4 h-4 text-yellow-400" />
-            <span className="text-sm">Markets Traded</span>
-          </div>
-          <div className="text-right">
-            <div className="font-semibold text-yellow-400">23</div>
-            <div className="text-xs text-muted-foreground">vs #1000: 89</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Recent Performance */}
-      <div className="border-t border-border pt-4">
-        <h4 className="text-sm font-medium mb-3">Recent Performance</h4>
-        <div className="grid grid-cols-3 gap-3 text-center">
-          <div>
-            <div className="text-lg font-bold text-green-400">+$420</div>
-            <div className="text-xs text-muted-foreground">24H</div>
-          </div>
-          <div>
-            <div className="text-lg font-bold text-green-400">+$1,250</div>
-            <div className="text-xs text-muted-foreground">7D</div>
-          </div>
-          <div>
-            <div className="text-lg font-bold text-red-400">-$180</div>
-            <div className="text-xs text-muted-foreground">30D</div>
-          </div>
-        </div>
-      </div>
-
-      {/* View Full Stats Button */}
-      <Button className="w-full mt-6" variant="outline">
-        View Full Portfolio
-      </Button>
+          <Button asChild className="mt-6 w-full bg-purple-600 hover:bg-purple-500">
+            <Link href="/portfolio">View full portfolio</Link>
+          </Button>
+        </>
+      )}
     </div>
   );
 };
+
+function Stat({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] px-4 py-3">
+      <span className="flex items-center gap-2 text-sm text-muted-foreground">
+        {icon}
+        {label}
+      </span>
+      <span className="font-mono text-sm font-semibold text-white">{value}</span>
+    </div>
+  );
+}
 
 export default YourRanking;

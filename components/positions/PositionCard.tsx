@@ -5,7 +5,6 @@ import { Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import clsx from "clsx";
-import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { Position } from "@/store/types/user/postionType";
 import { format, formatDistanceToNow } from "date-fns";
 
@@ -53,7 +52,7 @@ export default function PositionCard({
               Staked
             </div>
             <div className="font-mono text-sm font-medium text-white">
-              {(Number(position.amount_staked) / LAMPORTS_PER_SOL).toFixed(2)}{" "}
+              {Number(position.amount_staked ?? 0).toFixed(3)}{" "}
               SOL
             </div>
           </div>
@@ -72,7 +71,7 @@ export default function PositionCard({
           <div className="flex justify-between text-xs">
             <span className="text-muted-foreground">Total Volume</span>
             <span className="text-white font-mono">
-              {(Number(position.market.total_volume) / LAMPORTS_PER_SOL).toFixed(
+              {(Number(position.market.total_volume ?? 0)).toFixed(
                 2
               )}{" "}
               SOL

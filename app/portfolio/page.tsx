@@ -211,7 +211,7 @@ export default function Portfolio() {
                                 reputation_score={userInfo?.user.reputation_score ?? 0}
                                 win_rate={userInfo?.user.win_rate || "0"}
                                 battels_won={userInfo?.user.correct_predictions?.toString() || "0"}
-                                total_wagged={userInfo?.user.total_volume ? Number(userInfo.user.total_volume) / LAMPORTS_PER_SOL : 0}
+                                total_wagged={userInfo?.user.total_volume ? Number(userInfo.user.total_volume) : 0}
                                 current_strak={0}
                             />
                         </div>

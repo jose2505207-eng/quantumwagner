@@ -9,7 +9,6 @@ import {
   Users,
   DollarSign,
 } from "lucide-react";
-import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 
 const MarketCard = ({ market }) => {
   const yesPool = Number(market.yes_pool || 0);
@@ -41,7 +40,8 @@ const MarketCard = ({ market }) => {
     }
   };
 
-  const volume = (Number(market.total_volume) / LAMPORTS_PER_SOL).toFixed(2) + " SOL";
+  // Backend volumes are already SOL — dividing again showed every market as 0.00.
+  const volume = Number(market.total_volume ?? 0).toFixed(3) + " SOL";
   // Real participant count from the backend (positions). Was a Math.random() mock
   // that both fabricated data and caused an SSR/client hydration mismatch.
   const traders = market._count?.positions ?? 0;

@@ -1,5 +1,7 @@
 "use client";
 import React, { useEffect } from "react";
+import Link from "next/link";
+import { Plus } from "lucide-react";
 import { useMarketStore } from "@/store/adminMarketStore";
 import MarketCategories from "@/components/MarketCategories";
 import Faq from "@/components/marketing/Faq";
@@ -29,6 +31,17 @@ export default function Markets() {
         <PlayerHUD />
       </div>
 
+      {/* Anyone can open a market — it is their own on-chain transaction. */}
+      <div className="mx-auto mt-6 flex w-full max-w-6xl justify-end px-4">
+        <Link
+          href="/markets/new"
+          className="inline-flex items-center gap-2 rounded-xl border border-purple-500/30 bg-purple-500/10 px-4 py-2.5 text-sm font-bold text-purple-200 transition-colors hover:bg-purple-500/20"
+        >
+          <Plus className="h-4 w-4" />
+          Create a market
+        </Link>
+      </div>
+
       {error ? (
         <div className="px-4 py-10">
           <ErrorState
@@ -37,7 +50,9 @@ export default function Markets() {
           />
         </div>
       ) : (
-        <MarketsGrid markets={markets} loading={loading} />
+        <div id="markets-grid" className="scroll-mt-24">
+          <MarketsGrid markets={markets} loading={loading} />
+        </div>
       )}
 
       <TradingStats />

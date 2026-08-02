@@ -10,7 +10,6 @@ import { Background } from "@/components/background";
 import { TokenHeader } from "@/components/token-details/token-header";
 import { TokenStats } from "@/components/token-details/token-stats";
 import { BuyInterface } from "@/components/token-details/buy-interface";
-import { TokenChart } from "@/components/token-details/TokenChart";
 
 export default function TokenBuyPage() {
   const params = useParams();
@@ -69,9 +68,11 @@ export default function TokenBuyPage() {
         <TokenHeader token={acc} status={status} />
         
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-10">
-          {/* Chart Section */}
-          <div className="xl:col-span-2 h-[500px]">
-             <TokenChart tokenSymbol={acc.symbol} />
+          {/* Real on-chain state. There is no price-history feed for launch
+              tokens, so nothing is charted — TokenStats shows the actual
+              bonding-curve figures read from the TokenLaunch account. */}
+          <div className="xl:col-span-2">
+            <TokenStats token={acc} />
           </div>
 
           {/* Swap Interface */}
@@ -84,9 +85,6 @@ export default function TokenBuyPage() {
             />
           </div>
         </div>
-
-        {/* Stats */}
-        <TokenStats token={acc} />
         
         {/* About Section */}
         <div className="mt-10 p-8 rounded-3xl bg-white/[0.02] border border-white/5">

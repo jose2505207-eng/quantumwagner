@@ -68,7 +68,7 @@ export default function SilverReputationCard({
                     />
                 </div>
                 <div className="mt-2 text-center">
-                    <span className="text-[9px] text-slate-500">Top <span className="text-slate-300">{percentile}%</span> of players</span>
+                    <span className="text-[9px] text-slate-500">Progress to <span className="text-slate-300">next tier</span></span>
                 </div>
             </div>
         </div>

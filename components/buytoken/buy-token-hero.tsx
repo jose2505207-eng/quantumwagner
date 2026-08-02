@@ -2,6 +2,7 @@
 
 import { Clock, Swords, Trophy, Users, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
+import { usePlatformStats, formatSol } from "@/lib/usePlatformStats";
 import type { ReactNode } from "react";
 
 interface StatCardProps {
@@ -54,6 +55,10 @@ function StatCard({ color, icon, label, value, tag, delay }: StatCardProps) {
 }
 
 export function BuyTokenHero() {
+  // Real counts — these tiles displayed fixed marketing numbers before.
+  const { stats: live, loading } = usePlatformStats();
+  const show = (value: string) => (loading ? "…" : value);
+
   return (
     <div className="relative mb-16 pt-32">
       {/* Background Elements */}
@@ -101,32 +106,32 @@ export function BuyTokenHero() {
           delay={0.3}
           color="#f59e0b"
           icon={<Swords className="w-5 h-5 text-amber-500" />}
-          label="Active Battles"
-          value="24"
+          label="Tokens Launched"
+          value={show(String(live?.tokensLaunched ?? 0))}
           tag="LIVE"
         />
         <StatCard
           delay={0.4}
           color="#ec4899"
           icon={<Trophy className="w-5 h-5 text-pink-500" />}
-          label="Total Prize Pool"
-          value="$2.4M"
+          label="Platform Volume"
+          value={show(formatSol(live?.totalVolumeSol ?? 0))}
           tag="+24H"
         />
         <StatCard
           delay={0.5}
           color="#8b5cf6"
           icon={<Users className="w-5 h-5 text-violet-500" />}
-          label="Total Traders"
-          value="12.8K"
+          label="Players"
+          value={show(String(live?.traders ?? 0))}
           tag="ONLINE"
         />
         <StatCard
           delay={0.6}
           color="#3b82f6"
           icon={<Clock className="w-5 h-5 text-blue-500" />}
-          label="Avg Duration"
-          value="6h"
+          label="Open Markets"
+          value={show(String(live?.activeMarkets ?? 0))}
           tag="FAST"
         />
       </div>

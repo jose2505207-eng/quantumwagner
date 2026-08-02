@@ -1,12 +1,14 @@
 "use client";
 
 import React from "react";
+import { usePlatformStats, formatSol } from "@/lib/usePlatformStats";
 import Container from "../global/container";
 import Wrapper from "../global/wrapper";
 import Icons from "../global/icons";
 import { Trophy, TrendingUp, Users, Award } from "lucide-react";
 
 const LeaderboardHero = () => {
+  const { stats: live, loading } = usePlatformStats();
   return (
     <Wrapper className="py-12 md:py-20">
       <div className="flex flex-col items-center justify-center w-full z-10">
@@ -36,7 +38,7 @@ const LeaderboardHero = () => {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 w-full max-w-4xl mx-auto mt-8 md:mt-12 px-4 md:px-0">
             <div className="flex flex-col items-center p-4 md:p-6 rounded-2xl bg-[#0A0A0A] border border-border">
               <Users className="w-6 h-6 md:w-8 md:h-8 text-blue-400 mb-2 md:mb-3" />
-              <div className="text-xl md:text-2xl font-bold text-white">12,847</div>
+              <div className="text-xl md:text-2xl font-bold text-white">{loading ? "…" : live?.traders ?? 0}</div>
               <div className="text-xs md:text-sm text-muted-foreground text-center">
                 Active Traders
               </div>
@@ -44,20 +46,20 @@ const LeaderboardHero = () => {
 
             <div className="flex flex-col items-center p-4 md:p-6 rounded-2xl bg-[#0A0A0A] border border-border">
               <TrendingUp className="w-6 h-6 md:w-8 md:h-8 text-green-400 mb-2 md:mb-3" />
-              <div className="text-xl md:text-2xl font-bold text-white">$2.4M</div>
+              <div className="text-xl md:text-2xl font-bold text-white">{loading ? "…" : formatSol(live?.totalVolumeSol ?? 0)}</div>
               <div className="text-xs md:text-sm text-muted-foreground text-center">Total Volume</div>
             </div>
 
             <div className="flex flex-col items-center p-4 md:p-6 rounded-2xl bg-[#0A0A0A] border border-border">
               <Award className="w-6 h-6 md:w-8 md:h-8 text-purple-400 mb-2 md:mb-3" />
-              <div className="text-xl md:text-2xl font-bold text-white">1,289</div>
-              <div className="text-xs md:text-sm text-muted-foreground text-center">Elite Members</div>
+              <div className="text-xl md:text-2xl font-bold text-white">{loading ? "…" : live?.totalPredictions ?? 0}</div>
+              <div className="text-xs md:text-sm text-muted-foreground text-center">Bets Placed</div>
             </div>
 
             <div className="flex flex-col items-center p-4 md:p-6 rounded-2xl bg-[#0A0A0A] border border-border">
               <Trophy className="w-6 h-6 md:w-8 md:h-8 text-yellow-400 mb-2 md:mb-3" />
-              <div className="text-xl md:text-2xl font-bold text-white">89.4%</div>
-              <div className="text-xs md:text-sm text-muted-foreground text-center">Top Win Rate</div>
+              <div className="text-xl md:text-2xl font-bold text-white">{loading ? "…" : live?.accuracyPercent === null || live?.accuracyPercent === undefined ? "—" : `${live.accuracyPercent.toFixed(1)}%`}</div>
+              <div className="text-xs md:text-sm text-muted-foreground text-center">Settled Win Rate</div>
             </div>
           </div>
         </Container>

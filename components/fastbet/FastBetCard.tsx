@@ -57,6 +57,15 @@ export default function FastBetCard({
   const hasSplit =
     typeof yesPercentage === "number" && typeof noPercentage === "number";
 
+  // Pari-mutuel implied payout from the REAL pools: back a side and you take
+  // your share of the whole pool. The card used to print a fixed "1.8x"/"2.1x"
+  // that had nothing to do with this round. Null (→ "Open odds") while a side
+  // is still empty, since the multiplier is undefined until someone stakes.
+  const yesPool = hasSplit ? (totalPool * (yesPercentage ?? 0)) / 100 : 0;
+  const noPool = hasSplit ? (totalPool * (noPercentage ?? 0)) / 100 : 0;
+  const yesMultiplier = yesPool > 0 ? totalPool / yesPool : null;
+  const noMultiplier = noPool > 0 ? totalPool / noPool : null;
+
   // Honest live delta: only when the round is in play AND we have BOTH a real
   // current price and a real start price. Anything missing -> render nothing.
   const isInPlay = status === "live" || status === "closing-soon";
@@ -154,7 +163,7 @@ export default function FastBetCard({
               </div>
               <div className="flex items-center gap-1.5 text-white/60 bg-white/[0.02] px-2 py-1 rounded-lg border border-white/5">
                 <Trophy className="w-3.5 h-3.5 text-yellow-400" />
-                <span>Pool: <span className="text-white font-mono">${(totalPool / 1000).toFixed(1)}k</span></span>
+                <span>Pool: <span className="text-white font-mono">{totalPool.toFixed(3)} SOL</span></span>
               </div>
               {hasDelta && (
                 <div
@@ -262,7 +271,9 @@ export default function FastBetCard({
               <button className="w-full group/btn relative overflow-hidden rounded-xl bg-green-500/10 border border-green-500/20 p-3 transition-all duration-300 hover:bg-green-500 hover:border-green-500 hover:shadow-[0_0_20px_rgba(34,197,94,0.4)]">
                 <div className="relative z-10 flex flex-col items-center justify-center gap-0.5">
                   <span className="text-sm font-black text-green-400 group-hover/btn:text-black uppercase tracking-wider">Bet Yes</span>
-                  <span className="text-[10px] font-medium text-green-400/60 group-hover/btn:text-black/60">Multiplier 1.8x</span>
+                  <span className="text-[10px] font-medium text-green-400/60 group-hover/btn:text-black/60">
+                    {yesMultiplier ? `Pays ${yesMultiplier.toFixed(2)}x` : "Open odds"}
+                  </span>
                 </div>
               </button>
             </Link>
@@ -271,7 +282,9 @@ export default function FastBetCard({
               <button className="w-full group/btn relative overflow-hidden rounded-xl bg-red-500/10 border border-red-500/20 p-3 transition-all duration-300 hover:bg-red-500 hover:border-red-500 hover:shadow-[0_0_20px_rgba(239,68,68,0.4)]">
                 <div className="relative z-10 flex flex-col items-center justify-center gap-0.5">
                   <span className="text-sm font-black text-red-400 group-hover/btn:text-black uppercase tracking-wider">Bet No</span>
-                  <span className="text-[10px] font-medium text-red-400/60 group-hover/btn:text-black/60">Multiplier 2.1x</span>
+                  <span className="text-[10px] font-medium text-red-400/60 group-hover/btn:text-black/60">
+                    {noMultiplier ? `Pays ${noMultiplier.toFixed(2)}x` : "Open odds"}
+                  </span>
                 </div>
               </button>
             </Link>

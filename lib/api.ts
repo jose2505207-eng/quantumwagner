@@ -90,6 +90,77 @@ export async function getFastBets(): Promise<ApiFastBet[]> {
   }
 }
 
+/** A player's own staked position in a round. */
+export interface ApiFastBetEntry {
+  id: string;
+  side: "YES" | "NO";
+  amount: number;
+  won: boolean | null;
+  payout: number;
+  txSignature: string | null;
+  payoutTxSignature: string | null;
+  createdAt: string;
+}
+
+/** One round plus the caller's own entries (empty when signed out). */
+export async function getFastBet(
+  id: string
+): Promise<{ fastBet: ApiFastBet; myEntries: ApiFastBetEntry[] } | null> {
+  try {
+    const res = await api.get(`/api/fast-bets/${id}`);
+    const data = res.data?.data;
+    if (!data?.fastBet) return null;
+    return {
+      fastBet: data.fastBet as ApiFastBet,
+      myEntries: (data.myEntries ?? []) as ApiFastBetEntry[],
+    };
+  } catch (err) {
+    throw toApiError(err, "Failed to load this round");
+  }
+}
+
+/**
+ * Record a fast-bet entry. The SOL transfer into the platform vault must have
+ * confirmed first — the backend verifies recipient, signer and amount before
+ * it stores anything.
+ */
+export async function enterFastBet(
+  id: string,
+  input: { side: MarketSide; amount: number; txSignature: string }
+): Promise<ApiFastBetEntry | null> {
+  try {
+    const res = await api.post(`/api/fast-bets/${id}/enter`, input);
+    return (res.data?.data?.entry as ApiFastBetEntry) ?? null;
+  } catch (err) {
+    throw toApiError(err, "Failed to record your fast bet");
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Public runtime config (GET /api/config/public)
+// ----------------------------------------------------------------------------
+
+export interface PublicConfig {
+  network: string;
+  rpcUrl: string;
+  oracleMode: string;
+  appMode: string;
+  fastBets: {
+    vault: string | null;
+    stakingEnabled: boolean;
+    payoutsEnabled: boolean;
+  };
+}
+
+export async function getPublicConfig(): Promise<PublicConfig | null> {
+  try {
+    const res = await api.get(`/api/config/public`);
+    return (res.data?.data as PublicConfig) ?? null;
+  } catch (err) {
+    throw toApiError(err, "Failed to load app configuration");
+  }
+}
+
 // ----------------------------------------------------------------------------
 // Auth / profile (live REST)
 // ----------------------------------------------------------------------------
@@ -173,13 +244,28 @@ export async function recordMarketCreated(input: {
   }
 }
 
-/** Record a prediction (bet) on a market. */
+/** A prediction as persisted by the backend (amounts in SOL). */
+export interface RecordedPrediction {
+  id: string;
+  marketId: string;
+  side: MarketSide;
+  amount: number;
+  txSignature: string | null;
+  createdAt: string;
+}
+
+/**
+ * Record a prediction (bet) on a market. `amount` is SOL, never lamports.
+ * Returns the persisted row so callers can render the real record instead of
+ * posting a second time to a different endpoint.
+ */
 export async function recordPrediction(
   ref: string,
   input: { side: MarketSide; amount: number; txSignature?: string }
-): Promise<void> {
+): Promise<RecordedPrediction | null> {
   try {
-    await api.post(`/api/markets/${ref}/predictions`, input);
+    const res = await api.post(`/api/markets/${ref}/predictions`, input);
+    return (res.data?.data?.prediction as RecordedPrediction) ?? null;
   } catch (err) {
     throw toApiError(err, "Failed to record prediction");
   }

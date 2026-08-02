@@ -106,9 +106,27 @@ export default function MarketDetailPage() {
   const { connection } = useConnection();
   const [selected, setSelected] = useState<"yes" | "no">("yes");
   const [amount, setAmount] = useState("");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- backend position payload
-  const [betResult, setBetResult] = useState<any | null>(null);
-  const { placeBet } = Methods();
+  const { placeBet, withdrawWinnings } = Methods();
+  const [claiming, setClaiming] = useState(false);
+
+  /** Claim a settled market's winnings. The program decides the amount. */
+  const handleClaim = async () => {
+    if (claiming || !market?.pda) return;
+    setClaiming(true);
+    try {
+      await withdrawWinnings(new PublicKey(market.pda));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : `${err}`;
+      // "AlreadyClaimed"/"nothing to claim" are normal outcomes, not crashes.
+      toast.error(
+        /alreadyclaimed/i.test(message)
+          ? "Already claimed."
+          : `Claim failed: ${message}`
+      );
+    } finally {
+      setClaiming(false);
+    }
+  };
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -146,33 +164,26 @@ export default function MarketDetailPage() {
         return;
       }
 
-      // Real Devnet transaction via the Anchor program (wallet signs).
-      const tx = await placeBet(
+      // Real Devnet transaction via the Anchor program (wallet signs). placeBet
+      // records the bet with the backend itself (de-duplicated on the tx
+      // signature) — posting it a second time from here used to create two
+      // predictions, double XP, and pools mixing lamports with SOL.
+      const { signature: tx, recordError } = await placeBet(
         new PublicKey(`${market.pda}`),
         userLamports,
         selected === "yes"
       );
 
-      // Auth rides the HttpOnly session cookie (sent automatically);
-      // withCredentials keeps it working if BACKEND_URL is a different origin.
-      const res = await axios.post(
-        `${BACKEND_URL}/api/positions/add`,
-        {
-          market_id: market.id,
-          position_type: selected.toUpperCase(),
-          amount_staked: Number(amount) * LAMPORTS_PER_SOL,
-          stake_tx_hash: tx,
-        },
-        {
-          headers: { "Content-Type": "application/json" },
-          withCredentials: true,
-        }
-      );
-
-      console.log("Position added:", res.data);
-      setBetResult(res.data.data);
       setHasBet(true);
       setAmount("");
+
+      if (recordError) {
+        // The stake is on-chain regardless — say exactly that, don't pretend.
+        toast.error(
+          `Bet is on-chain but wasn't recorded (${recordError}). Your portfolio may lag until it syncs.`,
+          { duration: 8000 }
+        );
+      }
       // Surface the real Devnet signature with a Solana Explorer link.
       toast.custom(
         (t) => (
@@ -253,13 +264,14 @@ export default function MarketDetailPage() {
     );
   }
 
-  function lamportsToSol(val) {
-    return val ? Number(val) / LAMPORTS_PER_SOL : 0;
-  }
-  
+  // The backend stores and returns pools in SOL (see server/markets.ts). These
+  // used to be divided by LAMPORTS_PER_SOL again, which rendered every real
+  // amount as 0.000 SOL.
+  const toSol = (val: unknown) => (val ? Number(val) : 0);
+
   // calculate odds
-  const yesPool = lamportsToSol(market?.yes_pool);
-  const noPool = lamportsToSol(market?.no_pool);
+  const yesPool = toSol(market?.yes_pool);
+  const noPool = toSol(market?.no_pool);
 
   let yesPct = 0;
   let noPct = 0;
@@ -350,16 +362,17 @@ export default function MarketDetailPage() {
                 <div className="flex flex-col">
                   <span className="text-xs text-muted-foreground uppercase tracking-wider">Volume</span>
                   <span className="text-lg font-bold text-green-400 flex items-center gap-1">
-                    {Number(market.total_volume) / LAMPORTS_PER_SOL} <span className="text-xs font-normal text-green-400/70">SOL</span>
+                    {toSol(market.total_volume).toFixed(3)} <span className="text-xs font-normal text-green-400/70">SOL</span>
                   </span>
                 </div>
               </div>
             </div>
 
             {/* Probability Bar / Price History */}
-            <PriceHistoryGraph 
-              currentProbability={yesPct} 
-              color={yesPct >= 50 ? "#10B981" : "#EF4444"} 
+            <PriceHistoryGraph
+              currentProbability={yesPct}
+              marketId={market.id}
+              color={yesPct >= 50 ? "#10B981" : "#EF4444"}
             />
 
             {/* Market Details Tabs */}
@@ -449,6 +462,31 @@ export default function MarketDetailPage() {
                 </CardHeader>
                 
                 <CardContent className="p-6 space-y-6">
+                  {/* Resolved / cancelled: the money is claimed ON-CHAIN by the
+                      winner. Without this, a settled market had no way to get
+                      paid from this screen at all. */}
+                  {market.status !== "ACTIVE" && (
+                    <div className="rounded-xl border border-purple-500/30 bg-purple-500/10 p-4 space-y-3">
+                      <p className="text-sm font-semibold text-white">
+                        {market.status === "CANCELLED"
+                          ? "This market was cancelled — stakes are refundable on-chain."
+                          : `Resolved: ${market.outcome ?? "—"} won.`}
+                      </p>
+                      <Button
+                        className="w-full bg-purple-600 hover:bg-purple-500"
+                        disabled={claiming || !market.pda}
+                        onClick={handleClaim}
+                      >
+                        {claiming ? "Claiming on Devnet…" : "Claim winnings"}
+                      </Button>
+                      <p className="text-[10px] text-white/50">
+                        Eligibility and the payout amount are enforced by the on-chain
+                        program — this sends the withdrawal from your wallet. Claiming
+                        with nothing to claim simply fails, it costs no stake.
+                      </p>
+                    </div>
+                  )}
+
                   {/* Buy Yes/No Toggle */}
                   <div className="grid grid-cols-2 gap-3 p-1 bg-black/40 rounded-xl border border-white/5">
                     <button
@@ -535,7 +573,13 @@ export default function MarketDetailPage() {
                         : "bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 shadow-red-500/20"
                     )}
                     onClick={handleBet}
-                    disabled={!selected || !amount || Number(amount) <= 0 || betting}
+                    disabled={
+                      !selected ||
+                      !amount ||
+                      Number(amount) <= 0 ||
+                      betting ||
+                      market.status !== "ACTIVE"
+                    }
                   >
                     {betting ? (
                       <span className="flex items-center gap-2">

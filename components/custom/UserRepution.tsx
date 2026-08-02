@@ -102,7 +102,7 @@ export default function ProfileCard(p: Props) {
         <div className="p-3 rounded-xl border border-white/5 bg-white/[0.02] backdrop-blur-sm text-center hover:bg-white/5 transition-colors group">
           <p className="text-[10px] text-gray-500 uppercase tracking-wider font-medium mb-1 group-hover:text-gray-400">Wagered</p>
           <p className="text-sm font-bold text-white truncate">
-            ${p.total_wagged?.toLocaleString() ?? 0}
+            {(p.total_wagged ?? 0).toFixed(3)} SOL
           </p>
         </div>
 

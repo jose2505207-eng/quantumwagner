@@ -3,6 +3,7 @@
 import { Clock, Zap, Trophy, Flame, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
+import { useFastBets } from "@/lib/useFastBets";
 
 interface StatCardProps {
   color: string;
@@ -53,7 +54,19 @@ function StatCard({ color, icon, label, value, tag, delay }: StatCardProps) {
   );
 }
 
+/**
+ * Fast-bet hero. The four stat cards were hardcoded marketing numbers
+ * ("1,247 active", "$2.4M 24h volume", "$48.2K avg pool") on a page whose whole
+ * point is real rounds. They now count the actual feed.
+ */
 export default function FastBetHero() {
+  const { fastBets, loading } = useFastBets();
+  const openRounds = fastBets.filter((b) => b.status !== "resolved").length;
+  const settledRounds = fastBets.filter((b) => b.status === "resolved").length;
+  const openPool = fastBets
+    .filter((b) => b.status !== "resolved")
+    .reduce((sum, b) => sum + (b.totalPool ?? 0), 0);
+
   return (
     <div className="relative mb-16 pt-2">
       {/* Background Elements */}
@@ -101,25 +114,25 @@ export default function FastBetHero() {
           delay={0.3}
           color="#f59e0b"
           icon={<Zap className="w-5 h-5 text-amber-500" />}
-          label="Active Fast Bets"
-          value="1,247"
+          label="Open rounds"
+          value={loading ? "…" : String(openRounds)}
           tag="LIVE"
         />
         <StatCard
           delay={0.4}
           color="#ec4899"
           icon={<Flame className="w-5 h-5 text-pink-500" />}
-          label="24h Volume"
-          value="$2.4M"
-          tag="+12%"
+          label="Staked in open rounds"
+          value={loading ? "…" : `${openPool.toFixed(3)} SOL`}
+          tag="NOW"
         />
         <StatCard
           delay={0.5}
           color="#8b5cf6"
           icon={<Trophy className="w-5 h-5 text-violet-500" />}
-          label="Avg Pool Size"
-          value="$48.2K"
-          tag="HIGH"
+          label="Settled rounds"
+          value={loading ? "…" : String(settledRounds)}
+          tag="TOTAL"
         />
         <StatCard
           delay={0.6}

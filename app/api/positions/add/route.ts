@@ -1,121 +1,51 @@
 import { handler, ok, fail } from "@/server/http";
 import { requireAuth } from "@/server/auth";
-import { prisma } from "@/server/db";
 import { z } from "zod";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
-import { completeLevelServer, awardXp } from "@/server/xp";
-import { LEVEL_BY_ID } from "@/lib/game/levels";
-import { logAudit } from "@/server/audit";
-import { verifySignature, REQUIRE_ONCHAIN } from "@/server/solana";
+import { recordPrediction } from "@/server/predictions";
 import { rateLimit } from "@/server/rateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 // Body shape posted by the markets bet UI (app/markets/[id]/page.tsx).
+// `amount_staked` is in LAMPORTS here (the UI works in lamports for the chain
+// call); it is converted to SOL exactly once, below, before anything is stored.
 const schema = z.object({
   market_id: z.string(),
   position_type: z.enum(["YES", "NO"]),
-  amount_staked: z.coerce.number().positive(), // lamports
+  amount_staked: z.coerce.number().positive(),
   stake_tx_hash: z.string().optional(), // real Devnet signature from placeBet()
 });
 
 /**
- * Record a prediction from a REAL on-chain stake. The frontend calls the Anchor
- * `placeBet` instruction first, then posts the resulting signature here; we
- * verify it on Devnet before recording anything. Same trust rules as
- * /api/markets/[id]/predictions.
+ * Record a prediction from a REAL on-chain stake. Shares one implementation
+ * with /api/markets/[id]/predictions — including signature de-duplication, so
+ * a client that posts the same bet to both endpoints stores it once.
  */
 export const POST = handler(async (req: Request) => {
   await rateLimit(req, "positions-add", 30, 60_000);
   const claims = requireAuth(req);
   const body = schema.parse(await req.json());
 
-  const market = await prisma.market.findUnique({ where: { id: body.market_id } });
-  if (!market) return fail("market not found", 404);
-  if (market.status !== "ACTIVE") return fail("market is not active", 409);
-
-  // On-chain confirmation gate (Devnet).
-  const verification = await verifySignature(body.stake_tx_hash);
-  if (body.stake_tx_hash && !verification.confirmed) {
-    return fail(
-      `Bet not recorded — Devnet transaction not confirmed (${verification.reason}).`,
-      409
-    );
-  }
-  if (!body.stake_tx_hash && REQUIRE_ONCHAIN) {
-    return fail("An on-chain (Devnet) transaction is required to place a bet.", 400);
-  }
-
-  const amountSol = body.amount_staked / LAMPORTS_PER_SOL;
-  const isFirst =
-    (await prisma.prediction.count({ where: { userId: claims.sub } })) === 0;
-
-  const prediction = await prisma.prediction.create({
-    data: {
-      marketId: body.market_id,
-      userId: claims.sub,
-      side: body.position_type,
-      amount: amountSol,
-      txSignature: verification.confirmed ? body.stake_tx_hash : null,
-    },
+  const result = await recordPrediction({
+    marketRef: body.market_id,
+    userId: claims.sub,
+    wallet: claims.wallet,
+    side: body.position_type,
+    amountSol: body.amount_staked / LAMPORTS_PER_SOL,
+    txSignature: body.stake_tx_hash,
   });
 
-  await prisma.market.update({
-    where: { id: body.market_id },
-    data:
-      body.position_type === "YES"
-        ? { yesPool: market.yesPool + amountSol }
-        : { noPool: market.noPool + amountSol },
-  });
-
-  await prisma.transaction.create({
-    data: {
-      userId: claims.sub,
-      kind: "prediction",
-      amount: amountSol,
-      signature: verification.confirmed ? body.stake_tx_hash : null,
-      status: verification.confirmed ? "confirmed" : "local-unconfirmed",
-      refType: "prediction",
-      refId: prediction.id,
-    },
-  });
-
-  if (isFirst) {
-    const lvl = LEVEL_BY_ID["first-prediction"];
-    await completeLevelServer({
-      userId: claims.sub,
-      levelId: lvl.id,
-      levelNumber: lvl.level,
-      levelXp: lvl.xp,
-    });
-  } else {
-    await awardXp({
-      userId: claims.sub,
-      amount: 20,
-      reason: "Placed a prediction",
-      refType: "prediction",
-      refId: prediction.id,
-    });
-  }
-
-  await logAudit({
-    actorId: claims.sub,
-    action: "prediction.place",
-    target: prediction.id,
-    meta: {
-      signature: body.stake_tx_hash ?? null,
-      confirmed: verification.confirmed,
-      slot: verification.slot ?? null,
-    },
-  });
+  if (!result.ok) return fail(result.error, result.status);
 
   return ok(
     {
-      prediction,
-      firstPrediction: isFirst,
-      onchain: { confirmed: verification.confirmed, slot: verification.slot ?? null },
+      prediction: result.prediction,
+      firstPrediction: result.firstPrediction,
+      deduped: result.deduped,
+      onchain: result.onchain,
     },
-    { status: 201 }
+    { status: result.deduped ? 200 : 201 }
   );
 });

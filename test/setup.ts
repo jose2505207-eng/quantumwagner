@@ -41,6 +41,11 @@ process.env.SOLANA_RPC_URL = "https://api.devnet.solana.com";
 // singleton is cached on globalThis (avoids connection churn across files).
 Object.assign(process.env, { NODE_ENV: "test" });
 
+// The local .env points FASTBET_VAULT_SECRET at a FUNDED devnet keypair, and
+// settling a round pays winners from it. Tests must never move real SOL, so the
+// payout key is stripped here (server/fastbetVault.ts refuses it in tests too).
+delete process.env.FASTBET_VAULT_SECRET;
+
 beforeAll(() => {
   // Provision the schema on the dedicated test schema. `db push` is idempotent
   // and, because DATABASE_URL points at quantum_test, never touches `public`.

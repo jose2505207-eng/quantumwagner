@@ -10,16 +10,13 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion"
-import { useUserStore } from "@/store/userInfo"
+import { isAdminWallet } from "@/lib/admin"
 
 const MobileMenu = () => {
-    const { connected } = useWallet();
-    const { userInfo } = useUserStore();
+    const { connected, publicKey } = useWallet();
 
-    const hasAccess =
-        userInfo?.user?.kyc_level !== undefined &&
-        userInfo?.user?.kyc_level >= 3 &&
-        userInfo?.user?.is_verified === true;
+    // Admin link visibility — navigation only, see lib/admin.ts.
+    const hasAccess = isAdminWallet(publicKey?.toBase58());
 
     return (
         <Sheet>

@@ -13,7 +13,7 @@ import Wrapper from "../global/wrapper";
 import MobileMenu from "./mobile-menu";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletDisconnectButton, WalletMultiButton } from "@solana/wallet-adapter-react-ui";
-import { useUserStore } from "@/store/userInfo";
+import { isAdminWallet } from "@/lib/admin";
 import { NavbarHUD } from "@/components/game";
 import { LUXURY_UI } from "@/lib/luxury";
 import {
@@ -34,18 +34,15 @@ const Navbar = () => {
   // flag: server + first client render show a stable placeholder, then we swap in
   // the real button after hydration.
   const [mounted, setMounted] = useState<boolean>(false);
-  const { connected } = useWallet();
-  const { userInfo } = useUserStore();
+  const { connected, publicKey } = useWallet();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Check for admin access
-  const hasAccess =
-    userInfo?.user?.kyc_level !== undefined &&
-    userInfo?.user?.kyc_level >= 3 &&
-    userInfo?.user?.is_verified === true;
+  // Admin link visibility — navigation only, see lib/admin.ts. The previous
+  // `kyc_level >= 3` gate could never pass (the profile API returns 0).
+  const hasAccess = isAdminWallet(publicKey?.toBase58());
 
   useEffect(() => {
     const handleScroll = () => {

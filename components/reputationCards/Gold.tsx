@@ -69,7 +69,7 @@ export default function GoldReputationCard({
                     />
                 </div>
                 <div className="mt-2 text-center">
-                    <span className="text-[9px] text-slate-500">Top <span className="text-yellow-400">{percentile}%</span> of players</span>
+                    <span className="text-[9px] text-slate-500">Progress to <span className="text-yellow-400">next tier</span></span>
                 </div>
             </div>
         </div>

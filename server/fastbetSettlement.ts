@@ -2,6 +2,7 @@ import { prisma } from "@/server/db";
 import { awardXp, completeLevelServer } from "@/server/xp";
 import { LEVEL_BY_ID } from "@/lib/game/levels";
 import { logAudit } from "@/server/audit";
+import { payFastBetWinners, type PayoutSummary } from "@/server/fastbetVault";
 
 /**
  * Reusable pari-mutuel settlement for a FastBet round.
@@ -29,7 +30,12 @@ export async function settleFastBet(params: {
    * it never affects the outcome (which the caller already derived).
    */
   context?: Record<string, unknown>;
-}): Promise<{ resolved: boolean; outcome: "YES" | "NO"; source: string }> {
+}): Promise<{
+  resolved: boolean;
+  outcome: "YES" | "NO";
+  source: string;
+  payouts: PayoutSummary;
+}> {
   const { fastBetId, outcome, source, context } = params;
 
   const fastBet = await prisma.fastBet.findUnique({
@@ -41,10 +47,19 @@ export async function settleFastBet(params: {
 
   const winners = fastBet.entries.filter((e) => e.side === outcome);
   const winnersStake = winners.reduce((s, e) => s + e.amount, 0);
+  // Nobody backed the winning side: there is no one to split the pool between,
+  // and the stakes are REAL SOL sitting in the platform vault. Refund every
+  // entry its own stake instead of keeping the pool. (`won` stays false — a
+  // refund is not a win, so it grants no XP and no milestone.)
+  const refundOnly = winnersStake === 0;
 
   for (const e of fastBet.entries) {
     const won = e.side === outcome;
-    const payout = won && winnersStake > 0 ? (e.amount / winnersStake) * fastBet.pool : 0;
+    const payout = refundOnly
+      ? e.amount
+      : won
+        ? (e.amount / winnersStake) * fastBet.pool
+        : 0;
     await prisma.fastBetEntry.update({
       where: { id: e.id },
       data: { won, payout },
@@ -101,5 +116,11 @@ export async function settleFastBet(params: {
     meta: { outcome, source, ...(context ?? {}) },
   });
 
-  return { resolved: true, outcome, source };
+  // Move the actual SOL. Settlement and payment live on the SAME path so a
+  // round can never be "resolved" in the database while the stakes stay stuck
+  // in the vault. payFastBetWinners is idempotent and records its own failures,
+  // so a retry (cron rerun) settles the remainder without paying anyone twice.
+  const payouts = await payFastBetWinners(fastBetId);
+
+  return { resolved: true, outcome, source, payouts };
 }

@@ -1,3 +1,6 @@
+"use client";
+
+import { usePlatformStats, formatSol } from "@/lib/usePlatformStats";
 import {
   Activity,
   DollarSign,
@@ -7,14 +10,29 @@ import {
   Zap,
 } from "lucide-react";
 
+/**
+ * Platform stats. Previously six invented constants; now the real counts, with
+ * "…" while loading and "—" for anything that genuinely has no value yet.
+ */
 export default function PlatformStats() {
+  const { stats: live, loading } = usePlatformStats();
+  const show = (value: string) => (loading ? "…" : value);
   const stats = [
-    { icon: DollarSign, value: "$2.4M+", label: "Total Volume", desc: "Traded across all markets" },
-    { icon: Users, value: "8,924", label: "Active Traders", desc: "Making predictions daily" },
-    { icon: Activity, value: "156", label: "Active Markets", desc: "Live prediction markets" },
-    { icon: Target, value: "89.2%", label: "Accuracy Rate", desc: "Average prediction accuracy" },
-    { icon: TrendingUp, value: "+34%", label: "Growth", desc: "Monthly trading growth" },
-    { icon: Zap, value: "~2s", label: "Settlement", desc: "Average settlement time" },
+    { icon: DollarSign, value: show(formatSol(live?.totalVolumeSol ?? 0)), label: "Total Volume", desc: "Staked across all markets" },
+    { icon: Users, value: show(String(live?.traders ?? 0)), label: "Players", desc: "Wallets that have signed in" },
+    { icon: Activity, value: show(String(live?.activeMarkets ?? 0)), label: "Active Markets", desc: "Open prediction markets" },
+    {
+      icon: Target,
+      value: show(
+        live?.accuracyPercent === null || live?.accuracyPercent === undefined
+          ? "—"
+          : `${live.accuracyPercent.toFixed(1)}%`
+      ),
+      label: "Accuracy Rate",
+      desc: "Winning share of settled bets",
+    },
+    { icon: TrendingUp, value: show(String(live?.totalPredictions ?? 0)), label: "Bets Placed", desc: "Confirmed on-chain stakes" },
+    { icon: Zap, value: show(String(live?.tokensLaunched ?? 0)), label: "Tokens Launched", desc: "Deployed from the launchpad" },
   ];
 
   return (

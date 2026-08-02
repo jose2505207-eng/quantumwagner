@@ -164,7 +164,9 @@ model Prediction {
   settled      Boolean  @default(false)
   won          Boolean?
   payout       Float    @default(0)
-  txSignature  String?  // on-chain stake tx, if recorded
+  // On-chain stake tx. UNIQUE: one confirmed transaction can back exactly one
+  // prediction, which makes recording idempotent and blocks signature replay.
+  txSignature  String?  @unique
   createdAt    DateTime @default(now())
   settledAt    DateTime?
 
@@ -218,7 +220,14 @@ model FastBetEntry {
   amount      Float
   won         Boolean?
   payout      Float    @default(0)
-  txSignature String?
+  // Stake transfer into the platform vault. UNIQUE for the same reason as
+  // Prediction.txSignature: one transfer funds exactly one entry.
+  txSignature String?  @unique
+  // Winner payout back to the player's wallet, sent by the platform vault after
+  // the round settles. Non-null = paid; recording it makes payout idempotent so
+  // a retried settlement never pays twice. payoutError holds the last failure.
+  payoutTxSignature String? @unique
+  payoutError String?
   createdAt   DateTime @default(now())
 
   @@index([userId])

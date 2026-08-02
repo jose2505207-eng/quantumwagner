@@ -1,4 +1,7 @@
+"use client";
+
 import React from "react";
+import { usePlatformStats, formatSol } from "@/lib/usePlatformStats";
 import Wrapper from "../global/wrapper";
 import Icons from "../global/icons";
 import Image from "next/image";
@@ -8,6 +11,7 @@ import BettingButton from "../ui/betting-button";
 import Link from "next/link";
 
 const Hero = () => {
+  const { stats: live, loading } = usePlatformStats();
   return (
     <div className="relative z-0 w-full h-full">
       <div className="absolute -top-16 inset-x-0 -z-10 mx-auto w-3/4 h-32 lg:h-40 rounded-full blur-[5rem] bg-[radial-gradient(86.02%_172.05%_at_50%_-40%,rgba(139,92,246,0.8)_0%,rgba(5,5,5,0)_80%)]"></div>
@@ -74,19 +78,19 @@ const Hero = () => {
           <Container delay={0.4}>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12 w-full max-w-4xl">
               <div className="text-center">
-                <div className="text-3xl font-bold text-primary">$2.4M+</div>
+                <div className="text-3xl font-bold text-primary">{loading ? "…" : formatSol(live?.totalVolumeSol ?? 0)}</div>
                 <div className="text-sm text-muted-foreground mt-1">
                   Total Volume
                 </div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-primary">156</div>
+                <div className="text-3xl font-bold text-primary">{loading ? "…" : live?.activeMarkets ?? 0}</div>
                 <div className="text-sm text-muted-foreground mt-1">
                   Active Markets
                 </div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-primary">8,924</div>
+                <div className="text-3xl font-bold text-primary">{loading ? "…" : live?.traders ?? 0}</div>
                 <div className="text-sm text-muted-foreground mt-1">
                   Top Predictors
                 </div>

@@ -1,9 +1,6 @@
 import React from "react";
 import LeaderboardHero from "@/components/leaderboard/leaderboard-hero";
-import LeaderboardTabs from "@/components/leaderboard/leaderboard-tabs";
-import TopPredictors from "@/components/leaderboard/top-predictors";
 import YourRanking from "@/components/leaderboard/your-ranking";
-import AchievementSystem from "@/components/leaderboard/achievement-system";
 import { PlayerHUD, MissionMap, CompleteLevelOnMount } from "@/components/game";
 import LiveLeaderboard from "@/components/leaderboard/LiveLeaderboard";
 
@@ -19,10 +16,8 @@ const LeaderboardPage = () => {
       <div className="px-4 lg:px-8 max-w-7xl mx-auto w-full">
         <LiveLeaderboard />
       </div>
-      <LeaderboardTabs />
       <div className="flex flex-col-reverse lg:flex-row gap-8 px-4 lg:px-8 max-w-7xl mx-auto w-full">
         <div className="flex-1">
-          <TopPredictors />
         </div>
         <div className="lg:w-80 space-y-6">
           <PlayerHUD />
@@ -33,7 +28,6 @@ const LeaderboardPage = () => {
         </div>
       </div>
       <div className="px-4 lg:px-8 max-w-7xl mx-auto w-full">
-        <AchievementSystem />
       </div>
 
       {/* Bottom gradient */}

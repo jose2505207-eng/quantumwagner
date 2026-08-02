@@ -36,6 +36,9 @@ export async function serializeUserProfile(userId: string) {
   const total = user.predictions.length;
   const correct = user.predictions.filter((p) => p.won === true).length;
   const winRate = total > 0 ? ((correct / total) * 100).toFixed(1) : "0.0";
+  // Real staked volume in SOL. This was hardcoded to "0", so the portfolio
+  // showed 0 wagered no matter how much the player had actually staked.
+  const totalVolume = user.predictions.reduce((sum, p) => sum + p.amount, 0);
 
   return {
     success: true,
@@ -46,7 +49,7 @@ export async function serializeUserProfile(userId: string) {
       username: user.username,
       email: null,
       reputation_score: user.profile?.xp ?? 0,
-      total_volume: "0",
+      total_volume: String(totalVolume),
       win_rate: winRate,
       total_predictions: total,
       correct_predictions: correct,

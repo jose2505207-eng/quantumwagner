@@ -11,7 +11,16 @@
 -- To later expose any table to the Supabase REST/JS API, add explicit RLS
 -- policies (and grants) for that table — do not disable RLS.
 
-ALTER TABLE public."_prisma_migrations" ENABLE ROW LEVEL SECURITY;
+-- Prisma's own bookkeeping table exists in a real database but NOT in the
+-- shadow database used to replay migrations, so guard it: an unguarded ALTER
+-- here makes every later `prisma migrate dev` fail with P3006/P1014.
+DO $$
+BEGIN
+  IF to_regclass('public._prisma_migrations') IS NOT NULL THEN
+    EXECUTE 'ALTER TABLE public."_prisma_migrations" ENABLE ROW LEVEL SECURITY';
+  END IF;
+END
+$$;
 ALTER TABLE public."User" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public."Wallet" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public."AuthNonce" ENABLE ROW LEVEL SECURITY;

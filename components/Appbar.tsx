@@ -24,28 +24,25 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { useUserStore } from "@/store/userInfo";
+import { DevnetWalletBar } from "@/components/wallet/DevnetWalletBar";
+import { isAdminWallet } from "@/lib/admin";
 import Image from "next/image";
 import { NAV_LINKS } from "@/constants/links";
 
 export function AppBar() {
-  const { connected } = useWallet();
+  const { connected, publicKey } = useWallet();
   const router = useRouter();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const { userInfo } = useUserStore();
 
   const navItems = NAV_LINKS.map((item) => ({
     label: item.name,
     path: item.link,
   }));
 
-  // Permission check
-
-  const hasAccess =
-    userInfo?.user?.kyc_level !== undefined &&
-    userInfo?.user?.kyc_level >= 3 &&
-    userInfo?.user?.is_verified === true;
+  // Admin link visibility — see lib/admin.ts. (The old `kyc_level >= 3` gate
+  // could never pass: the profile endpoint always returns kyc_level 0.)
+  const hasAccess = isAdminWallet(publicKey?.toBase58());
 
   if (hasAccess) {
     navItems.push({ label: "Admin", path: "/admin" });
@@ -127,8 +124,9 @@ export function AppBar() {
             </NavigationMenuList>
           </NavigationMenu>
 
-          {/* Wallet Buttons */}
+          {/* Wallet: devnet balance + faucet, then connect/disconnect */}
           <div className="flex items-center gap-3">
+            <DevnetWalletBar />
             <WalletMultiButton className="transition duration-300 hover:shadow-[0_0_6px_rgba(0,212,255,0.25)]" />
             {connected && <WalletDisconnectButton />}
           </div>
@@ -172,6 +170,9 @@ export function AppBar() {
                 );
               })}
 
+              <div className="flex justify-center">
+                <DevnetWalletBar />
+              </div>
               <WalletMultiButton className="w-full" />
               {connected && <WalletDisconnectButton className="w-full" />}
             </div>

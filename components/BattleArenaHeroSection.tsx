@@ -2,6 +2,7 @@
 
 import { Clock, Swords, Trophy, Users } from "lucide-react";
 import { motion } from "framer-motion";
+import { usePlatformStats, formatSol } from "@/lib/usePlatformStats";
 
 function StatCard({ color, icon, label, value, tag }) {
   return (
@@ -63,6 +64,9 @@ function StatCard({ color, icon, label, value, tag }) {
 }
 
 export default function BattleArenaHeroSection() {
+  // Real counts — these tiles displayed fixed marketing numbers before.
+  const { stats: live, loading } = usePlatformStats();
+  const show = (value: string) => (loading ? "…" : value);
   return (
     <div className="mb-16 mt-10">
       {/* Header */}
@@ -101,28 +105,28 @@ export default function BattleArenaHeroSection() {
             color="#ff7b00"
             icon={<Swords className="w-6 h-6 text-white" />}
             label="Active Battles"
-            value="24"
+            value={show(String(live?.battles ?? 0))}
             tag="Live"
           />
           <StatCard
             color="#ffd000"
             icon={<Trophy className="w-6 h-6 text-white" />}
-            label="Total Prize Pool"
-            value="$2.4M"
+            label="Staked in Battles"
+            value={show(formatSol(live?.battleVolumeSol ?? 0))}
             tag="+24h"
           />
           <StatCard
             color="#b14fff"
             icon={<Users className="w-6 h-6 text-white" />}
-            label="Total Participants"
-            value="12.8K"
+            label="Players"
+            value={show(String(live?.traders ?? 0))}
             tag="Online"
           />
           <StatCard
             color="#00b4ff"
             icon={<Clock className="w-6 h-6 text-white" />}
-            label="Battle Duration"
-            value="6h"
+            label="Open Markets"
+            value={show(String(live?.activeMarkets ?? 0))}
             tag="Avg"
           />
         </div>

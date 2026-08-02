@@ -1,6 +1,6 @@
 "use client";
 
-import { PublicKey, SystemProgram } from "@solana/web3.js";
+import { LAMPORTS_PER_SOL, PublicKey, SystemProgram } from "@solana/web3.js";
 import { useProgram } from "@/app/utils/useProgram";
 import * as anchor from "@coral-xyz/anchor";
 import type { IdlAccounts } from "@coral-xyz/anchor";
@@ -53,6 +53,7 @@ import {
   recordMarketWithdraw,
   recordTokenLaunch,
   recordTokenEvent,
+  type RecordedPrediction,
 } from "@/lib/api";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -324,17 +325,26 @@ export default function Methods() {
       // Real on-chain action → completes the "first prediction" milestone.
       useGameStore.getState().completeLevel("first-prediction");
 
-      // Best-effort: record the confirmed on-chain bet to the backend.
+      // Record the confirmed on-chain bet to the backend. `amount` is lamports
+      // (what the chain call takes); the backend stores SOL, so convert HERE —
+      // sending lamports used to inflate the market pools by 1e9. Recording is
+      // de-duplicated on the signature server-side, so this is the ONLY place a
+      // bet is posted; callers get the persisted row back.
+      let prediction: RecordedPrediction | null = null;
+      let recordError: string | null = null;
       try {
-        await recordPrediction(marketPDA.toBase58(), {
+        prediction = await recordPrediction(marketPDA.toBase58(), {
           side: outcome ? "YES" : "NO",
-          amount,
+          amount: amount / LAMPORTS_PER_SOL,
           txSignature: tx,
         });
       } catch (e) {
+        // The stake IS on-chain — never claim otherwise. Surface the failure so
+        // the user knows their portfolio may lag until it is recorded.
+        recordError = e instanceof Error ? e.message : "unknown error";
         console.warn("prediction not recorded to backend:", e);
       }
-      return tx;
+      return { signature: tx, prediction, recordError };
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
       toast.error(`Error placing bet: ${msg}`);

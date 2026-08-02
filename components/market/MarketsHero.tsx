@@ -1,11 +1,29 @@
+"use client";
+
 import React from "react";
+import Link from "next/link";
+import { useMarkets } from "@/lib/useMarkets";
 import Wrapper from "../global/wrapper";
 import Icons from "../global/icons";
 import Container from "../global/container";
 import { Button } from "../ui/button";
-import { TrendingUp, Target, BarChart3, Bitcoin, ArrowUpRight, Activity } from "lucide-react";
+import { TrendingUp, Target, BarChart3, Bitcoin, Activity } from "lucide-react";
 
+/**
+ * Markets hero. The showcase card used to be a hardcoded fake market
+ * ("Bitcoin to hit $100k?", 65% YES, $2.4M volume) with a dead "Trade Now"
+ * button. It now features the newest REAL market, with its actual pools, and
+ * links to it — or invites you to open the first one when none exist.
+ */
 const MarketsHero = () => {
+  const { markets } = useMarkets();
+  const featured = markets[0];
+  const yesPool = featured ? Number(featured.yes_pool ?? 0) : 0;
+  const noPool = featured ? Number(featured.no_pool ?? 0) : 0;
+  const total = yesPool + noPool;
+  const yesPercent = total > 0 ? Math.round((yesPool / total) * 100) : 50;
+  const volume = featured ? Number(featured.total_volume ?? 0) : 0;
+
   return (
     <div className="relative z-0 w-full h-full">
       <div className="absolute -top-16 inset-x-0 -z-10 mx-auto w-3/4 h-32 lg:h-60 rounded-full blur-[5rem] bg-[radial-gradient(86.02%_172.05%_at_50%_-40%,rgba(139,92,246,0.8)_0%,rgba(5,5,5,0)_80%)]"></div>
@@ -63,17 +81,19 @@ const MarketsHero = () => {
             <Container delay={0.4}>
               <div className="flex flex-col sm:flex-row items-center gap-4 mt-8 justify-center lg:justify-start">
                 <Button
+                  asChild
                   size="lg"
                   className="bg-gradient-to-r from-primary to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-semibold px-8 py-3 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary/25"
                 >
-                  Start Trading
+                  <Link href="#markets-grid">Start Trading</Link>
                 </Button>
                 <Button
+                  asChild
                   size="lg"
                   variant="outline"
                   className="border-border/60 hover:border-primary/60 rounded-xl"
                 >
-                  View Analytics
+                  <Link href="/markets/new">Create a market</Link>
                 </Button>
               </div>
             </Container>
@@ -87,62 +107,79 @@ const MarketsHero = () => {
 
               {/* Main Card */}
               <div className="relative bg-card/50 backdrop-blur-xl border border-border/50 rounded-2xl p-6 shadow-2xl">
-                {/* Header */}
-                <div className="flex items-start justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-orange-500/10 flex items-center justify-center border border-orange-500/20">
-                      <Bitcoin className="w-6 h-6 text-orange-500" />
+                {featured ? (
+                  <>
+                    {/* Header — the newest real market */}
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-orange-500/10 flex items-center justify-center border border-orange-500/20">
+                          <Bitcoin className="w-6 h-6 text-orange-500" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-lg text-foreground line-clamp-2">
+                            {featured.question}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {featured.end_time
+                              ? `Ends ${new Date(featured.end_time).toLocaleDateString()}`
+                              : "Open"}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-500/10 text-green-500 text-xs font-medium border border-green-500/20 shrink-0">
+                        <Activity className="w-3 h-3" />
+                        {featured.status}
+                      </span>
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-lg text-foreground">Bitcoin to hit $100k?</h3>
-                      <p className="text-sm text-muted-foreground">Ends in 2 days</p>
+
+                    {/* Real pool split — no chart is drawn without real history */}
+                    <div className="mb-6">
+                      <div className="flex justify-between text-xs text-muted-foreground mb-2">
+                        <span>YES {yesPool.toFixed(3)} SOL</span>
+                        <span>NO {noPool.toFixed(3)} SOL</span>
+                      </div>
+                      <div className="flex h-2 overflow-hidden rounded-full bg-white/10">
+                        <div className="bg-green-500" style={{ width: `${yesPercent}%` }} />
+                        <div className="flex-1 bg-red-500" />
+                      </div>
                     </div>
-                  </div>
-                  <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-500/10 text-green-500 text-xs font-medium border border-green-500/20">
-                    <ArrowUpRight className="w-3 h-3" />
-                    +12.5% Vol
-                  </span>
-                </div>
 
-                {/* Chart Area (Mock) */}
-                <div className="h-32 w-full bg-gradient-to-b from-primary/5 to-transparent rounded-lg border border-primary/10 mb-6 relative overflow-hidden group">
-                  {/* SVG Line Chart */}
-                  <svg className="absolute bottom-0 left-0 right-0 h-full w-full" preserveAspectRatio="none">
-                    <path d="M0 100 C 20 80 40 90 60 60 S 100 40 140 50 S 200 20 240 10 V 130 H 0 Z" fill="url(#gradient)" opacity="0.2" />
-                    <path d="M0 100 C 20 80 40 90 60 60 S 100 40 140 50 S 200 20 240 10" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary drop-shadow-[0_0_10px_rgba(139,92,246,0.5)]" />
-                    <defs>
-                      <linearGradient id="gradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="currentColor" className="text-primary" />
-                        <stop offset="100%" stopColor="transparent" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                  
-                  {/* Interactive cursor line (visual only) */}
-                  <div className="absolute top-0 bottom-0 w-[1px] bg-primary/50 left-[60%] hidden group-hover:block">
-                    <div className="absolute top-[25%] -left-1 w-2 h-2 bg-primary rounded-full shadow-[0_0_10px_rgba(139,92,246,1)]"></div>
-                    <div className="absolute top-4 left-2 bg-card border border-border text-xs px-2 py-1 rounded shadow-lg">
-                      $98,420
+                    <div className="grid grid-cols-2 gap-4 mb-6">
+                      <div className="p-3 rounded-xl bg-background/40 border border-border/50">
+                        <p className="text-xs text-muted-foreground mb-1">Yes share</p>
+                        <p className="text-lg font-semibold text-green-500">{yesPercent}%</p>
+                      </div>
+                      <div className="p-3 rounded-xl bg-background/40 border border-border/50">
+                        <p className="text-xs text-muted-foreground mb-1">Volume</p>
+                        <p className="text-lg font-semibold text-foreground">
+                          {volume.toFixed(3)} SOL
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </div>
 
-                {/* Stats */}
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div className="p-3 rounded-xl bg-background/40 border border-border/50">
-                    <p className="text-xs text-muted-foreground mb-1">Yes Pool</p>
-                    <p className="text-lg font-semibold text-green-500">65%</p>
+                    <Button
+                      asChild
+                      className="w-full bg-primary hover:bg-primary/90 text-white font-medium h-11 rounded-xl shadow-lg shadow-primary/20"
+                    >
+                      <Link href={`/markets/${featured.id}`}>Trade now</Link>
+                    </Button>
+                  </>
+                ) : (
+                  <div className="py-8 text-center">
+                    <h3 className="font-semibold text-lg text-foreground">
+                      No markets open yet
+                    </h3>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Markets are created on-chain by players. Be the first.
+                    </p>
+                    <Button
+                      asChild
+                      className="mt-6 w-full bg-primary hover:bg-primary/90 text-white font-medium h-11 rounded-xl"
+                    >
+                      <Link href="/markets/new">Create the first market</Link>
+                    </Button>
                   </div>
-                  <div className="p-3 rounded-xl bg-background/40 border border-border/50">
-                    <p className="text-xs text-muted-foreground mb-1">Volume</p>
-                    <p className="text-lg font-semibold text-foreground">$2.4M</p>
-                  </div>
-                </div>
-
-                {/* Action */}
-                <Button className="w-full bg-primary hover:bg-primary/90 text-white font-medium h-11 rounded-xl shadow-lg shadow-primary/20">
-                  Trade Now
-                </Button>
+                )}
               </div>
 
               {/* Floating Elements */}

@@ -2,6 +2,7 @@ import React from "react";
 import Wrapper from "../global/wrapper";
 import Container from "../global/container";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { usePlatformStats, formatSol } from "@/lib/usePlatformStats";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import {
   TrendingUp,
@@ -14,42 +15,50 @@ import {
 
 const TradingStats = () => {
   const { connected } = useWallet();
+  // Every figure below used to be invented ("$2.4M+", "8,924 traders",
+  // "89.2% accuracy"). They now come from real persisted activity.
+  const { stats: live, loading } = usePlatformStats();
+  const show = (value: string) => (loading ? "…" : value);
   const stats = [
     {
       icon: DollarSign,
-      value: "$2.4M+",
+      value: show(formatSol(live?.totalVolumeSol ?? 0)),
       label: "Total Volume",
-      description: "Traded across all markets",
+      description: "Staked across all markets",
     },
     {
       icon: Users,
-      value: "8,924",
-      label: "Active Traders",
-      description: "Making predictions daily",
+      value: show(String(live?.traders ?? 0)),
+      label: "Players",
+      description: "Wallets that have signed in",
     },
     {
       icon: Target,
-      value: "156",
+      value: show(String(live?.activeMarkets ?? 0)),
       label: "Active Markets",
-      description: "Live prediction markets",
+      description: "Open prediction markets",
     },
     {
       icon: BarChart3,
-      value: "89.2%",
+      value: show(
+        live?.accuracyPercent === null || live?.accuracyPercent === undefined
+          ? "—"
+          : `${live.accuracyPercent.toFixed(1)}%`
+      ),
       label: "Accuracy Rate",
-      description: "Average prediction accuracy",
+      description: "Winning share of settled bets",
     },
     {
       icon: TrendingUp,
-      value: "+34%",
-      label: "Growth",
-      description: "Monthly trading growth",
+      value: show(String(live?.totalPredictions ?? 0)),
+      label: "Bets Placed",
+      description: "Confirmed on-chain stakes",
     },
     {
       icon: Zap,
-      value: "~2s",
-      label: "Settlement",
-      description: "Average settlement time",
+      value: show(String(live?.resolvedMarkets ?? 0)),
+      label: "Markets Settled",
+      description: "Resolved through the oracle",
     },
   ];
 
