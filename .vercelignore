@@ -1,0 +1,20 @@
+# Files that must never reach a Vercel build context.
+#
+# The Vercel CLI does NOT read .gitignore, so anything secret that is only
+# protected there has to be repeated here. Keep this in sync with .gitignore.
+
+# Local env files. Real configuration lives in Vercel's encrypted env vars.
+.env
+.env.*
+!.env.example
+
+# Devnet signing keys: the fast-bet vault hot key and the E2E wallet keypair.
+# These are raw secret keys — never upload them. The server reads the vault key
+# from the FASTBET_VAULT_SECRET env var (inline JSON) in a deployed environment.
+.devnet/
+
+# Build artifacts and local state — Vercel installs and builds from source.
+node_modules
+.next
+.git
+.vercel
