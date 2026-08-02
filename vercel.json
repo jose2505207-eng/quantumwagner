@@ -1,6 +1,3 @@
 {
-  "crons": [
-    { "path": "/api/fast-bets/auto-resolve", "schedule": "* * * * *" },
-    { "path": "/api/fast-bets/generate", "schedule": "*/5 * * * *" }
-  ]
+  "$schema": "https://openapi.vercel.sh/vercel.json"
 }

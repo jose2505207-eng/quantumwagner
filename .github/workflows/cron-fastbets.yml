@@ -1,8 +1,15 @@
-# Belt-and-suspenders scheduler for FastBet rounds.
+# PRIMARY scheduler for FastBet rounds.
 #
-# Vercel Cron (vercel.json) is the primary driver; this workflow is a fallback
-# that hits the same endpoints from GitHub Actions. Both authorize with
+# This was the fallback behind Vercel Cron, but the deployment runs on a Vercel
+# Hobby account, which rejects any cron finer than once per day — a sub-daily
+# `crons` entry in vercel.json fails the deploy outright. So vercel.json now
+# declares no crons and this workflow is the only driver. Authorizes with
 # `Authorization: Bearer <CRON_SECRET>`.
+#
+# Trade-off: auto-resolve ticks every 5 minutes here instead of every minute, so
+# expired rounds settle later than they would on Vercel Cron. If the account is
+# upgraded to Pro, restore the `crons` block in vercel.json and this workflow
+# goes back to being a redundant fallback.
 #
 # Required repo secrets:
 #   APP_BASE_URL  - deployed app origin, e.g. https://quantumwagner.vercel.app
