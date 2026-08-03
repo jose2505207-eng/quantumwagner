@@ -13,6 +13,9 @@ import { motion } from "framer-motion";
 export default function Home() {
   const { markets, loading } = useMarkets();
 
+  // Headline an explicitly-featured market when one exists, else the newest.
+  const featured = markets.find((m) => m.featured) ?? markets[0];
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
@@ -28,7 +31,7 @@ export default function Home() {
       />
 
       <main className="relative z-10 w-full">
-        <Hero />
+        <Hero featured={featured} />
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-6">

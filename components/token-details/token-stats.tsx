@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Coins, BarChart3, Users, Activity } from "lucide-react";
-import { toDisplay } from "@/lib/format";
+import { toDisplay, formatSolFromLamports } from "@/lib/format";
 import type { IdlAccounts } from "@coral-xyz/anchor";
 import type { PredictionMarket } from "@/idl/types";
 
@@ -16,7 +16,7 @@ export function TokenStats({ token }: TokenStatsProps) {
   const stats = [
     {
       label: "Current Price",
-      value: `${toDisplay(token.currentPrice)} SOL`,
+      value: `${formatSolFromLamports(token.currentPrice)} SOL`,
       icon: <Coins className="w-5 h-5 text-yellow-400" />,
       color: "text-yellow-400",
       bg: "bg-yellow-400/10",
@@ -33,7 +33,7 @@ export function TokenStats({ token }: TokenStatsProps) {
     },
     {
       label: "Market Cap",
-      value: `${toDisplay(token.currentMarketCap || "0")} SOL`,
+      value: `${formatSolFromLamports(token.currentMarketCap || "0", 4)} SOL`,
       icon: <Activity className="w-5 h-5 text-emerald-400" />,
       color: "text-emerald-400",
       bg: "bg-emerald-400/10",

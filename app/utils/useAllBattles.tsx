@@ -13,7 +13,14 @@ export function useAllBattles() {
   const wallet = useAnchorWallet();
 
   useEffect(() => {
-    if (!wallet?.publicKey) return;
+    // No wallet -> nothing to fetch, but we must still leave the loading state.
+    // Returning while `loading` stayed true pinned the arena on its spinner
+    // forever instead of rendering the empty/connect state.
+    if (!wallet?.publicKey) {
+      setBattles([]);
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
 
     const fetchBattles = async () => {

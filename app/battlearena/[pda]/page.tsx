@@ -4,6 +4,7 @@ import BN from "bn.js";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { useAnchorWallet } from "@solana/wallet-adapter-react";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -20,12 +21,19 @@ import { Spinner } from "@/components/custom/Spinner";
 import { Background } from "@/components/background";
 import { cn } from "@/lib/utils";
 import { MIN_BATTLE_POOL } from "@/config";
+import {
+  deriveBattleLifecycle,
+  battleStatusLabel,
+  battleTimeLabel,
+  canAcceptBets,
+} from "@/lib/battleStatus";
 
 export default function BattlePage() {
   const params = useParams();
   const battleMint = params.pda as string;
 
   const { enterBattle } = Methods();
+  const wallet = useAnchorWallet();
   const [entering, setEntering] = useState(false);
   const [selectedSide, setSelectedSide] = useState<"A" | "B" | null>(null);
   const [amount, setAmount] = useState("");
@@ -73,9 +81,37 @@ export default function BattlePage() {
   const minBattlePoolSol = MIN_BATTLE_POOL.toNumber() / LAMPORTS_PER_SOL;
   const invalidAmount = numericAmount <= 0 || lamportsBN.lt(MIN_BATTLE_POOL);
 
+  // Same derivation the arena list uses, so the badge here can never contradict
+  // the tag on the card that linked to this page.
+  const lifecycle = deriveBattleLifecycle(d.status, d.startTime, d.endTime);
+  const isLive = canAcceptBets(lifecycle);
+  const endLabel = battleTimeLabel(d.endTime);
+
   const handleEnterBattle = async () => {
-    if (!selectedSide || invalidAmount) return;
-    
+    // Guard up front and SAY why, rather than returning silently — a bare
+    // `return` here is what made the button flick back to idle with no
+    // feedback at all.
+    if (!wallet?.publicKey) {
+      toast.error("Connect your wallet to place a bet.");
+      return;
+    }
+    if (!selectedSide) {
+      toast.error("Pick a side first.");
+      return;
+    }
+    if (invalidAmount) {
+      toast.error(`Enter at least ${minBattlePoolSol} SOL.`);
+      return;
+    }
+    if (!isLive) {
+      toast.error(
+        lifecycle === "upcoming"
+          ? "This battle hasn't started yet."
+          : "This battle is no longer accepting bets."
+      );
+      return;
+    }
+
     try {
       setEntering(true);
       const sideObj = selectedSide === "A" ? { sideA: {} } : { sideB: {} };
@@ -87,20 +123,26 @@ export default function BattlePage() {
       });
 
       toast.success(`Successfully bet on Side ${selectedSide}!`);
-      
+
       // Optimistic update
       if (selectedSide === "A") d.sideAParticipants += 1;
       else d.sideBParticipants += 1;
-      
+
       setAmount("");
       setSelectedSide(null);
-      
+
     } catch (err) {
       console.error(err);
-      const msg = String(err);
+      const msg = err instanceof Error ? err.message : String(err);
       if (msg.includes("Battle has ended")) toast.error("Battle has ended");
       else if (msg.includes("Battle has not started yet")) toast.error("Battle has not started yet");
-      else toast.error("Failed to enter battle");
+      else if (/User rejected|rejected the request/i.test(msg))
+        toast.error("Transaction rejected in your wallet.");
+      else if (/insufficient|0x1\b/i.test(msg))
+        toast.error("Not enough SOL to cover this bet plus fees.");
+      // Never fail silently: fall back to the real message so the cause is
+      // visible instead of being flattened into a generic string.
+      else toast.error(`Failed to enter battle: ${msg.slice(0, 160)}`);
     } finally {
       setEntering(false);
     }
@@ -142,9 +184,28 @@ export default function BattlePage() {
           </Link>
           
           <div className="flex items-center gap-3">
-            <div className="px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Live Battle</span>
+            <div
+              className={cn(
+                "px-3 py-1.5 rounded-full border flex items-center gap-2",
+                isLive
+                  ? "bg-emerald-500/10 border-emerald-500/20"
+                  : "bg-white/5 border-white/10"
+              )}
+            >
+              <div
+                className={cn(
+                  "w-1.5 h-1.5 rounded-full",
+                  isLive ? "bg-emerald-500 animate-pulse" : "bg-white/40"
+                )}
+              />
+              <span
+                className={cn(
+                  "text-xs font-bold uppercase tracking-wider",
+                  isLive ? "text-emerald-400" : "text-white/60"
+                )}
+              >
+                {isLive ? "Live Battle" : battleStatusLabel(lifecycle)}
+              </span>
             </div>
             <button className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-colors border border-white/5">
               <Share2 className="w-4 h-4" />
@@ -196,7 +257,9 @@ export default function BattlePage() {
                   </span>
                 </div>
                 <div className="p-4 lg:p-6 flex flex-col items-center text-center gap-1">
-                  <span className="text-xs font-bold text-white/40 uppercase tracking-wider">Ends In</span>
+                  <span className="text-xs font-bold text-white/40 uppercase tracking-wider">
+                    {endLabel.caption}
+                  </span>
                   <span className="text-xl lg:text-2xl font-black text-white font-mono">
                     {formatTime(d.endTime).replace(" left", "")}
                   </span>
@@ -340,14 +403,19 @@ export default function BattlePage() {
                   </div>
 
                   {/* Action Button */}
+                  {/* Only `entering` disables the button. Previously an invalid
+                      amount or missing side disabled it outright, so the user
+                      got no explanation — now the click lands and the handler
+                      says what is wrong. */}
                   <button
                     onClick={handleEnterBattle}
-                    disabled={entering || !selectedSide || invalidAmount}
+                    disabled={entering}
                     className={cn(
                       "w-full h-[64px] text-lg font-bold rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 relative overflow-hidden",
+                      !isLive ? "bg-white/5 text-white/30" :
                       selectedSide === "A" ? "bg-blue-600 hover:bg-blue-500 shadow-[0_0_40px_rgba(37,99,235,0.4)]" :
                       selectedSide === "B" ? "bg-rose-600 hover:bg-rose-500 shadow-[0_0_40px_rgba(225,29,72,0.4)]" :
-                      "bg-white/5 text-white/20 cursor-not-allowed"
+                      "bg-white/10 text-white/50 hover:bg-white/20"
                     )}
                   >
                     {entering ? (
@@ -358,7 +426,15 @@ export default function BattlePage() {
                     ) : (
                       <>
                         <Zap className={cn("w-5 h-5", selectedSide ? "fill-white" : "fill-current")} />
-                        <span>{selectedSide ? `CONFIRM BET ON ${selectedSide}` : "SELECT A SIDE"}</span>
+                        <span>
+                          {!isLive
+                            ? lifecycle === "upcoming"
+                              ? "NOT STARTED YET"
+                              : "BETTING CLOSED"
+                            : selectedSide
+                            ? `CONFIRM BET ON ${selectedSide}`
+                            : "SELECT A SIDE"}
+                        </span>
                       </>
                     )}
                   </button>

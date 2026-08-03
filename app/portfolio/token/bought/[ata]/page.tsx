@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useUserBoughtTokens } from "@/app/utils/useUserBoughtTokens";
-import { toDisplay } from "@/lib/format";
+import { toDisplay, formatSolFromLamports } from "@/lib/format";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -238,7 +238,7 @@ export default function BoughtTokenDetails() {
           <StatCard
             icon={<BarChart3 className="w-5 h-5 text-purple-400" />}
             label="Price"
-            value={`${toDisplay(acc.currentPrice)} SOL`}
+            value={`${formatSolFromLamports(acc.currentPrice)} SOL`}
           />
           <StatCard
             icon={<ActivitySquare className="w-5 h-5 text-pink-400" />}
@@ -248,7 +248,7 @@ export default function BoughtTokenDetails() {
           <StatCard
             icon={<Globe className="w-5 h-5 text-yellow-400" />}
             label="Market Cap"
-            value={toDisplay(acc.currentMarketCap)}
+            value={`${formatSolFromLamports(acc.currentMarketCap, 4)} SOL`}
           />
         </div>
 

@@ -5,6 +5,11 @@ import { Swords, Trophy, Users, Timer, Zap, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import type { PublicKey } from "@solana/web3.js";
 import { cn } from "@/lib/utils";
+import {
+  deriveBattleLifecycle,
+  battleStatusLabel,
+  battleTimeLabel,
+} from "@/lib/battleStatus";
 
 interface BattleData {
   status?: Record<string, unknown>;
@@ -17,6 +22,7 @@ interface BattleData {
   // Decoded on-chain value is a BN of unix seconds; other call paths may pass a
   // number/string. Kept `unknown` (like the pool fields) and coerced via safe().
   endTime?: unknown;
+  startTime?: unknown;
 }
 
 interface BattleCardProps {
@@ -29,8 +35,10 @@ interface BattleCardProps {
 
 export function BattleCard({ battle, index }: BattleCardProps) {
   const d = battle.data;
-  const status = Object.keys(d.status || {})[0] || "unknown";
-  const isActive = status.toLowerCase() === "active";
+  // Derived, not the raw enum — see lib/battleStatus.ts for why.
+  const lifecycle = deriveBattleLifecycle(d.status, d.startTime, d.endTime);
+  const status = battleStatusLabel(lifecycle);
+  const isActive = lifecycle === "live";
 
   const safe = (v: unknown) => {
     if (v === null || v === undefined) return "0";
@@ -105,7 +113,13 @@ export function BattleCard({ battle, index }: BattleCardProps) {
             </div>
             <div className="flex items-center gap-1.5">
               <Timer className="w-3.5 h-3.5" />
-              <span>Ends {d.endTime ? new Date(Number(safe(d.endTime)) * 1000).toLocaleDateString() : "—"}</span>
+              <span>
+                {d.endTime
+                  ? `${battleTimeLabel(d.endTime).isPast ? "Ended" : "Ends"} ${new Date(
+                      Number(safe(d.endTime)) * 1000
+                    ).toLocaleDateString()}`
+                  : "—"}
+              </span>
             </div>
           </div>
         </div>

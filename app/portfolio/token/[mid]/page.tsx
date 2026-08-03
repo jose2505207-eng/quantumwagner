@@ -1,7 +1,7 @@
 "use client";
 import { useParams } from "next/navigation";
 import { Spinner } from "@/components/custom/Spinner";
-import { toDisplay } from "@/lib/format";
+import { toDisplay, formatSolFromLamports } from "@/lib/format";
 import { BN, web3 } from "@coral-xyz/anchor";
 import Image from "next/image";
 import {
@@ -346,10 +346,10 @@ export default function Token() {
         {/* === Summary Cards === */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
           {[
-            { label: "Initial Price", value: toDisplay(acc.initialPrice) },
-            { label: "Current Price", value: toDisplay(acc.currentPrice) },
+            { label: "Initial Price", value: `${formatSolFromLamports(acc.initialPrice)} SOL` },
+            { label: "Current Price", value: `${formatSolFromLamports(acc.currentPrice)} SOL` },
             { label: "Total Supply", value: toDisplay(acc.totalSupply) },
-            { label: "Market Cap", value: toDisplay(acc.currentMarketCap) },
+            { label: "Market Cap", value: `${formatSolFromLamports(acc.currentMarketCap, 4)} SOL` },
           ].map((s) => (
             <div
               key={s.label}
@@ -411,14 +411,14 @@ export default function Token() {
 
         {/* SECTION: TOKENOMICS */}
         <Section title="Tokenomics">
-          <InfoRow label="Initial Price" value={toDisplay(acc.initialPrice)} />
-          <InfoRow label="Current Price" value={toDisplay(acc.currentPrice)} />
+          <InfoRow label="Initial Price" value={`${formatSolFromLamports(acc.initialPrice)} SOL`} />
+          <InfoRow label="Current Price" value={`${formatSolFromLamports(acc.currentPrice)} SOL`} />
           <InfoRow label="Total Supply" value={toDisplay(acc.totalSupply)} />
           <InfoRow
             label="Circulating Supply"
             value={toDisplay(acc.circulatingSupply)}
           />
-          <InfoRow label="Market Cap" value={toDisplay(acc.currentMarketCap)} />
+          <InfoRow label="Market Cap" value={`${formatSolFromLamports(acc.currentMarketCap, 4)} SOL`} />
         </Section>
 
         {/* SECTION: VAULTS */}

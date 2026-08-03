@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Loader2, Wallet, ArrowRight, AlertCircle, Settings2, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { lamportsToSol } from "@/lib/format";
 import type { IdlAccounts } from "@coral-xyz/anchor";
 import type { PredictionMarket } from "@/idl/types";
 
@@ -22,8 +23,13 @@ export function BuyInterface({ token, onBuy, loading, compact = false }: BuyInte
   const [isFocused, setIsFocused] = useState(false);
 
   const numericAmount = parseFloat(amount) || 0;
-  const price = parseFloat(String(token.currentPrice)) || 0;
-  const estimatedTokens = price > 0 ? (numericAmount / price).toFixed(2) : "0";
+  // `amount` is SOL the user types; `currentPrice` is lamports on-chain. Both
+  // sides must be in SOL or the estimate is off by a factor of 1e9.
+  const price = lamportsToSol(token.currentPrice);
+  const estimatedTokens =
+    price > 0 ? (numericAmount / price).toLocaleString(undefined, {
+      maximumFractionDigits: 4,
+    }) : "0";
 
   const handleBuyClick = async () => {
     if (!amount || numericAmount <= 0) return;
